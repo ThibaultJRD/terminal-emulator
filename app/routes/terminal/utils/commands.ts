@@ -178,20 +178,9 @@ export const commands: Record<string, CommandHandler> = {
     }
 
     const filename = args[0];
-    const currentDir = getCurrentDirectory(filesystem);
-    if (
-      !currentDir ||
-      currentDir.type !== "directory" ||
-      !currentDir.children
-    ) {
-      return {
-        success: false,
-        output: "",
-        error: "cat: cannot access current directory",
-      };
-    }
-
-    const file = currentDir.children[filename];
+    const targetPath = resolvePath(filesystem, filename);
+    const file = getNodeAtPath(filesystem, targetPath);
+    
     if (!file) {
       return {
         success: false,
@@ -434,13 +423,15 @@ export function executeCommand(
       return inputResult;
     }
     
-    // For heredoc (<<), we might want to pass the content as an argument
-    // For file input (<), some commands might benefit from receiving the content
     if (redirectInput.type === '<<') {
-      // Heredoc - the source is the delimiter, for now just append as argument
-      finalArgs = [...args, redirectInput.source];
+      // Heredoc - for now, simulate with empty input for cat, or pass delimiter for other commands
+      if (command === 'cat' && args.length === 0) {
+        // For cat with heredoc and no files, simulate stdin input
+        return { success: true, output: `Reading input until '${redirectInput.source}'...` };
+      }
+      finalArgs = [...args];
     } else {
-      // File input - read the file content
+      // File input - validate the file exists and is readable
       const fileContent = getExistingFileContent(filesystem, redirectInput.source);
       if (fileContent === "" && !fileExists(filesystem, redirectInput.source)) {
         return {
@@ -449,8 +440,10 @@ export function executeCommand(
           error: `cannot read from '${redirectInput.source}': No such file or directory`,
         };
       }
-      // For some commands like 'cat', we could inject the content directly
-      // For now, we'll just indicate that input redirection was used
+      // For file input, replace the filename argument with the actual file content for certain commands
+      if (command === 'wc' && args.length === 0) {
+        finalArgs = [redirectInput.source];
+      }
     }
   }
 
@@ -466,10 +459,19 @@ export function executeCommand(
   const result = handler(finalArgs, filesystem);
 
   // Handle output redirection
-  if (result.success && redirectOutput && typeof result.output === 'string') {
+  if (result.success && redirectOutput) {
+    let outputContent = '';
+    
+    if (typeof result.output === 'string') {
+      outputContent = result.output;
+    } else if (Array.isArray(result.output)) {
+      // Convert OutputSegment array to string
+      outputContent = result.output.map(segment => segment.text || '').join('');
+    }
+    
     const content = redirectOutput.type === '>>' 
-      ? getExistingFileContent(filesystem, redirectOutput.filename) + result.output
-      : result.output;
+      ? getExistingFileContent(filesystem, redirectOutput.filename) + outputContent
+      : outputContent;
     
     const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content);
     
@@ -489,9 +491,9 @@ export function executeCommand(
 
 function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: string }, filesystem: FileSystemState): CommandResult {
   if (redirectInput.type === '<<') {
-    // Heredoc - for now, just return success
+    // Heredoc - simplified implementation that accepts any delimiter
     // In a real implementation, this would start interactive input until the delimiter is found
-    return { success: true, output: `Heredoc input until '${redirectInput.source}' (simplified implementation)` };
+    return { success: true, output: "" };
   } else {
     // File input - check if file exists
     if (!fileExists(filesystem, redirectInput.source)) {
@@ -506,20 +508,16 @@ function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: strin
 }
 
 function fileExists(filesystem: FileSystemState, filename: string): boolean {
-  const currentDir = getCurrentDirectory(filesystem);
-  if (currentDir && currentDir.children && currentDir.children[filename]) {
-    return currentDir.children[filename].type === 'file';
-  }
-  return false;
+  const targetPath = resolvePath(filesystem, filename);
+  const file = getNodeAtPath(filesystem, targetPath);
+  return file !== null && file.type === 'file';
 }
 
 function getExistingFileContent(filesystem: FileSystemState, filename: string): string {
-  const currentDir = getCurrentDirectory(filesystem);
-  if (currentDir && currentDir.children && currentDir.children[filename]) {
-    const file = currentDir.children[filename];
-    if (file.type === 'file') {
-      return file.content || "";
-    }
+  const targetPath = resolvePath(filesystem, filename);
+  const file = getNodeAtPath(filesystem, targetPath);
+  if (file && file.type === 'file') {
+    return file.content || "";
   }
   return "";
 }
@@ -638,15 +636,22 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
       };
     }
     
-    // For recursive removal, check if directory is empty or force removal
-    if (file.children && Object.keys(file.children).length > 0 && !force) {
-      // Directory not empty, remove contents first
+    // For recursive removal, remove contents first
+    if (file.children && Object.keys(file.children).length > 0) {
+      // Save current path and change to the directory being removed
+      const originalPath = filesystem.currentPath.slice();
+      filesystem.currentPath = [...originalPath, filename];
+      
       for (const childName of Object.keys(file.children)) {
         const childResult = removeFile(filesystem, childName, true, force);
         if (!childResult.success && !force) {
+          filesystem.currentPath = originalPath;
           return childResult;
         }
       }
+      
+      // Restore original path
+      filesystem.currentPath = originalPath;
     }
   }
 
@@ -663,24 +668,30 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
 }
 
 function writeToFile(filesystem: FileSystemState, filename: string, content: string): boolean {
-  const currentDir = getCurrentDirectory(filesystem);
-  if (!currentDir || currentDir.type !== "directory" || !currentDir.children) {
-    return false;
-  }
-
-  // If file exists, update it
-  if (currentDir.children[filename]) {
-    const file = currentDir.children[filename];
-    if (file.type === 'file') {
-      file.content = content;
-      file.size = content.length;
-      file.modifiedAt = new Date();
-      currentDir.modifiedAt = new Date();
+  // Handle path resolution for the file
+  const targetPath = resolvePath(filesystem, filename);
+  const existingFile = getNodeAtPath(filesystem, targetPath);
+  
+  if (existingFile) {
+    if (existingFile.type === 'file') {
+      existingFile.content = content;
+      existingFile.size = content.length;
+      existingFile.modifiedAt = new Date();
       return true;
     }
     return false; // Can't write to directory
   }
 
-  // Create new file
-  return createFile(filesystem, filesystem.currentPath, filename, content);
+  // Create new file - extract directory and filename
+  const lastSlashIndex = filename.lastIndexOf('/');
+  if (lastSlashIndex === -1) {
+    // Simple filename, create in current directory
+    return createFile(filesystem, filesystem.currentPath, filename, content);
+  } else {
+    // Path with directory, create in the specified directory
+    const dirPath = filename.substring(0, lastSlashIndex);
+    const fileName = filename.substring(lastSlashIndex + 1);
+    const targetDirPath = resolvePath(filesystem, dirPath);
+    return createFile(filesystem, targetDirPath, fileName, content);
+  }
 }

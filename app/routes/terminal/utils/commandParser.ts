@@ -54,7 +54,7 @@ export function parseCommand(input: string): ParsedCommand {
   
   // No redirection, parse normally
   const parts = parseArguments(trimmed);
-  const command = parts[0];
+  const command = parts[0] || '';
   const args = parts.slice(1);
   
   return {

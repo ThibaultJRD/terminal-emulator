@@ -18,11 +18,11 @@ export function getAutocompletions(
     const [, , operator, filename] = redirectMatch;
     // For output redirection, complete filenames
     if (operator === '>' || operator === '>>') {
-      return getPathCompletions(filename, filesystem);
+      return getPathCompletions(filename.trim(), filesystem);
     }
     // For input redirection, complete existing files only
     if (operator === '<') {
-      return getFileCompletions(filename, filesystem);
+      return getFileCompletions(filename.trim(), filesystem);
     }
     // For heredoc (<<), no completion needed
     if (operator === '<<') {
@@ -30,9 +30,10 @@ export function getAutocompletions(
     }
   }
 
-  const parts = input.trim().split(/\s+/);
+  const trimmedInput = input.trim();
+  const parts = trimmedInput.split(/\s+/);
 
-  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(" "))) {
+  if (parts.length === 0 || trimmedInput === '' || (parts.length === 1 && !input.endsWith(" "))) {
     // Command completion
     const commandName = parts[0] || "";
     const commandNames = Object.keys(commands);
