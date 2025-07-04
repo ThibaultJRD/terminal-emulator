@@ -243,6 +243,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 <div align="center">
   <p>Built with ❤️ by <a href="https://github.com/ThibaultJRD">ThibaultJRD</a> and Catppuccin theme 🐱</p>
   <p>
-    <a href="#">Back to top</a>
+    <a href="https://github.com/ThibaultJRD/terminal-emulator/blob/master/README.md#%EF%B8%8F-terminal-emulator">Back to top</a>
   </p>
 </div>
