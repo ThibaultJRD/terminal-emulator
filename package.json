@@ -1,5 +1,18 @@
 {
   "name": "terminal-emulator",
+  "version": "1.0.0",
+  "description": "A modern terminal emulator built with React Router v7, TypeScript, and TailwindCSS featuring Unix commands, I/O redirection, and Catppuccin theme",
+  "keywords": [
+    "terminal",
+    "emulator",
+    "react-router",
+    "typescript",
+    "catppuccin",
+    "unix",
+    "shell"
+  ],
+  "author": "ThibaultJRD",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
