@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { TerminalState, OutputSegment } from "@/routes/terminal/types/filesystem";
-import { createDefaultFileSystem } from "@/routes/terminal/utils/filesystem";
-import { executeCommand } from "@/routes/terminal/utils/commands";
-import { formatPath } from "@/routes/terminal/utils/filesystem";
-import { getAutocompletions, applyCompletion } from "@/routes/terminal/utils/autocompletion";
+import type { TerminalState, OutputSegment } from "~/routes/terminal/types/filesystem";
+import { createDefaultFileSystem } from "~/routes/terminal/utils/filesystem";
+import { executeCommand } from "~/routes/terminal/utils/commands";
+import { formatPath } from "~/routes/terminal/utils/filesystem";
+import { getAutocompletions, applyCompletion } from "~/routes/terminal/utils/autocompletion";
 
 interface TerminalOutputLine {
   type: "command" | "output" | "error";

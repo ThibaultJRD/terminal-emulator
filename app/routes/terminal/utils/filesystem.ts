@@ -1,7 +1,7 @@
 import type {
   FileSystemNode,
   FileSystemState,
-} from "@/routes/terminal/types/filesystem";
+} from "~/routes/terminal/types/filesystem";
 
 export function createDefaultFileSystem(): FileSystemState {
   const now = new Date();

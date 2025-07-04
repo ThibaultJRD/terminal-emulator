@@ -3,7 +3,7 @@ import type {
   FileSystemState,
   CommandHandler,
   OutputSegment,
-} from "@/routes/terminal/types/filesystem";
+} from "~/routes/terminal/types/filesystem";
 import {
   getNodeAtPath,
   getCurrentDirectory,
@@ -12,8 +12,8 @@ import {
   createFile,
   createDirectory,
   deleteNode,
-} from "@/routes/terminal/utils/filesystem";
-import { renderMarkdown } from "@/routes/terminal/utils/markdown";
+} from "~/routes/terminal/utils/filesystem";
+import { renderMarkdown } from "~/routes/terminal/utils/markdown";
 
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState): CommandResult => {

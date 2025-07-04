@@ -1,6 +1,6 @@
-import type { FileSystemState } from "@/routes/terminal/types/filesystem";
-import { getCurrentDirectory, getNodeAtPath, resolvePath } from "@/routes/terminal/utils/filesystem";
-import { commands } from "@/routes/terminal/utils/commands";
+import type { FileSystemState } from "~/routes/terminal/types/filesystem";
+import { getCurrentDirectory, getNodeAtPath, resolvePath } from "~/routes/terminal/utils/filesystem";
+import { commands } from "~/routes/terminal/utils/commands";
 
 export interface AutocompletionResult {
   completions: string[];

@@ -1,5 +1,5 @@
 import type { Route } from "./+types/terminal";
-import { Terminal } from "@/routes/terminal/components/Terminal";
+import { Terminal } from "~/routes/terminal/components/Terminal";
 
 export function meta({}: Route.MetaArgs) {
   return [

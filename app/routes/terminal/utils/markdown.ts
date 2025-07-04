@@ -1,4 +1,4 @@
-import type { OutputSegment } from '@/routes/terminal/types/filesystem';
+import type { OutputSegment } from '~/routes/terminal/types/filesystem';
 
 export function renderMarkdown(content: string): OutputSegment[] {
   const lines = content.split('\n');

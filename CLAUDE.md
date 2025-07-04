@@ -27,15 +27,17 @@ app/
 ├── root.tsx                 # Root layout component
 ├── routes.ts                # Route configuration
 ├── routes/
-│   └── home.tsx            # Main terminal route
-├── components/
-│   └── Terminal.tsx        # Main terminal component
-├── types/
-│   └── filesystem.ts       # TypeScript types for filesystem
-├── utils/
-│   ├── filesystem.ts       # In-memory filesystem utilities
-│   ├── commands.ts         # Terminal command implementations
-│   └── autocompletion.ts   # Tab completion system
+│   └── terminal/
+│       ├── terminal.tsx     # Main terminal route
+│       ├── components/
+│       │   └── Terminal.tsx # Main terminal component
+│       ├── types/
+│       │   └── filesystem.ts # TypeScript types for filesystem
+│       └── utils/
+│           ├── filesystem.ts    # In-memory filesystem utilities
+│           ├── commands.ts      # Terminal command implementations
+│           ├── autocompletion.ts # Tab completion system
+│           └── markdown.ts      # Markdown rendering with Catppuccin
 └── app.css                 # Global styles with Catppuccin theme
 ```
 
@@ -44,13 +46,16 @@ app/
 - **File System**: In-memory hierarchical filesystem with configurable structure
 - **History**: Arrow key navigation through command history
 - **Autocompletion**: Tab completion for commands and file paths
+- **Markdown Rendering**: cat command renders .md files with Catppuccin-styled formatting
 - **Theme**: Catppuccin Mocha colorscheme with monospace font
 
 ### Key Patterns
 - CSR mode is used instead of SSR for better terminal state management
 - All TypeScript imports use `type` imports where appropriate due to `verbatimModuleSyntax`
+- Use `~/*` path alias for absolute imports (pre-configured by React Router)
 - Filesystem state is managed in React component state
-- Commands are implemented as pure functions that return results
+- Commands return structured output (string or OutputSegment[]) for rich formatting
+- Markdown files are parsed and rendered with Catppuccin theme colors
 - Autocompletion handles both command names and file paths
 
 ### Catppuccin Theme
@@ -64,6 +69,8 @@ The application uses Catppuccin Mocha theme colors defined in `app.css`:
 ## Development Notes
 
 - Always run `npm run typecheck` after making changes to ensure TypeScript compliance
-- The filesystem is initialized with a default structure but can be customized in `utils/filesystem.ts`
+- The filesystem is initialized with a default structure but can be customized in `routes/terminal/utils/filesystem.ts`
 - Command implementations follow Unix-like behavior and error messages
 - Tab completion supports both single completion and showing multiple options
+- Markdown rendering supports headers, bold/italic, code blocks, links, lists, blockquotes, and horizontal rules
+- The cat command automatically detects .md files and applies syntax highlighting with Catppuccin colors
