@@ -241,8 +241,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 <div align="center">
-  <p>Built with ❤️ by [ThibaultJRD](https://github.com/ThibaultJRD) and Catppuccin theme 🐱</p>
+  <p>Built with ❤️ by <a href="https://github.com/ThibaultJRD">ThibaultJRD</a> and Catppuccin theme 🐱</p>
   <p>
-    <a href="#-terminal-emulator">Back to top</a>
+    <a href="#">Back to top</a>
   </p>
 </div>
