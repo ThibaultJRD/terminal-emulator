@@ -25,7 +25,6 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 - In-memory hierarchical file system
 - Support for relative and absolute paths
 - Hidden files (starting with `.`)
-- Easter egg discoverable via `ls -a` and `cat .secret`
 
 ### 🎨 User Interface
 - **Theme**: Catppuccin Mocha with consistent colors
@@ -43,19 +42,19 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 
 ### Prerequisites
 - Node.js 18+
-- npm or yarn
+- yarn
 
 ### Installation
 ```bash
 # Clone the project
-git clone <repo-url>
+git clone https://github.com/ThibaultJRD/terminal-emulator.git
 cd terminal-emulator
 
 # Install dependencies
-npm install
+yarn install
 
 # Start in development mode
-npm run dev
+yarn run dev
 ```
 
 The application will be available at `http://localhost:5173`
@@ -64,21 +63,21 @@ The application will be available at `http://localhost:5173`
 
 ```bash
 # Development with hot reload
-npm run dev
+yarn run dev
 
 # Production build
-npm run build
+yarn run build
 
 # Production server
-npm run start
+yarn run start
 
 # TypeScript checking
-npm run typecheck
+yarn run typecheck
 
 # Testing
-npm test
-npm test -- --watch     # Watch mode
-npm test -- --coverage  # With coverage
+yarn test
+yarn test -- --watch     # Watch mode
+yarn test -- --coverage  # With coverage
 ```
 
 ## 📁 Project Structure
@@ -230,8 +229,8 @@ docker run -p 3000:3000 terminal-emulator
 5. Open a Pull Request
 
 ### Guidelines
-- Run `npm run typecheck` before committing
-- All tests must pass (`npm test`)
+- Run `yarn run typecheck` before committing
+- All tests must pass (`yarn test`)
 - Follow project TypeScript conventions
 - Use `~/*` alias for absolute imports
 
@@ -242,7 +241,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 <div align="center">
-  <p>Built with ❤️ and Catppuccin theme 🐱</p>
+  <p>Built with ❤️ by [ThibaultJRD](https://github.com/ThibaultJRD) and Catppuccin theme 🐱</p>
   <p>
     <a href="#-terminal-emulator">Back to top</a>
   </p>
