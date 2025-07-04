@@ -1,0 +1,117 @@
+import type { FileSystemState } from "../types/filesystem";
+import { getCurrentDirectory, getNodeAtPath, resolvePath } from "./filesystem";
+import { commands } from "./commands";
+
+export interface AutocompletionResult {
+  completions: string[];
+  commonPrefix: string;
+}
+
+export function getAutocompletions(
+  input: string,
+  filesystem: FileSystemState
+): AutocompletionResult {
+  const parts = input.trim().split(/\s+/);
+
+  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(" "))) {
+    // Command completion
+    const commandName = parts[0] || "";
+    const commandNames = Object.keys(commands);
+    const matchingCommands = commandNames.filter((cmd) =>
+      cmd.startsWith(commandName)
+    );
+
+    return {
+      completions: matchingCommands,
+      commonPrefix: getCommonPrefix(matchingCommands),
+    };
+  }
+
+  // Path completion
+  const command = parts[0];
+  const pathArg = parts[parts.length - 1];
+
+  if (command && ["cd", "ls", "cat", "rm", "rmdir"].includes(command)) {
+    return getPathCompletions(pathArg, filesystem);
+  }
+
+  return { completions: [], commonPrefix: "" };
+}
+
+function getPathCompletions(
+  partialPath: string,
+  filesystem: FileSystemState
+): AutocompletionResult {
+  const lastSlashIndex = partialPath.lastIndexOf("/");
+  let basePath: string;
+  let prefix: string;
+
+  if (lastSlashIndex === -1) {
+    // No slash, completing in current directory
+    basePath = "";
+    prefix = partialPath;
+  } else {
+    // Has slash, completing in specified directory
+    basePath = partialPath.substring(0, lastSlashIndex + 1);
+    prefix = partialPath.substring(lastSlashIndex + 1);
+  }
+
+  const targetPath = basePath
+    ? resolvePath(filesystem, basePath)
+    : filesystem.currentPath;
+  const targetNode = getNodeAtPath(filesystem, targetPath);
+
+  if (!targetNode || targetNode.type !== "directory" || !targetNode.children) {
+    return { completions: [], commonPrefix: "" };
+  }
+
+  const matchingNames = Object.keys(targetNode.children)
+    .filter((name) => name.startsWith(prefix))
+    .sort();
+
+  const completions = matchingNames.map((name) => {
+    const node = targetNode.children![name];
+    const fullPath = basePath + name;
+    return node.type === "directory" ? fullPath + "/" : fullPath;
+  });
+
+  return {
+    completions,
+    commonPrefix: basePath + getCommonPrefix(matchingNames),
+  };
+}
+
+function getCommonPrefix(strings: string[]): string {
+  if (strings.length === 0) return "";
+  if (strings.length === 1) return strings[0];
+
+  let prefix = strings[0];
+  for (let i = 1; i < strings.length; i++) {
+    let j = 0;
+    while (
+      j < prefix.length &&
+      j < strings[i].length &&
+      prefix[j] === strings[i][j]
+    ) {
+      j++;
+    }
+    prefix = prefix.substring(0, j);
+    if (prefix === "") break;
+  }
+
+  return prefix;
+}
+
+export function applyCompletion(input: string, completion: string): string {
+  const parts = input.trim().split(/\s+/);
+
+  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(" "))) {
+    // Command completion
+    return completion + " ";
+  }
+
+  // Path completion
+  parts[parts.length - 1] = completion;
+  return parts.join(" ");
+}
+

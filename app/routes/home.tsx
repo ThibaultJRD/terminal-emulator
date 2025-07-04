@@ -1,13 +1,13 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { Terminal } from "../components/Terminal";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Terminal Emulator" },
+    { name: "description", content: "A web-based terminal emulator with Catppuccin theme" },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return <Terminal />;
 }
