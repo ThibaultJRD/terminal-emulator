@@ -81,6 +81,31 @@ function hello() {
                   modifiedAt: now,
                   children: {},
                 },
+                ".secret": {
+                  name: ".secret",
+                  type: "file",
+                  content: `🐱 Catppuccin Terminal Emulator Easter Egg! 🐱
+
+You found the hidden file! Here's a little ASCII art for you:
+
+       /\\_/\\  
+      ( o.o ) 
+       > ^ <
+
+This terminal emulator was built with:
+- React Router v7 🚀
+- TypeScript ⚡
+- TailwindCSS 🎨  
+- Catppuccin Mocha theme 🎵
+
+Fun fact: This file is hidden because it starts with a dot (.)
+Use 'ls -a' to see all hidden files!
+
+🌟 Keep exploring! 🌟`,
+                  size: 350,
+                  createdAt: now,
+                  modifiedAt: now,
+                },
               },
             },
           },

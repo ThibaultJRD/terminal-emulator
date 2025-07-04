@@ -44,6 +44,8 @@ export type Command =
   | "rm"
   | "rmdir"
   | "pwd"
+  | "echo"
+  | "wc"
   | "clear"
   | "help";
 
