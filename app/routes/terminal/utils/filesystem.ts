@@ -1,4 +1,7 @@
-import type { FileSystemNode, FileSystemState } from "../types/filesystem";
+import type {
+  FileSystemNode,
+  FileSystemState,
+} from "@/routes/terminal/types/filesystem";
 
 export function createDefaultFileSystem(): FileSystemState {
   const now = new Date();
@@ -32,6 +35,40 @@ export function createDefaultFileSystem(): FileSystemState {
                       content:
                         "Welcome to the terminal emulator!\nThis is a sample file.",
                       size: 62,
+                      createdAt: now,
+                      modifiedAt: now,
+                    },
+                    "example.md": {
+                      name: "example.md",
+                      type: "file",
+                      content: `# Terminal Emulator
+
+This is a **markdown** file example with various elements:
+
+## Features
+
+- **Bold text** and *italic text*
+- \`Inline code\` blocks
+- [Links](https://example.com)
+
+### Code Block
+
+\`\`\`javascript
+function hello() {
+  console.log("Hello, World!");
+}
+\`\`\`
+
+> This is a blockquote with important information.
+
+1. Ordered list item
+2. Another item
+3. Final item
+
+---
+
+*Built with React Router v7 and Catppuccin theme*`,
+                      size: 400,
                       createdAt: now,
                       modifiedAt: now,
                     },
@@ -209,4 +246,3 @@ export function deleteNode(
   parentNode.modifiedAt = new Date();
   return true;
 }
-

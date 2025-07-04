@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { TerminalState, OutputSegment } from "../types/filesystem";
-import { createDefaultFileSystem } from "../utils/filesystem";
-import { executeCommand } from "../utils/commands";
-import { formatPath } from "../utils/filesystem";
-import { getAutocompletions, applyCompletion } from "../utils/autocompletion";
+import type { TerminalState, OutputSegment } from "@/routes/terminal/types/filesystem";
+import { createDefaultFileSystem } from "@/routes/terminal/utils/filesystem";
+import { executeCommand } from "@/routes/terminal/utils/commands";
+import { formatPath } from "@/routes/terminal/utils/filesystem";
+import { getAutocompletions, applyCompletion } from "@/routes/terminal/utils/autocompletion";
 
 interface TerminalOutputLine {
   type: "command" | "output" | "error";
@@ -255,6 +255,51 @@ export function Terminal() {
             break;
           case "file":
             className = "text-ctp-text";
+            break;
+          case "header-1":
+            className = "text-ctp-red font-bold text-lg";
+            break;
+          case "header-2":
+            className = "text-ctp-peach font-bold";
+            break;
+          case "header-3":
+            className = "text-ctp-yellow font-semibold";
+            break;
+          case "header-symbol":
+            className = "text-ctp-mauve";
+            break;
+          case "bold":
+            className = "text-ctp-text font-bold";
+            break;
+          case "italic":
+            className = "text-ctp-subtext1 italic";
+            break;
+          case "inline-code":
+            className = "text-ctp-green bg-ctp-surface0 px-1 rounded";
+            break;
+          case "code-block":
+            className = "text-ctp-green";
+            break;
+          case "code-block-border":
+            className = "text-ctp-overlay0";
+            break;
+          case "link":
+            className = "text-ctp-sapphire underline";
+            break;
+          case "blockquote":
+            className = "text-ctp-subtext1 italic";
+            break;
+          case "blockquote-symbol":
+            className = "text-ctp-lavender";
+            break;
+          case "list-bullet":
+            className = "text-ctp-pink";
+            break;
+          case "list-number":
+            className = "text-ctp-pink";
+            break;
+          case "hr":
+            className = "text-ctp-overlay1";
             break;
           default:
             className = "text-ctp-text";

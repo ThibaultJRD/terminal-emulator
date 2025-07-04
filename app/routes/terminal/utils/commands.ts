@@ -3,7 +3,7 @@ import type {
   FileSystemState,
   CommandHandler,
   OutputSegment,
-} from "../types/filesystem";
+} from "@/routes/terminal/types/filesystem";
 import {
   getNodeAtPath,
   getCurrentDirectory,
@@ -12,7 +12,8 @@ import {
   createFile,
   createDirectory,
   deleteNode,
-} from "./filesystem";
+} from "@/routes/terminal/utils/filesystem";
+import { renderMarkdown } from "@/routes/terminal/utils/markdown";
 
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState): CommandResult => {
@@ -203,7 +204,14 @@ export const commands: Record<string, CommandHandler> = {
       };
     }
 
-    return { success: true, output: file.content || "" };
+    const content = file.content || "";
+    
+    // Check if it's a markdown file
+    if (filename.endsWith('.md')) {
+      return { success: true, output: renderMarkdown(content) };
+    }
+    
+    return { success: true, output: content };
   },
 
   mkdir: (args: string[], filesystem: FileSystemState): CommandResult => {
@@ -407,4 +415,3 @@ export function executeCommand(
 
   return handler(args, filesystem);
 }
-

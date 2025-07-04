@@ -1,6 +1,6 @@
-import type { FileSystemState } from "../types/filesystem";
-import { getCurrentDirectory, getNodeAtPath, resolvePath } from "./filesystem";
-import { commands } from "./commands";
+import type { FileSystemState } from "@/routes/terminal/types/filesystem";
+import { getCurrentDirectory, getNodeAtPath, resolvePath } from "@/routes/terminal/utils/filesystem";
+import { commands } from "@/routes/terminal/utils/commands";
 
 export interface AutocompletionResult {
   completions: string[];
@@ -114,4 +114,3 @@ export function applyCompletion(input: string, completion: string): string {
   parts[parts.length - 1] = completion;
   return parts.join(" ");
 }
-
