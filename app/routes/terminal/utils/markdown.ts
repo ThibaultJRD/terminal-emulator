@@ -8,7 +8,7 @@ export function renderMarkdown(content: string): OutputSegment[] {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    
+
     if (i > 0) {
       result.push({ text: '\n', type: 'normal' });
     }
@@ -40,13 +40,13 @@ export function renderMarkdown(content: string): OutputSegment[] {
       result.push({ text: line.slice(2), type: 'header-1' });
       continue;
     }
-    
+
     if (line.startsWith('## ')) {
       result.push({ text: '## ', type: 'header-symbol' });
       result.push({ text: line.slice(3), type: 'header-2' });
       continue;
     }
-    
+
     if (line.startsWith('### ')) {
       result.push({ text: '### ', type: 'header-symbol' });
       result.push({ text: line.slice(4), type: 'header-3' });
@@ -97,7 +97,7 @@ export function renderMarkdown(content: string): OutputSegment[] {
 function parseInlineMarkdown(text: string): OutputSegment[] {
   const result: OutputSegment[] = [];
   let current = text;
-  
+
   while (current.length > 0) {
     // Bold text **text**
     const boldMatch = current.match(/\*\*(.*?)\*\*/);

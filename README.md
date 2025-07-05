@@ -10,29 +10,34 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ## ✨ Features
 
 ### 🎯 Unix Commands
+
 - **Navigation**: `cd`, `pwd`, `ls` (with options `-a`, `-l`, `-la`)
 - **Files**: `touch`, `cat`, `rm` (with `-r`, `-f`), `rmdir`
 - **Directories**: `mkdir` (with `-p` to create parents)
 - **Utilities**: `echo`, `wc`, `clear`, `help`
 
 ### 🔄 I/O Redirection
+
 - `command > file` - Write output to file (overwrite)
 - `command >> file` - Append output to file
 - `command < file` - Read input from file
 - `command << delimiter` - Heredoc (simplified implementation)
 
 ### 🗂️ File System
+
 - In-memory hierarchical file system
 - Support for relative and absolute paths
 - Hidden files (starting with `.`)
 
 ### 🎨 User Interface
+
 - **Theme**: Catppuccin Mocha with consistent colors
 - **History**: Navigation with ↑/↓ arrow keys
 - **Autocompletion**: Tab completion for commands and files
 - **Markdown**: Rendering of `.md` files with syntax highlighting
 
 ### 🧪 Testing
+
 - **135 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
@@ -41,10 +46,12 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - yarn
 
 ### Installation
+
 ```bash
 # Clone the project
 git clone https://github.com/ThibaultJRD/terminal-emulator.git
@@ -108,6 +115,7 @@ app/
 ## 🎮 Usage Guide
 
 ### Basic Commands
+
 ```bash
 # Navigation
 pwd                    # Print working directory
@@ -141,6 +149,7 @@ help                   # Command help
 ```
 
 ### Advanced Redirection
+
 ```bash
 # Output
 ls -la > filelist.txt          # Save listing
@@ -152,6 +161,7 @@ cat << EOF                     # Simplified heredoc
 ```
 
 ### Autocompletion
+
 - `Tab` after partial command → completes the command
 - `Tab` after partial path → completes file/directory
 - `Tab` after `>` or `>>` → completes destination files
@@ -160,6 +170,7 @@ cat << EOF                     # Simplified heredoc
 ## 🧪 Testing
 
 ### Test Structure
+
 - **Unit Tests** (115 tests)
   - File system operations
   - Command and option parsers
@@ -171,6 +182,7 @@ cat << EOF                     # Simplified heredoc
   - Error handling
 
 ### Coverage
+
 - ✅ All commands with options
 - ✅ Parsing and redirection
 - ✅ Navigation and path resolution
@@ -191,6 +203,7 @@ The project uses the Catppuccin Mocha theme with consistent colors:
 ## 🏗️ Technical Architecture
 
 ### Frameworks and Tools
+
 - **React Router v7**: CSR mode for better state management
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`
 - **TailwindCSS v4**: Custom Catppuccin theme
@@ -198,6 +211,7 @@ The project uses the Catppuccin Mocha theme with consistent colors:
 - **Vitest**: Testing framework
 
 ### Key Patterns
+
 - In-memory file system with React state
 - Modular parsers (commands, options, redirection)
 - Structured output (string or OutputSegment[])
@@ -207,12 +221,14 @@ The project uses the Catppuccin Mocha theme with consistent colors:
 ## 🚀 Deployment
 
 ### Docker
+
 ```bash
 docker build -t terminal-emulator .
 docker run -p 3000:3000 terminal-emulator
 ```
 
 ### Supported Platforms
+
 - AWS ECS
 - Google Cloud Run
 - Azure Container Apps
@@ -229,6 +245,7 @@ docker run -p 3000:3000 terminal-emulator
 5. Open a Pull Request
 
 ### Guidelines
+
 - Run `yarn run typecheck` before committing
 - All tests must pass (`yarn test`)
 - Follow project TypeScript conventions

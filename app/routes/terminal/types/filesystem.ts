@@ -1,6 +1,6 @@
 export interface FileSystemNode {
   name: string;
-  type: "file" | "directory";
+  type: 'file' | 'directory';
   content?: string;
   children?: Record<string, FileSystemNode>;
   permissions?: string;
@@ -22,9 +22,25 @@ export interface CommandResult {
 
 export interface OutputSegment {
   text: string;
-  type?: "directory" | "file" | "normal" | "header-1" | "header-2" | "header-3" | "header-symbol" 
-       | "bold" | "italic" | "inline-code" | "code-block" | "code-block-border" | "link" 
-       | "blockquote" | "blockquote-symbol" | "list-bullet" | "list-number" | "hr";
+  type?:
+    | 'directory'
+    | 'file'
+    | 'normal'
+    | 'header-1'
+    | 'header-2'
+    | 'header-3'
+    | 'header-symbol'
+    | 'bold'
+    | 'italic'
+    | 'inline-code'
+    | 'code-block'
+    | 'code-block-border'
+    | 'link'
+    | 'blockquote'
+    | 'blockquote-symbol'
+    | 'list-bullet'
+    | 'list-number'
+    | 'hr';
 }
 
 export interface TerminalState {
@@ -35,21 +51,8 @@ export interface TerminalState {
   filesystem: FileSystemState;
 }
 
-export type Command =
-  | "cd"
-  | "ls"
-  | "touch"
-  | "cat"
-  | "mkdir"
-  | "rm"
-  | "rmdir"
-  | "pwd"
-  | "echo"
-  | "wc"
-  | "clear"
-  | "help";
+export type Command = 'cd' | 'ls' | 'touch' | 'cat' | 'mkdir' | 'rm' | 'rmdir' | 'pwd' | 'echo' | 'wc' | 'clear' | 'help';
 
 export interface CommandHandler {
   (args: string[], filesystem: FileSystemState): CommandResult;
 }
-

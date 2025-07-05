@@ -1,19 +1,16 @@
-import type { FileSystemState } from "~/routes/terminal/types/filesystem";
-import { getCurrentDirectory, getNodeAtPath, resolvePath } from "~/routes/terminal/utils/filesystem";
-import { commands } from "~/routes/terminal/utils/commands";
+import type { FileSystemState } from '~/routes/terminal/types/filesystem';
+import { commands } from '~/routes/terminal/utils/commands';
+import { getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
 export interface AutocompletionResult {
   completions: string[];
   commonPrefix: string;
 }
 
-export function getAutocompletions(
-  input: string,
-  filesystem: FileSystemState
-): AutocompletionResult {
+export function getAutocompletions(input: string, filesystem: FileSystemState): AutocompletionResult {
   // Check for redirection operators
   const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
-  
+
   if (redirectMatch) {
     const [, , operator, filename] = redirectMatch;
     // For output redirection, complete filenames
@@ -26,20 +23,18 @@ export function getAutocompletions(
     }
     // For heredoc (<<), no completion needed
     if (operator === '<<') {
-      return { completions: [], commonPrefix: "" };
+      return { completions: [], commonPrefix: '' };
     }
   }
 
   const trimmedInput = input.trim();
   const parts = trimmedInput.split(/\s+/);
 
-  if (parts.length === 0 || trimmedInput === '' || (parts.length === 1 && !input.endsWith(" "))) {
+  if (parts.length === 0 || trimmedInput === '' || (parts.length === 1 && !input.endsWith(' '))) {
     // Command completion
-    const commandName = parts[0] || "";
+    const commandName = parts[0] || '';
     const commandNames = Object.keys(commands);
-    const matchingCommands = commandNames.filter((cmd) =>
-      cmd.startsWith(commandName)
-    );
+    const matchingCommands = commandNames.filter((cmd) => cmd.startsWith(commandName));
 
     return {
       completions: matchingCommands,
@@ -51,24 +46,21 @@ export function getAutocompletions(
   const command = parts[0];
   const pathArg = parts[parts.length - 1];
 
-  if (command && ["cd", "ls", "cat", "rm", "rmdir", "mkdir", "touch"].includes(command)) {
+  if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
   }
 
-  return { completions: [], commonPrefix: "" };
+  return { completions: [], commonPrefix: '' };
 }
 
-function getPathCompletions(
-  partialPath: string,
-  filesystem: FileSystemState
-): AutocompletionResult {
-  const lastSlashIndex = partialPath.lastIndexOf("/");
+function getPathCompletions(partialPath: string, filesystem: FileSystemState): AutocompletionResult {
+  const lastSlashIndex = partialPath.lastIndexOf('/');
   let basePath: string;
   let prefix: string;
 
   if (lastSlashIndex === -1) {
     // No slash, completing in current directory
-    basePath = "";
+    basePath = '';
     prefix = partialPath;
   } else {
     // Has slash, completing in specified directory
@@ -76,13 +68,11 @@ function getPathCompletions(
     prefix = partialPath.substring(lastSlashIndex + 1);
   }
 
-  const targetPath = basePath
-    ? resolvePath(filesystem, basePath)
-    : filesystem.currentPath;
+  const targetPath = basePath ? resolvePath(filesystem, basePath) : filesystem.currentPath;
   const targetNode = getNodeAtPath(filesystem, targetPath);
 
-  if (!targetNode || targetNode.type !== "directory" || !targetNode.children) {
-    return { completions: [], commonPrefix: "" };
+  if (!targetNode || targetNode.type !== 'directory' || !targetNode.children) {
+    return { completions: [], commonPrefix: '' };
   }
 
   const matchingNames = Object.keys(targetNode.children)
@@ -92,7 +82,7 @@ function getPathCompletions(
   const completions = matchingNames.map((name) => {
     const node = targetNode.children![name];
     const fullPath = basePath + name;
-    return node.type === "directory" ? fullPath + "/" : fullPath;
+    return node.type === 'directory' ? fullPath + '/' : fullPath;
   });
 
   return {
@@ -101,17 +91,14 @@ function getPathCompletions(
   };
 }
 
-function getFileCompletions(
-  partialPath: string,
-  filesystem: FileSystemState
-): AutocompletionResult {
-  const lastSlashIndex = partialPath.lastIndexOf("/");
+function getFileCompletions(partialPath: string, filesystem: FileSystemState): AutocompletionResult {
+  const lastSlashIndex = partialPath.lastIndexOf('/');
   let basePath: string;
   let prefix: string;
 
   if (lastSlashIndex === -1) {
     // No slash, completing in current directory
-    basePath = "";
+    basePath = '';
     prefix = partialPath;
   } else {
     // Has slash, completing in specified directory
@@ -119,20 +106,18 @@ function getFileCompletions(
     prefix = partialPath.substring(lastSlashIndex + 1);
   }
 
-  const targetPath = basePath
-    ? resolvePath(filesystem, basePath)
-    : filesystem.currentPath;
+  const targetPath = basePath ? resolvePath(filesystem, basePath) : filesystem.currentPath;
   const targetNode = getNodeAtPath(filesystem, targetPath);
 
-  if (!targetNode || targetNode.type !== "directory" || !targetNode.children) {
-    return { completions: [], commonPrefix: "" };
+  if (!targetNode || targetNode.type !== 'directory' || !targetNode.children) {
+    return { completions: [], commonPrefix: '' };
   }
 
   // Only complete files (not directories) for input redirection
   const matchingNames = Object.keys(targetNode.children)
     .filter((name) => {
       const node = targetNode.children![name];
-      return node.type === "file" && name.startsWith(prefix);
+      return node.type === 'file' && name.startsWith(prefix);
     })
     .sort();
 
@@ -145,21 +130,17 @@ function getFileCompletions(
 }
 
 function getCommonPrefix(strings: string[]): string {
-  if (strings.length === 0) return "";
+  if (strings.length === 0) return '';
   if (strings.length === 1) return strings[0];
 
   let prefix = strings[0];
   for (let i = 1; i < strings.length; i++) {
     let j = 0;
-    while (
-      j < prefix.length &&
-      j < strings[i].length &&
-      prefix[j] === strings[i][j]
-    ) {
+    while (j < prefix.length && j < strings[i].length && prefix[j] === strings[i][j]) {
       j++;
     }
     prefix = prefix.substring(0, j);
-    if (prefix === "") break;
+    if (prefix === '') break;
   }
 
   return prefix;
@@ -168,7 +149,7 @@ function getCommonPrefix(strings: string[]): string {
 export function applyCompletion(input: string, completion: string): string {
   // Check for redirection operators
   const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
-  
+
   if (redirectMatch) {
     const [, commandPart, operator] = redirectMatch;
     return `${commandPart} ${operator} ${completion}`;
@@ -176,12 +157,12 @@ export function applyCompletion(input: string, completion: string): string {
 
   const parts = input.trim().split(/\s+/);
 
-  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(" "))) {
+  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(' '))) {
     // Command completion
-    return completion + " ";
+    return completion + ' ';
   }
 
   // Path completion
   parts[parts.length - 1] = completion;
-  return parts.join(" ");
+  return parts.join(' ');
 }

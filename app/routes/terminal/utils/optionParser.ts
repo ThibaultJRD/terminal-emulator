@@ -6,7 +6,7 @@ export interface ParsedOptions {
 export function parseOptions(args: string[]): ParsedOptions {
   const flags = new Set<string>();
   const positionalArgs: string[] = [];
-  
+
   for (const arg of args) {
     if (arg.startsWith('-') && arg.length > 1) {
       if (arg.startsWith('--')) {
@@ -23,6 +23,6 @@ export function parseOptions(args: string[]): ParsedOptions {
       positionalArgs.push(arg);
     }
   }
-  
+
   return { flags, positionalArgs };
 }

@@ -1,0 +1,13 @@
+{
+  "semi": true,
+  "trailingComma": "all",
+  "singleQuote": true,
+  "printWidth": 160,
+  "tabWidth": 2,
+  "bracketSpacing": true,
+  "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
+  "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"],
+  "importOrder": ["^react$", "^react-router/(.*)$", "^(?!@react-router/)(?!~/)(@?\\w).*", "^~/(.*)$", "^\\./", "^\\.\\./"],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
+}

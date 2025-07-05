@@ -1,46 +1,42 @@
-import type {
-  FileSystemNode,
-  FileSystemState,
-} from "~/routes/terminal/types/filesystem";
+import type { FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
 
 export function createDefaultFileSystem(): FileSystemState {
   const now = new Date();
 
   return {
     root: {
-      name: "/",
-      type: "directory",
+      name: '/',
+      type: 'directory',
       children: {
         home: {
-          name: "home",
-          type: "directory",
+          name: 'home',
+          type: 'directory',
           createdAt: now,
           modifiedAt: now,
           children: {
             user: {
-              name: "user",
-              type: "directory",
+              name: 'user',
+              type: 'directory',
               createdAt: now,
               modifiedAt: now,
               children: {
                 documents: {
-                  name: "documents",
-                  type: "directory",
+                  name: 'documents',
+                  type: 'directory',
                   createdAt: now,
                   modifiedAt: now,
                   children: {
-                    "readme.txt": {
-                      name: "readme.txt",
-                      type: "file",
-                      content:
-                        "Welcome to the terminal emulator!\nThis is a sample file.",
+                    'readme.txt': {
+                      name: 'readme.txt',
+                      type: 'file',
+                      content: 'Welcome to the terminal emulator!\nThis is a sample file.',
                       size: 62,
                       createdAt: now,
                       modifiedAt: now,
                     },
-                    "example.md": {
-                      name: "example.md",
-                      type: "file",
+                    'example.md': {
+                      name: 'example.md',
+                      type: 'file',
                       content: `# Terminal Emulator
 
 This is a **markdown** file example with various elements:
@@ -75,15 +71,15 @@ function hello() {
                   },
                 },
                 projects: {
-                  name: "projects",
-                  type: "directory",
+                  name: 'projects',
+                  type: 'directory',
                   createdAt: now,
                   modifiedAt: now,
                   children: {},
                 },
-                ".secret": {
-                  name: ".secret",
-                  type: "file",
+                '.secret': {
+                  name: '.secret',
+                  type: 'file',
                   content: `🐱 Catppuccin Terminal Emulator Easter Egg! 🐱
 
 You found the hidden file! Here's a little ASCII art for you:
@@ -111,22 +107,22 @@ Use 'ls -a' to see all hidden files!
           },
         },
         tmp: {
-          name: "tmp",
-          type: "directory",
+          name: 'tmp',
+          type: 'directory',
           createdAt: now,
           modifiedAt: now,
           children: {},
         },
         etc: {
-          name: "etc",
-          type: "directory",
+          name: 'etc',
+          type: 'directory',
           createdAt: now,
           modifiedAt: now,
           children: {
-            "config.conf": {
-              name: "config.conf",
-              type: "file",
-              content: "# Configuration file\nversion=1.0\ndebug=false",
+            'config.conf': {
+              name: 'config.conf',
+              type: 'file',
+              content: '# Configuration file\nversion=1.0\ndebug=false',
               size: 42,
               createdAt: now,
               modifiedAt: now,
@@ -137,22 +133,15 @@ Use 'ls -a' to see all hidden files!
       createdAt: now,
       modifiedAt: now,
     },
-    currentPath: ["home", "user"],
+    currentPath: ['home', 'user'],
   };
 }
 
-export function getNodeAtPath(
-  filesystem: FileSystemState,
-  path: string[]
-): FileSystemNode | null {
+export function getNodeAtPath(filesystem: FileSystemState, path: string[]): FileSystemNode | null {
   let current = filesystem.root;
 
   for (const segment of path) {
-    if (
-      current.type !== "directory" ||
-      !current.children ||
-      !current.children[segment]
-    ) {
+    if (current.type !== 'directory' || !current.children || !current.children[segment]) {
       return null;
     }
     current = current.children[segment];
@@ -161,37 +150,32 @@ export function getNodeAtPath(
   return current;
 }
 
-export function getCurrentDirectory(
-  filesystem: FileSystemState
-): FileSystemNode | null {
+export function getCurrentDirectory(filesystem: FileSystemState): FileSystemNode | null {
   return getNodeAtPath(filesystem, filesystem.currentPath);
 }
 
-export function resolvePath(
-  filesystem: FileSystemState,
-  inputPath: string
-): string[] {
-  if (inputPath.startsWith("/")) {
+export function resolvePath(filesystem: FileSystemState, inputPath: string): string[] {
+  if (inputPath.startsWith('/')) {
     // Absolute path
     return inputPath
       .slice(1)
-      .split("/")
-      .filter((segment) => segment !== "");
-  } else if (inputPath === "..") {
+      .split('/')
+      .filter((segment) => segment !== '');
+  } else if (inputPath === '..') {
     // Parent directory
     return filesystem.currentPath.slice(0, -1);
-  } else if (inputPath === ".") {
+  } else if (inputPath === '.') {
     // Current directory
     return filesystem.currentPath;
   } else {
     // Relative path
-    const segments = inputPath.split("/").filter((segment) => segment !== "");
+    const segments = inputPath.split('/').filter((segment) => segment !== '');
     let newPath = [...filesystem.currentPath];
 
     for (const segment of segments) {
-      if (segment === "..") {
+      if (segment === '..') {
         newPath.pop();
-      } else if (segment !== ".") {
+      } else if (segment !== '.') {
         newPath.push(segment);
       }
     }
@@ -201,24 +185,19 @@ export function resolvePath(
 }
 
 export function formatPath(path: string[]): string {
-  return path.length === 0 ? "/" : "/" + path.join("/");
+  return path.length === 0 ? '/' : '/' + path.join('/');
 }
 
-export function createFile(
-  filesystem: FileSystemState,
-  path: string[],
-  name: string,
-  content: string = ""
-): boolean {
+export function createFile(filesystem: FileSystemState, path: string[], name: string, content: string = ''): boolean {
   const parentNode = getNodeAtPath(filesystem, path);
-  if (!parentNode || parentNode.type !== "directory" || !parentNode.children) {
+  if (!parentNode || parentNode.type !== 'directory' || !parentNode.children) {
     return false;
   }
 
   const now = new Date();
   parentNode.children[name] = {
     name,
-    type: "file",
+    type: 'file',
     content,
     size: content.length,
     createdAt: now,
@@ -229,20 +208,16 @@ export function createFile(
   return true;
 }
 
-export function createDirectory(
-  filesystem: FileSystemState,
-  path: string[],
-  name: string
-): boolean {
+export function createDirectory(filesystem: FileSystemState, path: string[], name: string): boolean {
   const parentNode = getNodeAtPath(filesystem, path);
-  if (!parentNode || parentNode.type !== "directory" || !parentNode.children) {
+  if (!parentNode || parentNode.type !== 'directory' || !parentNode.children) {
     return false;
   }
 
   const now = new Date();
   parentNode.children[name] = {
     name,
-    type: "directory",
+    type: 'directory',
     children: {},
     createdAt: now,
     modifiedAt: now,
@@ -252,18 +227,9 @@ export function createDirectory(
   return true;
 }
 
-export function deleteNode(
-  filesystem: FileSystemState,
-  path: string[],
-  name: string
-): boolean {
+export function deleteNode(filesystem: FileSystemState, path: string[], name: string): boolean {
   const parentNode = getNodeAtPath(filesystem, path);
-  if (
-    !parentNode ||
-    parentNode.type !== "directory" ||
-    !parentNode.children ||
-    !parentNode.children[name]
-  ) {
+  if (!parentNode || parentNode.type !== 'directory' || !parentNode.children || !parentNode.children[name]) {
     return false;
   }
 

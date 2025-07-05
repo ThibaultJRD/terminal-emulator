@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
-import { configDefaults } from 'vitest/config'
-import tsconfigPaths from 'vite-tsconfig-paths'
+import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import { configDefaults } from 'vitest/config';
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
@@ -12,14 +12,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, 'build/**/*'],
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'build/',
-        'test/',
-        '**/*.d.ts',
-        'vite.config.ts',
-        'vitest.config.ts',
-      ],
+      exclude: ['node_modules/', 'build/', 'test/', '**/*.d.ts', 'vite.config.ts', 'vitest.config.ts'],
     },
   },
-})
+});
