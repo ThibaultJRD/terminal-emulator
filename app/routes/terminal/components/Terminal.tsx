@@ -74,16 +74,39 @@ export function Terminal() {
     (input: string) => {
       if (!input.trim()) return;
 
-      const newOutputLines = [...outputLines];
       const prompt = `${formatPath(terminalState.filesystem.currentPath)} $ `;
 
-      newOutputLines.push({
-        type: 'command',
-        content: prompt + input,
-        timestamp: new Date(),
-      });
+      setOutputLines((prev) => [
+        ...prev,
+        {
+          type: 'command',
+          content: prompt + input,
+          timestamp: new Date(),
+        },
+      ]);
 
-      const result = executeCommand(input, terminalState.filesystem);
+      let result;
+      try {
+        result = executeCommand(input, terminalState.filesystem);
+      } catch (error) {
+        console.error('Error executing command:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setOutputLines((prev) => [
+          ...prev,
+          {
+            type: 'error',
+            content: `Error: ${errorMessage}`,
+            timestamp: new Date(),
+          },
+        ]);
+        setTerminalState((prev) => ({
+          ...prev,
+          history: [...prev.history, input],
+          historyIndex: -1,
+          currentInput: '',
+        }));
+        return;
+      }
 
       // Handle special command outputs
       if (result.success && typeof result.output === 'string') {
@@ -116,13 +139,14 @@ export function Terminal() {
 
           setCurrentFilesystemMode(mode);
 
-          newOutputLines.push({
-            type: 'output',
-            content: `Switched to ${mode} filesystem mode`,
-            timestamp: new Date(),
-          });
-
-          setOutputLines(newOutputLines);
+          setOutputLines((prev) => [
+            ...prev,
+            {
+              type: 'output',
+              content: `Switched to ${mode} filesystem mode`,
+              timestamp: new Date(),
+            },
+          ]);
           return;
         }
 
@@ -144,13 +168,14 @@ export function Terminal() {
 
           setCurrentFilesystemMode(mode);
 
-          newOutputLines.push({
-            type: 'output',
-            content: `Reset to default ${mode} filesystem`,
-            timestamp: new Date(),
-          });
-
-          setOutputLines(newOutputLines);
+          setOutputLines((prev) => [
+            ...prev,
+            {
+              type: 'output',
+              content: `Reset to default ${mode} filesystem`,
+              timestamp: new Date(),
+            },
+          ]);
           return;
         }
 
@@ -176,22 +201,27 @@ export function Terminal() {
       }
 
       if (result.success && result.output) {
-        newOutputLines.push({
-          type: 'output',
-          content: result.output,
-          timestamp: new Date(),
-        });
+        setOutputLines((prev) => [
+          ...prev,
+          {
+            type: 'output',
+            content: result.output,
+            timestamp: new Date(),
+          },
+        ]);
       }
 
-      if (!result.success && result.error) {
-        newOutputLines.push({
-          type: 'error',
-          content: result.error,
-          timestamp: new Date(),
-        });
+      if (!result.success) {
+        const errorContent = result.error || 'Command failed';
+        setOutputLines((prev) => [
+          ...prev,
+          {
+            type: 'error' as const,
+            content: errorContent,
+            timestamp: new Date(),
+          },
+        ]);
       }
-
-      setOutputLines(newOutputLines);
       setTerminalState((prev) => ({
         ...prev,
         history: [...prev.history, input],
@@ -199,7 +229,7 @@ export function Terminal() {
         currentInput: '',
       }));
     },
-    [outputLines, terminalState.filesystem],
+    [terminalState.filesystem],
   );
 
   const handleKeyDown = useCallback(
@@ -271,29 +301,27 @@ export function Terminal() {
           }));
         } else {
           // Multiple completions, show them
-          const newOutputLines = [...outputLines];
           const prompt = `${formatPath(terminalState.filesystem.currentPath)} $ `;
 
-          newOutputLines.push({
-            type: 'command',
-            content: prompt + terminalState.currentInput,
-            timestamp: new Date(),
-          });
-
-          const completionList = result.completions.join('  ');
-          newOutputLines.push({
-            type: 'output',
-            content: completionList,
-            timestamp: new Date(),
-          });
-
-          setOutputLines(newOutputLines);
+          setOutputLines((prev) => [
+            ...prev,
+            {
+              type: 'command',
+              content: prompt + terminalState.currentInput,
+              timestamp: new Date(),
+            },
+            {
+              type: 'output',
+              content: result.completions.join('  '),
+              timestamp: new Date(),
+            },
+          ]);
         }
 
         return;
       }
     },
-    [terminalState.currentInput, terminalState.history, terminalState.historyIndex, handleCommand],
+    [terminalState.currentInput, terminalState.history, terminalState.historyIndex, terminalState.filesystem, handleCommand],
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

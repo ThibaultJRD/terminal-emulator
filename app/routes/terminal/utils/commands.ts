@@ -79,7 +79,7 @@ export const commands: Record<string, CommandHandler> = {
         const type = node.type === 'directory' ? 'd' : '-';
         const permissions = node.permissions || 'rwxr-xr-x';
         const size = node.size || 0;
-        const date = node.modifiedAt.toLocaleDateString();
+        const date = node.modifiedAt ? new Date(node.modifiedAt).toLocaleDateString() : new Date().toLocaleDateString();
 
         outputSegments.push({
           text: `${type}${permissions} ${size.toString().padStart(8)} ${date} `,
