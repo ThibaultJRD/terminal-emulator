@@ -173,7 +173,7 @@ describe('Command Execution Integration Tests', () => {
     });
 
     it('should handle markdown file rendering', () => {
-      const result = executeCommand('cat documents/example.md', filesystem);
+      const result = executeCommand('cat documents/notes.md', filesystem);
       expect(result.success).toBe(true);
       expect(Array.isArray(result.output)).toBe(true);
 

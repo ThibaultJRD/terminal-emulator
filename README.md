@@ -14,6 +14,8 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 - **Navigation**: `cd`, `pwd`, `ls` (with options `-a`, `-l`, `-la`)
 - **Files**: `touch`, `cat`, `rm` (with `-r`, `-f`), `rmdir`
 - **Directories**: `mkdir` (with `-p` to create parents)
+- **Text Editor**: `nano`, `vi` (vim-inspired editor with INSERT/COMMAND modes)
+- **Filesystem Management**: `switch-fs`, `reset-fs`, `storage-info`
 - **Utilities**: `echo`, `wc`, `clear`, `help`
 
 ### 🔄 I/O Redirection
@@ -25,16 +27,21 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 
 ### 🗂️ File System
 
-- In-memory hierarchical file system
-- Support for relative and absolute paths
-- Hidden files (starting with `.`)
+- **Multiple Modes**: Default Unix-like and Portfolio filesystem structures
+- **Persistence**: Browser localStorage for session management
+- **In-memory**: Hierarchical file system with full Unix-like features
+- **Path Support**: Relative and absolute paths with proper resolution
+- **Hidden Files**: Support for dotfiles (starting with `.`)
+- **Realistic Content**: Demo files with actual useful content
 
 ### 🎨 User Interface
 
 - **Theme**: Catppuccin Mocha with consistent colors
 - **History**: Navigation with ↑/↓ arrow keys
-- **Autocompletion**: Tab completion for commands and files
+- **Autocompletion**: Tab completion for commands, files, and filesystem modes
 - **Markdown**: Rendering of `.md` files with syntax highlighting
+- **Text Editor**: Full-screen vim-inspired editor with modal editing
+- **Responsive**: Works on desktop and mobile devices
 
 ### 🧪 Testing
 
@@ -96,16 +103,20 @@ app/
 ├── routes/terminal/
 │   ├── terminal.tsx         # Main terminal route
 │   ├── components/
-│   │   └── Terminal.tsx     # Main component
+│   │   ├── Terminal.tsx     # Main terminal component
+│   │   └── TextEditor.tsx   # Vim-inspired text editor
 │   ├── types/
 │   │   └── filesystem.ts    # TypeScript types
 │   └── utils/
-│       ├── filesystem.ts    # File system utilities
-│       ├── commands.ts      # Command implementations
+│       ├── filesystem.ts    # File system utilities with persistence
+│       ├── commands.ts      # Command implementations + new commands
 │       ├── commandParser.ts # Parsing with redirection
 │       ├── optionParser.ts  # Unix option parsing
-│       ├── autocompletion.ts # Autocompletion system
-│       └── markdown.ts      # Markdown rendering
+│       ├── autocompletion.ts # Autocompletion system + new commands
+│       ├── markdown.ts      # Markdown rendering
+│       ├── defaultFilesystems.ts # Default and portfolio filesystems
+│       ├── persistence.ts   # Browser localStorage management
+│       └── textEditor.ts    # Text editor state and logic
 ├── test/                    # Comprehensive test suite
 │   ├── utils/              # Unit tests
 │   └── integration/        # Integration tests
@@ -142,6 +153,15 @@ rm -r folder           # Remove recursively
 rm -f nonexistent      # Force (no error)
 rmdir empty_folder     # Remove empty directory
 
+# Text Editor
+nano file.txt          # Open file in nano text editor
+vi document.md         # Open file in vi text editor
+
+# Filesystem Management
+switch-fs portfolio    # Switch to portfolio filesystem
+reset-fs default       # Reset to default filesystem
+storage-info           # Show storage information
+
 # Utilities
 wc file.txt            # Count lines/words/characters
 clear                  # Clear screen
@@ -166,6 +186,251 @@ cat << EOF                     # Simplified heredoc
 - `Tab` after partial path → completes file/directory
 - `Tab` after `>` or `>>` → completes destination files
 - `Tab` after `<` → completes source files only
+- `Tab` after `switch-fs` → completes filesystem modes
+
+## 📝 Text Editor
+
+The terminal includes a powerful vim-inspired text editor accessible via `nano` or `vi` commands.
+
+### Editor Features
+
+- **Modal Editing**: INSERT mode for typing, COMMAND mode for operations
+- **Vim Shortcuts**: Basic vim navigation and commands
+- **File Operations**: Save (`:w`), quit (`:q`), save & quit (`:wq`)
+- **Visual Feedback**: Line numbers, status bar, mode indicator
+- **Keyboard Navigation**: Arrow keys, hjkl, home/end, page up/down
+
+### Usage
+
+```bash
+# Open existing file
+nano myfile.txt
+vi document.md
+
+# Create new file
+nano newfile.txt
+```
+
+### Editor Commands
+
+#### INSERT Mode (default)
+
+- **Type** to insert text
+- **Enter** for new line
+- **Backspace/Delete** to remove text
+- **Arrow keys** for navigation
+- **Escape** to enter COMMAND mode
+
+#### COMMAND Mode
+
+- **i** - Enter INSERT mode
+- **a** - Append after cursor (INSERT mode)
+- **o** - Open new line below (INSERT mode)
+- **h/j/k/l** - Navigate left/down/up/right
+- **0** - Beginning of line
+- **$** - End of line
+- **G** - Go to end of file
+- **x** - Delete character under cursor
+- **X** - Delete character before cursor
+- **:** - Enter command prompt
+
+#### Command Prompt (after pressing :)
+
+- **:w** - Save file
+- **:q** - Quit (fails if unsaved changes)
+- **:q!** - Force quit without saving
+- **:wq** - Save and quit
+- **:help** - Show help
+
+### Keyboard Shortcuts
+
+- **Ctrl+S** - Save file (any mode)
+- **Ctrl+C** - Quit editor (prompts if unsaved)
+- **Tab** - Insert 2 spaces
+- **Escape** - Switch to COMMAND mode
+
+## 🗂️ Filesystem Configuration
+
+The terminal supports multiple filesystem modes for different use cases.
+
+### Available Modes
+
+#### Default Mode
+
+```bash
+switch-fs default
+```
+
+A comprehensive Unix-like filesystem with:
+
+- `/home/user/` - User directory with documents and projects
+- `/etc/` - System configuration files
+- `/var/log/` - System logs and web content
+- `/tmp/` - Temporary files
+- `/usr/` - User programs and documentation
+- `/root/` - Administrator files
+
+#### Portfolio Mode
+
+```bash
+switch-fs portfolio
+```
+
+A portfolio-focused structure designed for showcasing:
+
+- `/about/` - Personal information, skills, CV
+- `/projects/` - Software projects and demos
+- `/contact/` - Contact information and social links
+- `/blog/` - Technical articles and blog posts
+
+### Filesystem Management Commands
+
+```bash
+# View current mode and available options
+switch-fs
+
+# Switch to portfolio mode
+switch-fs portfolio
+
+# Reset to fresh default filesystem
+reset-fs default
+
+# Reset to fresh portfolio filesystem
+reset-fs portfolio
+
+# View storage information
+storage-info
+```
+
+### Browser Persistence
+
+The filesystem automatically saves to browser localStorage:
+
+- **Auto-save**: Changes saved automatically after 1 second of inactivity
+- **Session restore**: Filesystem state restored on page reload
+- **Mode memory**: Last used filesystem mode is remembered
+- **Backup system**: Previous filesystem backed up when switching modes
+
+### Custom Filesystem Development
+
+To create your own filesystem mode:
+
+1. **Define the structure** in `app/routes/terminal/utils/defaultFilesystems.ts`:
+
+```typescript
+export function createCustomFilesystem(): FileSystemNode {
+  return {
+    name: '/',
+    type: 'directory',
+    permissions: 'drwxr-xr-x',
+    size: 4096,
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+    children: {
+      'my-folder': {
+        name: 'my-folder',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          'my-file.txt': {
+            name: 'my-file.txt',
+            type: 'file',
+            content: 'Hello, custom filesystem!',
+            permissions: '-rw-r--r--',
+            size: 27,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+          },
+        },
+      },
+    },
+  };
+}
+```
+
+2. **Add to mode list** in the same file:
+
+```typescript
+export const FILESYSTEM_MODES = ['default', 'portfolio', 'custom'] as const;
+```
+
+3. **Update the mode getter**:
+
+```typescript
+export function getFilesystemByMode(mode: FilesystemMode): FileSystemNode {
+  switch (mode) {
+    case 'portfolio':
+      return createPortfolioFilesystem();
+    case 'custom':
+      return createCustomFilesystem();
+    case 'default':
+    default:
+      return createDefaultFilesystem();
+  }
+}
+```
+
+### File and Directory Structure
+
+```typescript
+// Directory structure
+'directory-name': {
+  type: 'directory' as const,
+  permissions: 'drwxr-xr-x',
+  size: 4096,
+  createdAt: new Date(),
+  modifiedAt: new Date(),
+  children: {
+    // nested files/folders
+  }
+}
+
+// File structure
+'file.txt': {
+  type: 'file' as const,
+  content: 'Your file content here',
+  permissions: '-rw-r--r--',
+  size: 25, // content.length
+  createdAt: new Date(),
+  modifiedAt: new Date(),
+}
+```
+
+### Use Cases
+
+- **Portfolio websites**: Showcase projects and skills
+- **Educational demos**: Teach Unix commands and filesystem concepts
+- **Development environments**: Prototype terminal applications
+- **Documentation systems**: Interactive command-line documentation
+- **Company demos**: Custom branded filesystem for presentations
+
+## 📊 Storage Management
+
+The terminal provides tools to manage browser storage usage.
+
+### Storage Commands
+
+```bash
+# View storage information
+storage-info
+```
+
+Shows:
+
+- Total terminal storage usage
+- Filesystem data size
+- Backup status
+- Last save timestamp
+
+### Storage Considerations
+
+- **Quota**: Browser localStorage typically has 5-10MB limit
+- **Cleanup**: Reset filesystem to free up space
+- **Backups**: Previous filesystems backed up when switching modes
+- **Efficiency**: Only changed files consume additional space
 
 ## 🧪 Testing
 

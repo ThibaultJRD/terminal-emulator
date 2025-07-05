@@ -63,8 +63,8 @@ describe('Autocompletion', () => {
     });
 
     it('should complete files in subdirectories', () => {
-      const result = getAutocompletions('cat documents/ex', filesystem);
-      expect(result.completions).toContain('documents/example.md');
+      const result = getAutocompletions('cat documents/no', filesystem);
+      expect(result.completions).toContain('documents/notes.md');
     });
 
     it('should handle absolute paths', () => {
@@ -188,9 +188,9 @@ describe('Autocompletion', () => {
       let completed = applyCompletion('cat doc', 'documents/');
       expect(completed).toBe('cat documents/');
 
-      // User continues typing "cat documents/ex" and presses tab
-      result = getAutocompletions('cat documents/ex', filesystem);
-      expect(result.completions).toContain('documents/example.md');
+      // User continues typing "cat documents/no" and presses tab
+      result = getAutocompletions('cat documents/no', filesystem);
+      expect(result.completions).toContain('documents/notes.md');
     });
 
     it('should handle multiple possible completions', () => {

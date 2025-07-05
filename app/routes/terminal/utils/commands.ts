@@ -1,8 +1,10 @@
 import type { CommandHandler, CommandResult, FileSystemState, OutputSegment } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
+import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDirectory, createFile, deleteNode, formatPath, getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
+import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState, switchFilesystemMode } from '~/routes/terminal/utils/persistence';
 
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState): CommandResult => {
@@ -339,9 +341,149 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: results.join('\n') };
   },
 
+  'switch-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
+    if (args.length === 0) {
+      const currentMode = 'default'; // This would be passed from the terminal component
+      return {
+        success: true,
+        output: `Current filesystem mode: ${currentMode}\nAvailable modes: ${FILESYSTEM_MODES.join(', ')}\nUsage: switch-fs <mode>`,
+      };
+    }
+
+    const mode = args[0] as FilesystemMode;
+    if (!FILESYSTEM_MODES.includes(mode)) {
+      return {
+        success: false,
+        output: '',
+        error: `switch-fs: invalid mode '${mode}'. Available modes: ${FILESYSTEM_MODES.join(', ')}`,
+      };
+    }
+
+    // This command needs special handling in the terminal component
+    // It will trigger a filesystem switch and state update
+    return {
+      success: true,
+      output: `SWITCH_FILESYSTEM:${mode}`,
+    };
+  },
+
+  'reset-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
+    const mode = args.length > 0 ? (args[0] as FilesystemMode) : 'default';
+
+    if (!FILESYSTEM_MODES.includes(mode)) {
+      return {
+        success: false,
+        output: '',
+        error: `reset-fs: invalid mode '${mode}'. Available modes: ${FILESYSTEM_MODES.join(', ')}`,
+      };
+    }
+
+    // This command needs special handling in the terminal component
+    // It will trigger a filesystem reset to default state
+    return {
+      success: true,
+      output: `RESET_FILESYSTEM:${mode}`,
+    };
+  },
+
+  'storage-info': (args: string[], filesystem: FileSystemState): CommandResult => {
+    const info = getStorageInfo();
+    const formatSize = (bytes: number): string => {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const output = [
+      'Browser Storage Information:',
+      `  Total terminal storage: ${formatSize(info.totalSize)}`,
+      `  Filesystem data: ${formatSize(info.filesystemSize)}`,
+      `  Has backups: ${info.hasBackups ? 'Yes' : 'No'}`,
+      info.lastSaved ? `  Last saved: ${new Date(info.lastSaved).toLocaleString()}` : '  Last saved: Never',
+      '',
+      'Commands:',
+      '  reset-fs [mode] - Reset filesystem to default state',
+      '  switch-fs <mode> - Switch between filesystem modes',
+    ].join('\n');
+
+    return { success: true, output };
+  },
+
+  nano: (args: string[], filesystem: FileSystemState): CommandResult => {
+    if (args.length === 0) {
+      return {
+        success: false,
+        output: '',
+        error: 'nano: missing filename argument',
+      };
+    }
+
+    const filename = args[0];
+
+    // Check if file exists and get content
+    const targetPath = resolvePath(filesystem, filename);
+    const existingFile = getNodeAtPath(filesystem, targetPath);
+
+    let content = '';
+    if (existingFile) {
+      if (existingFile.type === 'directory') {
+        return {
+          success: false,
+          output: '',
+          error: `nano: ${filename}: Is a directory`,
+        };
+      }
+      content = existingFile.content || '';
+    }
+
+    // This command needs special handling in the terminal component
+    // It will open the text editor with the file content
+    return {
+      success: true,
+      output: `OPEN_EDITOR:${filename}:${btoa(content)}`, // Base64 encode content to handle special characters
+    };
+  },
+
+  vi: (args: string[], filesystem: FileSystemState): CommandResult => {
+    if (args.length === 0) {
+      return {
+        success: false,
+        output: '',
+        error: 'vi: missing filename argument',
+      };
+    }
+
+    const filename = args[0];
+
+    // Check if file exists and get content
+    const targetPath = resolvePath(filesystem, filename);
+    const existingFile = getNodeAtPath(filesystem, targetPath);
+
+    let content = '';
+    if (existingFile) {
+      if (existingFile.type === 'directory') {
+        return {
+          success: false,
+          output: '',
+          error: `vi: ${filename}: Is a directory`,
+        };
+      }
+      content = existingFile.content || '';
+    }
+
+    // This command needs special handling in the terminal component
+    // It will open the text editor with the file content
+    return {
+      success: true,
+      output: `OPEN_EDITOR:${filename}:${btoa(content)}`, // Base64 encode content to handle special characters
+    };
+  },
+
   help: (args: string[], filesystem: FileSystemState): CommandResult => {
     const helpText = [
       'Available commands:',
+      '',
+      'File Operations:',
       '  cd [dir]         - Change directory',
       '  ls [-a] [-l]     - List directory contents (-a: show hidden, -l: long format)',
       '  pwd              - Print working directory',
@@ -350,6 +492,17 @@ export const commands: Record<string, CommandHandler> = {
       '  mkdir [-p] <dir> - Create directory (-p: create parent directories)',
       '  rm [-r] [-f] <file> - Remove file (-r: recursive, -f: force)',
       '  rmdir <dir>      - Remove empty directory',
+      '',
+      'Text Editor:',
+      '  nano <file>      - Open file in nano text editor',
+      '  vi <file>        - Open file in vi text editor',
+      '',
+      'Filesystem Management:',
+      '  switch-fs <mode> - Switch between filesystem modes (default, portfolio)',
+      '  reset-fs [mode]  - Reset filesystem to default state',
+      '  storage-info     - Show browser storage information',
+      '',
+      'Utilities:',
       '  echo <text>      - Print text to output',
       '  wc <file>        - Count lines, words, and characters in file',
       '  clear            - Clear terminal',
@@ -370,6 +523,9 @@ export const commands: Record<string, CommandHandler> = {
       '  ls -la > file_list.txt',
       '  wc < example.md',
       '  cat readme.txt >> log.txt',
+      '  nano myfile.txt',
+      '  switch-fs portfolio',
+      '  reset-fs default',
     ].join('\n');
 
     return { success: true, output: helpText };

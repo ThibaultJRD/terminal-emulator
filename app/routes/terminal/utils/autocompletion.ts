@@ -46,8 +46,31 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
   const command = parts[0];
   const pathArg = parts[parts.length - 1];
 
-  if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch'].includes(command)) {
+  if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'nano', 'vi'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
+  }
+
+  // Special completions for new commands
+  if (command === 'switch-fs' && parts.length === 2) {
+    const modes = ['default', 'portfolio'];
+    const prefix = parts[1] || '';
+    const matchingModes = modes.filter((mode) => mode.startsWith(prefix));
+
+    return {
+      completions: matchingModes,
+      commonPrefix: getCommonPrefix(matchingModes),
+    };
+  }
+
+  if (command === 'reset-fs' && parts.length === 2) {
+    const modes = ['default', 'portfolio'];
+    const prefix = parts[1] || '';
+    const matchingModes = modes.filter((mode) => mode.startsWith(prefix));
+
+    return {
+      completions: matchingModes,
+      commonPrefix: getCommonPrefix(matchingModes),
+    };
   }
 
   return { completions: [], commonPrefix: '' };

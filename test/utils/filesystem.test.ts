@@ -37,7 +37,7 @@ describe('Filesystem utilities', () => {
 
       const documentsDir = getNodeAtPath(filesystem, ['home', 'user', 'documents']);
       expect(documentsDir!.children!['readme.txt']).toBeDefined();
-      expect(documentsDir!.children!['example.md']).toBeDefined();
+      expect(documentsDir!.children!['notes.md']).toBeDefined();
     });
   });
 

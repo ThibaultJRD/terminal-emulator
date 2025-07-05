@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { TextEditor } from '~/routes/terminal/components/TextEditor';
 import type { OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { applyCompletion, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
 import { executeCommand } from '~/routes/terminal/utils/commands';
-import { createDefaultFileSystem } from '~/routes/terminal/utils/filesystem';
+import { getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
+import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
 import { formatPath } from '~/routes/terminal/utils/filesystem';
+import { type FilesystemMode, resetToDefaultFilesystem, saveFilesystemState, switchFilesystemMode } from '~/routes/terminal/utils/persistence';
+import { type TextEditorState, createTextEditorState } from '~/routes/terminal/utils/textEditor';
 
 interface TerminalOutputLine {
   type: 'command' | 'output' | 'error';
@@ -20,6 +24,10 @@ export function Terminal() {
     output: [],
     filesystem: createDefaultFileSystem(),
   }));
+
+  const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>('default');
+  const [textEditorState, setTextEditorState] = useState<TextEditorState | null>(null);
+  const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
 
   const [outputLines, setOutputLines] = useState<TerminalOutputLine[]>([
     {
@@ -53,6 +61,15 @@ export function Terminal() {
     }
   }, []);
 
+  // Auto-save filesystem changes to localStorage
+  useEffect(() => {
+    const saveTimeout = setTimeout(() => {
+      saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
+    }, 1000); // Save after 1 second of inactivity
+
+    return () => clearTimeout(saveTimeout);
+  }, [terminalState.filesystem, currentFilesystemMode]);
+
   const handleCommand = useCallback(
     (input: string) => {
       if (!input.trim()) return;
@@ -68,15 +85,94 @@ export function Terminal() {
 
       const result = executeCommand(input, terminalState.filesystem);
 
-      if (result.output === 'CLEAR') {
-        setOutputLines([]);
-        setTerminalState((prev) => ({
-          ...prev,
-          history: [...prev.history, input],
-          historyIndex: -1,
-          currentInput: '',
-        }));
-        return;
+      // Handle special command outputs
+      if (result.success && typeof result.output === 'string') {
+        if (result.output === 'CLEAR') {
+          setOutputLines([]);
+          setTerminalState((prev) => ({
+            ...prev,
+            history: [...prev.history, input],
+            historyIndex: -1,
+            currentInput: '',
+          }));
+          return;
+        }
+
+        // Handle filesystem switching
+        if (result.output.startsWith('SWITCH_FILESYSTEM:')) {
+          const mode = result.output.split(':')[1] as FilesystemMode;
+          const switchResult = switchFilesystemMode(mode, terminalState.filesystem.root, terminalState.filesystem.currentPath);
+
+          setTerminalState((prev) => ({
+            ...prev,
+            filesystem: {
+              root: switchResult.filesystem,
+              currentPath: switchResult.currentPath,
+            },
+            history: [...prev.history, input],
+            historyIndex: -1,
+            currentInput: '',
+          }));
+
+          setCurrentFilesystemMode(mode);
+
+          newOutputLines.push({
+            type: 'output',
+            content: `Switched to ${mode} filesystem mode`,
+            timestamp: new Date(),
+          });
+
+          setOutputLines(newOutputLines);
+          return;
+        }
+
+        // Handle filesystem reset
+        if (result.output.startsWith('RESET_FILESYSTEM:')) {
+          const mode = result.output.split(':')[1] as FilesystemMode;
+          const resetResult = resetToDefaultFilesystem(mode);
+
+          setTerminalState((prev) => ({
+            ...prev,
+            filesystem: {
+              root: resetResult.filesystem,
+              currentPath: resetResult.currentPath,
+            },
+            history: [...prev.history, input],
+            historyIndex: -1,
+            currentInput: '',
+          }));
+
+          setCurrentFilesystemMode(mode);
+
+          newOutputLines.push({
+            type: 'output',
+            content: `Reset to default ${mode} filesystem`,
+            timestamp: new Date(),
+          });
+
+          setOutputLines(newOutputLines);
+          return;
+        }
+
+        // Handle text editor opening
+        if (result.output.startsWith('OPEN_EDITOR:')) {
+          const parts = result.output.split(':');
+          const filename = parts[1];
+          const content = parts[2] ? atob(parts[2]) : ''; // Base64 decode
+
+          const editorState = createTextEditorState(filename, content);
+          setTextEditorState(editorState);
+          setIsTextEditorOpen(true);
+
+          setTerminalState((prev) => ({
+            ...prev,
+            history: [...prev.history, input],
+            historyIndex: -1,
+            currentInput: '',
+          }));
+
+          return;
+        }
       }
 
       if (result.success && result.output) {
@@ -209,9 +305,49 @@ export function Terminal() {
   }, []);
 
   const handleTerminalClick = useCallback(() => {
-    if (inputRef.current) {
+    if (inputRef.current && !isTextEditorOpen) {
       inputRef.current.focus();
     }
+  }, [isTextEditorOpen]);
+
+  const handleTextEditorSave = useCallback(
+    (filename: string, content: string) => {
+      // Save file to filesystem
+      const success = createFile(terminalState.filesystem, terminalState.filesystem.currentPath, filename, content);
+
+      if (success) {
+        setOutputLines((prev) => [
+          ...prev,
+          {
+            type: 'output',
+            content: `"${filename}" written`,
+            timestamp: new Date(),
+          },
+        ]);
+      } else {
+        setOutputLines((prev) => [
+          ...prev,
+          {
+            type: 'error',
+            content: `Failed to save "${filename}"`,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    },
+    [terminalState.filesystem],
+  );
+
+  const handleTextEditorClose = useCallback((saved: boolean) => {
+    setIsTextEditorOpen(false);
+    setTextEditorState(null);
+
+    // Return focus to terminal input
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
   }, []);
 
   const renderOutputLine = (line: TerminalOutputLine, index: number) => {
@@ -316,28 +452,35 @@ export function Terminal() {
   const currentPrompt = `${formatPath(terminalState.filesystem.currentPath)} $ `;
 
   return (
-    <div className="bg-ctp-base flex h-full flex-col">
+    <div className="bg-ctp-base relative flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-4" ref={terminalRef} onClick={handleTerminalClick}>
         <div className="space-y-1">
           {outputLines.map(renderOutputLine)}
 
-          <div className="flex items-center font-mono text-sm">
-            <span className="text-ctp-green mr-2">{currentPrompt}</span>
-            <div className="relative flex-1">
-              <input
-                ref={inputRef}
-                type="text"
-                value={terminalState.currentInput}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                className="text-ctp-text caret-ctp-text w-full border-none bg-transparent outline-none"
-                spellCheck={false}
-                autoComplete="off"
-              />
+          {!isTextEditorOpen && (
+            <div className="flex items-center font-mono text-sm">
+              <span className="text-ctp-green mr-2">{currentPrompt}</span>
+              <div className="relative flex-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={terminalState.currentInput}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  className="text-ctp-text caret-ctp-text w-full border-none bg-transparent outline-none"
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Text Editor Overlay */}
+      {isTextEditorOpen && textEditorState && (
+        <TextEditor initialState={textEditorState} onSave={handleTextEditorSave} onClose={handleTextEditorClose} onStateChange={setTextEditorState} />
+      )}
     </div>
   );
 }

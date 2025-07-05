@@ -140,7 +140,7 @@ describe('Commands', () => {
     it('should render markdown files with formatting', () => {
       // Change to documents directory first
       filesystem.currentPath = ['home', 'user', 'documents'];
-      const result = commands.cat(['example.md'], filesystem);
+      const result = commands.cat(['notes.md'], filesystem);
       expect(result.success).toBe(true);
       expect(Array.isArray(result.output)).toBe(true);
     });
@@ -254,7 +254,7 @@ describe('Commands', () => {
     it('should handle multiple files', () => {
       // Change to documents directory first
       filesystem.currentPath = ['home', 'user', 'documents'];
-      const result = commands.wc(['readme.txt', 'example.md'], filesystem);
+      const result = commands.wc(['readme.txt', 'notes.md'], filesystem);
       expect(result.success).toBe(true);
       expect(result.output).toContain('total');
     });
