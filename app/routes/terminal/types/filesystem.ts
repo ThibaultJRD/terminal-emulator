@@ -51,7 +51,7 @@ export interface TerminalState {
   filesystem: FileSystemState;
 }
 
-export type Command = 'cd' | 'ls' | 'touch' | 'cat' | 'mkdir' | 'rm' | 'rmdir' | 'pwd' | 'echo' | 'wc' | 'clear' | 'help';
+export type Command = 'cd' | 'ls' | 'touch' | 'cat' | 'mkdir' | 'rm' | 'rmdir' | 'pwd' | 'echo' | 'wc' | 'clear' | 'help' | 'vi' | 'reset-fs' | 'storage-info';
 
 export interface CommandHandler {
   (args: string[], filesystem: FileSystemState): CommandResult;

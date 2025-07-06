@@ -1,5 +1,15 @@
 import type { CommandHandler, CommandResult, FileSystemState, OutputSegment } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
+import {
+  ERROR_MESSAGES,
+  createDetailedFileInfo,
+  createErrorResult,
+  createSimpleFileInfo,
+  createSuccessResult,
+  filterDirectoryEntries,
+  joinOutputSegments,
+  sortDirectoryEntries,
+} from '~/routes/terminal/utils/commandUtils';
 import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDirectory, createFile, deleteNode, formatPath, getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
@@ -38,67 +48,40 @@ export const commands: Record<string, CommandHandler> = {
 
   ls: (args: string[], filesystem: FileSystemState): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
-
     const showHidden = flags.has('a');
     const showDetails = flags.has('l');
     const pathArg = positionalArgs[0];
 
+    // Resolve target path and get node
     const targetPath = pathArg ? resolvePath(filesystem, pathArg) : filesystem.currentPath;
     const targetNode = getNodeAtPath(filesystem, targetPath);
 
     if (!targetNode) {
-      return {
-        success: false,
-        output: '',
-        error: `ls: cannot access '${pathArg}': No such file or directory`,
-      };
+      return createErrorResult(`ls: ${ERROR_MESSAGES.FILE_NOT_FOUND(pathArg)}`);
     }
 
+    // Handle single file case
     if (targetNode.type === 'file') {
-      return { success: true, output: targetNode.name };
+      return createSuccessResult(targetNode.name);
     }
 
+    // Handle empty directory
     if (!targetNode.children) {
-      return { success: true, output: '' };
+      return createSuccessResult('');
     }
 
-    const entries = Object.values(targetNode.children)
-      .filter((node) => showHidden || !node.name.startsWith('.'))
-      .sort((a, b) => {
-        if (a.type === 'directory' && b.type === 'file') return -1;
-        if (a.type === 'file' && b.type === 'directory') return 1;
-        return a.name.localeCompare(b.name);
-      });
+    // Get, filter, and sort directory entries
+    const allEntries = Object.values(targetNode.children);
+    const filteredEntries = filterDirectoryEntries(allEntries, showHidden);
+    const sortedEntries = sortDirectoryEntries(filteredEntries);
 
+    // Generate output based on format
     if (showDetails) {
-      const outputSegments: OutputSegment[] = [];
-      entries.forEach((node, index) => {
-        if (index > 0) {
-          outputSegments.push({ text: '\n', type: 'normal' });
-        }
-        const type = node.type === 'directory' ? 'd' : '-';
-        const permissions = node.permissions || 'rwxr-xr-x';
-        const size = node.size || 0;
-        const date = node.modifiedAt ? new Date(node.modifiedAt).toLocaleDateString() : new Date().toLocaleDateString();
-
-        outputSegments.push({
-          text: `${type}${permissions} ${size.toString().padStart(8)} ${date} `,
-          type: 'normal',
-        });
-        outputSegments.push({ text: node.name, type: node.type });
-      });
-
-      return { success: true, output: outputSegments };
+      const detailedSegments = sortedEntries.map(createDetailedFileInfo);
+      return createSuccessResult(joinOutputSegments(detailedSegments));
     } else {
-      const outputSegments: OutputSegment[] = [];
-      entries.forEach((node, index) => {
-        if (index > 0) {
-          outputSegments.push({ text: '  ', type: 'normal' });
-        }
-        outputSegments.push({ text: node.name, type: node.type });
-      });
-
-      return { success: true, output: outputSegments };
+      const simpleSegments = sortedEntries.map(createSimpleFileInfo);
+      return createSuccessResult(joinOutputSegments(simpleSegments, '  '));
     }
   },
 
@@ -108,51 +91,35 @@ export const commands: Record<string, CommandHandler> = {
 
   touch: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
-      return {
-        success: false,
-        output: '',
-        error: 'touch: missing file operand',
-      };
+      return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
 
     const filename = args[0];
     if (filename.includes('/')) {
-      return {
-        success: false,
-        output: '',
-        error: 'touch: cannot create file with path separators',
-      };
+      return createErrorResult('touch: cannot create file with path separators');
     }
 
     const currentDir = getCurrentDirectory(filesystem);
     if (!currentDir || currentDir.type !== 'directory' || !currentDir.children) {
-      return {
-        success: false,
-        output: '',
-        error: 'touch: cannot access current directory',
-      };
+      return createErrorResult('touch: cannot access current directory');
     }
 
     if (currentDir.children[filename]) {
       currentDir.children[filename].modifiedAt = new Date();
-      return { success: true, output: '' };
+      return createSuccessResult('');
     }
 
     const success = createFile(filesystem, filesystem.currentPath, filename, '');
     if (!success) {
-      return {
-        success: false,
-        output: '',
-        error: `touch: cannot create '${filename}'`,
-      };
+      return createErrorResult(`touch: cannot create '${filename}'`);
     }
 
-    return { success: true, output: '' };
+    return createSuccessResult('');
   },
 
   cat: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
-      return { success: false, output: '', error: 'cat: missing file operand' };
+      return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('cat', 'file'));
     }
 
     const filename = args[0];
@@ -160,36 +127,28 @@ export const commands: Record<string, CommandHandler> = {
     const file = getNodeAtPath(filesystem, targetPath);
 
     if (!file) {
-      return {
-        success: false,
-        output: '',
-        error: `cat: ${filename}: No such file or directory`,
-      };
+      return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
     }
 
     if (file.type === 'directory') {
-      return {
-        success: false,
-        output: '',
-        error: `cat: ${filename}: Is a directory`,
-      };
+      return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
     }
 
     const content = file.content || '';
 
     // Check if it's a markdown file
     if (filename.endsWith('.md')) {
-      return { success: true, output: renderMarkdown(content) };
+      return createSuccessResult(renderMarkdown(content));
     }
 
-    return { success: true, output: content };
+    return createSuccessResult(content);
   },
 
   mkdir: (args: string[], filesystem: FileSystemState): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
-      return { success: false, output: '', error: 'mkdir: missing operand' };
+      return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('mkdir', 'operand'));
     }
 
     const createParents = flags.has('p');

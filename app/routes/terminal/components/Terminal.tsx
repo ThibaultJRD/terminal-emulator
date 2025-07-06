@@ -1,17 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TextEditor } from '~/routes/terminal/components/TextEditor';
+import { useFilesystemPersistence } from '~/routes/terminal/hooks/useFilesystemPersistence';
 import type { OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { applyCompletion, applyCompletionNoSpace, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
-import { parseCommand } from '~/routes/terminal/utils/commandParser';
-import { executeCommand } from '~/routes/terminal/utils/commands';
 import { getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
 import { formatPath } from '~/routes/terminal/utils/filesystem';
-import { type FilesystemMode, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
-import { type TextEditorState, createTextEditorState } from '~/routes/terminal/utils/textEditor';
+import { type FilesystemMode, saveFilesystemState } from '~/routes/terminal/utils/persistence';
+import {
+  analyzeSpecialCommand,
+  createOutputLine,
+  executeCommandSafely,
+  handleFilesystemReset,
+  handleFilesystemSaveAfterCommand,
+  handleTextEditorOpen,
+  updateTerminalStateAfterCommand,
+} from '~/routes/terminal/utils/terminalHandlers';
+import { type TextEditorState } from '~/routes/terminal/utils/textEditor';
 
-interface TerminalOutputLine {
+interface OutputLine {
   type: 'command' | 'output' | 'error';
   content: string | OutputSegment[];
   timestamp: Date;
@@ -43,7 +51,7 @@ export function Terminal() {
     originalInput: '',
   });
 
-  const [outputLines, setOutputLines] = useState<TerminalOutputLine[]>([
+  const [outputLines, setOutputLines] = useState<OutputLine[]>([
     {
       type: 'output',
       content: 'Welcome to Terminal Emulator v1.0',
@@ -75,17 +83,12 @@ export function Terminal() {
     }
   }, []);
 
-  // Auto-save filesystem changes to localStorage
-  useEffect(() => {
-    const saveTimeout = setTimeout(() => {
-      const result = saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
-      if (!result.success) {
-        console.error('Failed to auto-save filesystem:', result.error);
-      }
-    }, 200); // Save after 200ms of inactivity (more responsive)
-
-    return () => clearTimeout(saveTimeout);
-  }, [terminalState.filesystem, currentFilesystemMode]);
+  // Intelligent filesystem persistence
+  const filesystemPersistence = useFilesystemPersistence(terminalState.filesystem, currentFilesystemMode, {
+    debounceMs: 500,
+    maxDebounceMs: 2000,
+    enableLogs: false, // Set to true for debugging
+  });
 
   const handleCommand = useCallback(
     (input: string) => {
@@ -93,148 +96,63 @@ export function Terminal() {
 
       const prompt = generatePromptText(terminalState.filesystem.currentPath);
 
-      setOutputLines((prev) => [
-        ...prev,
-        {
-          type: 'command',
-          content: prompt + input,
-          timestamp: new Date(),
-        },
-      ]);
+      // Add command to output
+      setOutputLines((prev) => [...prev, createOutputLine('command', prompt + input)]);
 
-      let result;
-      try {
-        result = executeCommand(input, terminalState.filesystem);
-      } catch (error) {
-        console.error('Error executing command:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setOutputLines((prev) => [
-          ...prev,
-          {
-            type: 'error',
-            content: `Error: ${errorMessage}`,
-            timestamp: new Date(),
-          },
-        ]);
-        setTerminalState((prev) => ({
-          ...prev,
-          history: [...prev.history, input],
-          historyIndex: -1,
-          currentInput: '',
-        }));
+      // Execute command safely
+      const result = executeCommandSafely(input, terminalState.filesystem);
+
+      // Handle command execution error
+      if (!result.success) {
+        const errorContent = result.error || 'Command failed';
+        setOutputLines((prev) => [...prev, createOutputLine('error', errorContent)]);
+        setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
         return;
       }
 
-      // Handle special command outputs
-      if (result.success && typeof result.output === 'string') {
-        if (result.output === 'CLEAR') {
+      // Analyze for special commands
+      const specialCommand = analyzeSpecialCommand(result);
+
+      switch (specialCommand.type) {
+        case 'clear':
           setOutputLines([]);
-          setTerminalState((prev) => ({
-            ...prev,
-            history: [...prev.history, input],
-            historyIndex: -1,
-            currentInput: '',
-          }));
+          setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
           return;
-        }
 
-        // Handle filesystem reset
-        if (result.output.startsWith('RESET_FILESYSTEM:')) {
-          const mode = result.output.split(':')[1] as FilesystemMode;
-          const resetResult = resetToDefaultFilesystem(mode);
-
-          setTerminalState((prev) => ({
-            ...prev,
-            filesystem: {
-              root: resetResult.filesystem,
-              currentPath: resetResult.currentPath,
-            },
-            history: [...prev.history, input],
-            historyIndex: -1,
-            currentInput: '',
-          }));
-
+        case 'reset_filesystem': {
+          const mode = specialCommand.data?.mode as FilesystemMode;
+          const { newTerminalState, outputLine } = handleFilesystemReset(mode, terminalState, input);
+          setTerminalState(newTerminalState);
           setCurrentFilesystemMode(mode);
-
-          setOutputLines((prev) => [
-            ...prev,
-            {
-              type: 'output',
-              content: `Reset to default ${mode} filesystem`,
-              timestamp: new Date(),
-            },
-          ]);
+          setOutputLines((prev) => [...prev, outputLine]);
           return;
         }
 
-        // Handle text editor opening
-        if (result.output.startsWith('OPEN_EDITOR:')) {
-          const parts = result.output.split(':');
-          const filename = parts[1];
-          const content = parts[2] ? atob(parts[2]) : ''; // Base64 decode
-
-          const editorState = createTextEditorState(filename, content);
+        case 'open_editor': {
+          const { filename, content } = specialCommand.data as { filename: string; content: string };
+          const { newTerminalState, editorState } = handleTextEditorOpen(filename, content, terminalState, input);
+          setTerminalState(newTerminalState);
           setTextEditorState(editorState);
           setIsTextEditorOpen(true);
-
-          setTerminalState((prev) => ({
-            ...prev,
-            history: [...prev.history, input],
-            historyIndex: -1,
-            currentInput: '',
-          }));
-
           return;
         }
+
+        case 'normal':
+        default:
+          // Handle normal command output
+          if (result.output) {
+            setOutputLines((prev) => [...prev, createOutputLine('output', result.output)]);
+          }
+          break;
       }
 
-      if (result.success && result.output) {
-        setOutputLines((prev) => [
-          ...prev,
-          {
-            type: 'output',
-            content: result.output,
-            timestamp: new Date(),
-          },
-        ]);
-      }
+      // Update terminal state
+      setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
 
-      if (!result.success) {
-        const errorContent = result.error || 'Command failed';
-        setOutputLines((prev) => [
-          ...prev,
-          {
-            type: 'error' as const,
-            content: errorContent,
-            timestamp: new Date(),
-          },
-        ]);
-      }
-      setTerminalState((prev) => ({
-        ...prev,
-        history: [...prev.history, input],
-        historyIndex: -1,
-        currentInput: '',
-      }));
-
-      // Immediate save for filesystem-modifying commands and redirections
-      const filesystemCommands = ['touch', 'mkdir', 'rm', 'rmdir', 'nano', 'vi'];
-      const commandName = input.trim().split(/\s+/)[0];
-      const parsed = parseCommand(input);
-      const hasOutputRedirection = parsed.redirectOutput !== undefined;
-
-      if (result.success && (filesystemCommands.includes(commandName) || hasOutputRedirection)) {
-        const saveResult = saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
-        if (!saveResult.success) {
-          console.error('Failed to immediately save filesystem after command:', saveResult.error);
-        } else {
-          const reason = hasOutputRedirection
-            ? `redirection (${commandName} ${parsed.redirectOutput?.type} ${parsed.redirectOutput?.filename})`
-            : `filesystem command (${commandName})`;
-        }
-      }
+      // Save filesystem if needed
+      handleFilesystemSaveAfterCommand(input, result, filesystemPersistence.saveImmediately);
     },
-    [terminalState.filesystem, currentFilesystemMode],
+    [terminalState.filesystem, currentFilesystemMode, filesystemPersistence.saveImmediately],
   );
 
   const handleKeyDown = useCallback(
@@ -477,7 +395,7 @@ export function Terminal() {
     }, 100);
   }, []);
 
-  const renderOutputLine = (line: TerminalOutputLine, index: number) => {
+  const renderOutputLine = (line: OutputLine, index: number) => {
     const baseClasses = 'font-mono text-sm whitespace-pre-wrap';
 
     const renderContent = (content: string | OutputSegment[]) => {

@@ -310,33 +310,41 @@ export function getStorageInfo(): {
  * @param node - The filesystem node to process
  * @returns The node with restored Date objects
  */
-function restoreDateObjects(node: any): FileSystemNode {
-  // Restore dates for this node
-  if (node.createdAt && typeof node.createdAt === 'string') {
-    node.createdAt = new Date(node.createdAt);
+function restoreDateObjects(node: unknown): FileSystemNode {
+  // Type guard to ensure we have a valid object
+  if (typeof node !== 'object' || node === null) {
+    throw new Error('Invalid node structure');
   }
-  if (node.modifiedAt && typeof node.modifiedAt === 'string') {
-    node.modifiedAt = new Date(node.modifiedAt);
+
+  const nodeObj = node as Record<string, unknown>;
+
+  // Restore dates for this node
+  if (nodeObj.createdAt && typeof nodeObj.createdAt === 'string') {
+    nodeObj.createdAt = new Date(nodeObj.createdAt);
+  }
+  if (nodeObj.modifiedAt && typeof nodeObj.modifiedAt === 'string') {
+    nodeObj.modifiedAt = new Date(nodeObj.modifiedAt);
   }
 
   // Ensure we have valid Date objects, create them if missing
-  if (!node.createdAt || !(node.createdAt instanceof Date) || isNaN(node.createdAt.getTime())) {
-    node.createdAt = new Date();
+  if (!nodeObj.createdAt || !(nodeObj.createdAt instanceof Date) || isNaN(nodeObj.createdAt.getTime())) {
+    nodeObj.createdAt = new Date();
   }
-  if (!node.modifiedAt || !(node.modifiedAt instanceof Date) || isNaN(node.modifiedAt.getTime())) {
-    node.modifiedAt = new Date();
+  if (!nodeObj.modifiedAt || !(nodeObj.modifiedAt instanceof Date) || isNaN(nodeObj.modifiedAt.getTime())) {
+    nodeObj.modifiedAt = new Date();
   }
 
   // Recursively process children
-  if (node.children && typeof node.children === 'object') {
-    for (const childName in node.children) {
-      if (node.children.hasOwnProperty(childName)) {
-        node.children[childName] = restoreDateObjects(node.children[childName]);
+  if (nodeObj.children && typeof nodeObj.children === 'object' && nodeObj.children !== null) {
+    const children = nodeObj.children as Record<string, unknown>;
+    for (const childName in children) {
+      if (children.hasOwnProperty(childName)) {
+        children[childName] = restoreDateObjects(children[childName]);
       }
     }
   }
 
-  return node as FileSystemNode;
+  return nodeObj as unknown as FileSystemNode;
 }
 
 /**
@@ -346,19 +354,23 @@ function restoreDateObjects(node: any): FileSystemNode {
  * @param data - The data to validate
  * @returns boolean indicating if the data is valid
  */
-function isValidPersistedData(data: any): data is PersistedFilesystemData {
+function isValidPersistedData(data: unknown): data is PersistedFilesystemData {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+
   return (
-    typeof data === 'object' &&
-    data !== null &&
-    typeof data.filesystem === 'object' &&
-    data.filesystem !== null &&
-    typeof data.filesystem.name === 'string' &&
-    typeof data.filesystem.type === 'string' &&
-    typeof data.mode === 'string' &&
-    typeof data.version === 'string' &&
-    typeof data.savedAt === 'string' &&
-    Array.isArray(data.currentPath) &&
-    data.currentPath.every((path: any) => typeof path === 'string')
+    typeof obj.filesystem === 'object' &&
+    obj.filesystem !== null &&
+    typeof (obj.filesystem as Record<string, unknown>).name === 'string' &&
+    typeof (obj.filesystem as Record<string, unknown>).type === 'string' &&
+    typeof obj.mode === 'string' &&
+    typeof obj.version === 'string' &&
+    typeof obj.savedAt === 'string' &&
+    Array.isArray(obj.currentPath) &&
+    obj.currentPath.every((path: unknown) => typeof path === 'string')
   );
 }
 
