@@ -30,6 +30,19 @@ export function Terminal() {
   const [textEditorState, setTextEditorState] = useState<TextEditorState | null>(null);
   const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
 
+  // Autocompletion state
+  const [completionState, setCompletionState] = useState<{
+    isActive: boolean;
+    completions: string[];
+    selectedIndex: number; // -1 means no selection
+    originalInput: string;
+  }>({
+    isActive: false,
+    completions: [],
+    selectedIndex: -1,
+    originalInput: '',
+  });
+
   const [outputLines, setOutputLines] = useState<TerminalOutputLine[]>([
     {
       type: 'output',
@@ -78,7 +91,7 @@ export function Terminal() {
     (input: string) => {
       if (!input.trim()) return;
 
-      const prompt = `${formatPath(terminalState.filesystem.currentPath)} $ `;
+      const prompt = generatePromptText(terminalState.filesystem.currentPath);
 
       setOutputLines((prev) => [
         ...prev,
@@ -227,6 +240,29 @@ export function Terminal() {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
+        if (completionState.isActive && completionState.selectedIndex !== -1) {
+          // In completion mode with selection: apply completion + space, don't execute
+          e.preventDefault();
+          const selectedCompletion = completionState.completions[completionState.selectedIndex];
+          const newInput = applyCompletion(completionState.originalInput, selectedCompletion);
+
+          // Exit completion mode
+          setCompletionState({
+            isActive: false,
+            completions: [],
+            selectedIndex: -1,
+            originalInput: '',
+          });
+
+          setTerminalState((prev) => ({
+            ...prev,
+            currentInput: newInput,
+            historyIndex: -1,
+          }));
+          return;
+        }
+
+        // Normal behavior: execute command
         handleCommand(terminalState.currentInput);
         return;
       }
@@ -269,60 +305,118 @@ export function Terminal() {
 
       if (e.key === 'Tab') {
         e.preventDefault();
-        const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem);
 
-        if (result.completions.length === 0) {
-          return;
-        }
+        if (completionState.isActive) {
+          if (completionState.selectedIndex === -1) {
+            // First selection: start with first item
+            const selectedCompletion = completionState.completions[0];
+            const newInput = applyCompletion(completionState.originalInput, selectedCompletion);
 
-        if (result.completions.length === 1) {
-          // Single completion, apply it
-          const newInput = applyCompletion(terminalState.currentInput, result.completions[0]);
-          setTerminalState((prev) => ({
-            ...prev,
-            currentInput: newInput,
-            historyIndex: -1,
-          }));
-        } else if (result.commonPrefix && result.commonPrefix.length > terminalState.currentInput.split(/\s+/).pop()?.length!) {
-          // Multiple completions with common prefix
-          const newInput = applyCompletion(terminalState.currentInput, result.commonPrefix);
-          setTerminalState((prev) => ({
-            ...prev,
-            currentInput: newInput,
-            historyIndex: -1,
-          }));
+            setCompletionState((prev) => ({
+              ...prev,
+              selectedIndex: 0,
+            }));
+
+            setTerminalState((prev) => ({
+              ...prev,
+              currentInput: newInput,
+            }));
+          } else {
+            // Cycle through completions
+            const nextIndex = (completionState.selectedIndex + 1) % completionState.completions.length;
+            const selectedCompletion = completionState.completions[nextIndex];
+            const newInput = applyCompletion(completionState.originalInput, selectedCompletion);
+
+            setCompletionState((prev) => ({
+              ...prev,
+              selectedIndex: nextIndex,
+            }));
+
+            setTerminalState((prev) => ({
+              ...prev,
+              currentInput: newInput,
+            }));
+          }
         } else {
-          // Multiple completions, show them
-          const prompt = `${formatPath(terminalState.filesystem.currentPath)} $ `;
+          // Start completion
+          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem);
 
-          setOutputLines((prev) => [
-            ...prev,
-            {
-              type: 'command',
-              content: prompt + terminalState.currentInput,
-              timestamp: new Date(),
-            },
-            {
-              type: 'output',
-              content: result.completions.join('  '),
-              timestamp: new Date(),
-            },
-          ]);
+          if (result.completions.length === 0) {
+            return;
+          }
+
+          if (result.completions.length === 1) {
+            // Single completion, apply it directly
+            const newInput = applyCompletion(terminalState.currentInput, result.completions[0]);
+            setTerminalState((prev) => ({
+              ...prev,
+              currentInput: newInput,
+              historyIndex: -1,
+            }));
+          } else if (result.commonPrefix && result.commonPrefix.length > terminalState.currentInput.split(/\s+/).pop()?.length!) {
+            // Multiple completions with common prefix
+            const newInput = applyCompletion(terminalState.currentInput, result.commonPrefix);
+            setTerminalState((prev) => ({
+              ...prev,
+              currentInput: newInput,
+              historyIndex: -1,
+            }));
+          } else {
+            // Multiple completions, show list without selection
+            setCompletionState({
+              isActive: true,
+              completions: result.completions,
+              selectedIndex: -1, // No selection initially
+              originalInput: terminalState.currentInput,
+            });
+          }
         }
 
         return;
       }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (completionState.isActive) {
+          // Exit completion mode and restore original input
+          setCompletionState({
+            isActive: false,
+            completions: [],
+            selectedIndex: -1,
+            originalInput: '',
+          });
+
+          setTerminalState((prev) => ({
+            ...prev,
+            currentInput: completionState.originalInput,
+          }));
+        }
+        return;
+      }
     },
-    [terminalState.currentInput, terminalState.history, terminalState.historyIndex, terminalState.filesystem, handleCommand],
+    [terminalState.currentInput, terminalState.history, terminalState.historyIndex, terminalState.filesystem, handleCommand, completionState],
   );
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setTerminalState((prev) => ({
-      ...prev,
-      currentInput: e.target.value,
-      historyIndex: -1,
-    }));
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Exit completion mode when user types
+      if (completionState.isActive) {
+        setCompletionState({
+          isActive: false,
+          completions: [],
+          selectedIndex: -1,
+          originalInput: '',
+        });
+      }
+
+      setTerminalState((prev) => ({
+        ...prev,
+        currentInput: e.target.value,
+        historyIndex: -1,
+      }));
+    },
+    [completionState.isActive],
+  );
 
   const handleTerminalClick = useCallback(() => {
     if (inputRef.current && !isTextEditorOpen) {
@@ -476,7 +570,16 @@ export function Terminal() {
     }
   };
 
-  const currentPrompt = `${formatPath(terminalState.filesystem.currentPath)} $ `;
+  const generatePromptText = (path: string[]): string => {
+    return `user@terminal:${formatPath(path)} ❯ `;
+  };
+
+  const currentPrompt = {
+    user: 'user',
+    host: 'terminal',
+    path: formatPath(terminalState.filesystem.currentPath),
+    symbol: '❯',
+  };
 
   return (
     <div className="bg-ctp-base relative flex h-full flex-col">
@@ -486,7 +589,12 @@ export function Terminal() {
 
           {!isTextEditorOpen && (
             <div className="flex items-center font-mono text-sm">
-              <span className="text-ctp-green mr-2">{currentPrompt}</span>
+              <span className="text-ctp-mauve">{currentPrompt.user}</span>
+              <span className="text-ctp-subtext0">@</span>
+              <span className="text-ctp-blue">{currentPrompt.host}</span>
+              <span className="text-ctp-subtext0">:</span>
+              <span className="text-ctp-yellow">{currentPrompt.path}</span>
+              <span className="text-ctp-green mr-2 ml-2">{currentPrompt.symbol}</span>
               <div className="relative flex-1">
                 <input
                   ref={inputRef}
@@ -498,6 +606,32 @@ export function Terminal() {
                   spellCheck={false}
                   autoComplete="off"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Completion Menu */}
+          {completionState.isActive && completionState.completions.length > 1 && (
+            <div className="mt-1 ml-2 text-sm">
+              <div className="text-ctp-subtext0 mb-1">
+                {completionState.selectedIndex === -1
+                  ? `Available options (${completionState.completions.length}):`
+                  : `Tab through options (${completionState.selectedIndex + 1}/${completionState.completions.length}):`}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {completionState.completions.map((completion, index) => (
+                  <span
+                    key={index}
+                    className={`rounded px-2 py-1 ${
+                      index === completionState.selectedIndex ? 'bg-ctp-surface1 text-ctp-green border-ctp-green border' : 'bg-ctp-surface0 text-ctp-subtext1'
+                    }`}
+                  >
+                    {completion}
+                  </span>
+                ))}
+              </div>
+              <div className="text-ctp-subtext0 mt-1 text-xs">
+                {completionState.selectedIndex === -1 ? 'Press Tab to select, Escape to cancel' : 'Press Tab to cycle, Enter to apply, Escape to cancel'}
               </div>
             </div>
           )}
