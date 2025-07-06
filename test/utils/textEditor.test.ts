@@ -27,10 +27,10 @@ describe('textEditor utilities', () => {
       expect(state.content).toBe('Hello\nWorld');
       expect(state.lines).toEqual(['Hello', 'World']);
       expect(state.cursorPosition).toEqual({ line: 0, column: 0 });
-      expect(state.mode).toBe('COMMAND'); // Should default to COMMAND mode
+      expect(state.mode).toBe('NORMAL'); // Should default to NORMAL mode
       expect(state.isModified).toBe(false);
       expect(state.showLineNumbers).toBe(true);
-      expect(state.statusMessage).toBe('Editing test.txt - COMMAND mode');
+      expect(state.statusMessage).toBe('Editing test.txt - NORMAL mode');
       expect(state.scrollOffset).toBe(0);
       expect(state.maxVisibleLines).toBe(20);
       expect(state.isVisible).toBe(true);
@@ -59,7 +59,7 @@ describe('textEditor utilities', () => {
       expect(newState.content).toBe('Modified');
       expect(newState.lines).toEqual(['Modified']);
       expect(newState.isModified).toBe(true);
-      expect(newState.statusMessage).toBe('test.txt [Modified] - COMMAND mode');
+      expect(newState.statusMessage).toBe('test.txt [Modified] - NORMAL mode');
     });
 
     it('should not mark as modified if content is same as original', () => {
@@ -67,7 +67,7 @@ describe('textEditor utilities', () => {
       const newState = updateEditorContent(initialState, 'Original');
 
       expect(newState.isModified).toBe(false);
-      expect(newState.statusMessage).toBe('test.txt - COMMAND mode');
+      expect(newState.statusMessage).toBe('test.txt - NORMAL mode');
     });
   });
 
@@ -118,9 +118,9 @@ describe('textEditor utilities', () => {
       expect(insertState.mode).toBe('INSERT');
       expect(insertState.statusMessage).toBe('test.txt - INSERT mode');
 
-      const commandState = switchMode(insertState, 'COMMAND');
-      expect(commandState.mode).toBe('COMMAND');
-      expect(commandState.statusMessage).toBe('test.txt - COMMAND mode');
+      const normalState = switchMode(insertState, 'NORMAL');
+      expect(normalState.mode).toBe('NORMAL');
+      expect(normalState.statusMessage).toBe('test.txt - NORMAL mode');
     });
 
     it('should include modified indicator in status', () => {
@@ -377,11 +377,11 @@ describe('textEditor utilities', () => {
     };
 
     describe('INSERT mode', () => {
-      it('should switch to COMMAND mode on Escape', () => {
+      it('should switch to NORMAL mode on Escape', () => {
         const state = switchMode(createTextEditorState('test.txt', 'Content'), 'INSERT');
         const result = handleKeyboardInput(state, createKeyEvent('Escape'));
 
-        expect(result.state.mode).toBe('COMMAND');
+        expect(result.state.mode).toBe('NORMAL');
       });
 
       it('should insert new line on Enter', () => {
@@ -475,7 +475,7 @@ describe('textEditor utilities', () => {
       });
     });
 
-    describe('COMMAND mode', () => {
+    describe('NORMAL mode', () => {
       it('should switch to INSERT mode on i', () => {
         const state = createTextEditorState('test.txt', 'Content');
         const result = handleKeyboardInput(state, createKeyEvent('i'));
@@ -619,7 +619,7 @@ describe('textEditor utilities', () => {
       const cursorState = moveCursor(state, { line: 1, column: 3 });
       const status = formatStatusLine(cursorState);
 
-      expect(status).toBe('test.txt - COMMAND mode - Line 2/2, Column 4');
+      expect(status).toBe('test.txt - NORMAL mode - Line 2/2, Column 4');
     });
 
     it('should format status line with modifications', () => {
@@ -627,14 +627,14 @@ describe('textEditor utilities', () => {
       const modifiedState = { ...state, isModified: true };
       const status = formatStatusLine(modifiedState);
 
-      expect(status).toBe('test.txt [Modified] - COMMAND mode - Line 1/1, Column 1');
+      expect(status).toBe('test.txt [Modified] - NORMAL mode - Line 1/1, Column 1');
     });
 
     it('should handle empty file', () => {
       const state = createTextEditorState('empty.txt', '');
       const status = formatStatusLine(state);
 
-      expect(status).toBe('empty.txt - COMMAND mode - Line 1/1, Column 1');
+      expect(status).toBe('empty.txt - NORMAL mode - Line 1/1, Column 1');
     });
   });
 
@@ -699,8 +699,8 @@ describe('textEditor utilities', () => {
       state = moveCursor(state, { column: 7 });
       state = insertTextAtCursor(state, ' modified');
 
-      // Switch back to COMMAND mode and move around
-      state = switchMode(state, 'COMMAND');
+      // Switch back to NORMAL mode and move around
+      state = switchMode(state, 'NORMAL');
       state = moveCursor(state, { column: 0 });
 
       // Add new line and switch to INSERT

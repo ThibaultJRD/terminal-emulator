@@ -157,8 +157,8 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
         return;
       }
 
-      // Handle colon in command mode to open command input
-      if (state.mode === 'COMMAND' && event.key === ':') {
+      // Handle colon in normal mode to open command input
+      if (state.mode === 'NORMAL' && event.key === ':') {
         event.preventDefault();
         setIsCommandInputVisible(true);
         setCommandInput('');
@@ -199,6 +199,10 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
         onClose(true);
       } else if (result.newState) {
         setState((prevState) => ({ ...prevState, ...result.newState }));
+        // Save file when :w command is executed (even without closing)
+        if (result.newState.originalContent !== undefined) {
+          onSave(result.newState.filename || state.filename, state.content);
+        }
       }
     }
 
@@ -289,7 +293,7 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
             {state.filename}
             {state.isModified && <span className="text-ctp-yellow"> [Modified]</span>}
           </h1>
-          <span className="text-ctp-subtext1 text-xs">{state.mode} mode</span>
+          <span className="text-ctp-subtext1 text-xs">{state.mode === 'NORMAL' ? 'Normal' : 'Insert'} mode</span>
         </div>
         <div className="text-ctp-subtext1 flex items-center space-x-2 text-xs">
           <span>
@@ -331,10 +335,10 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
                       style={{
                         left: `${getTextWidth(line.content, state.cursorPosition.column)}px`,
                         top: 0,
-                        width: state.mode === 'COMMAND' ? `${getCharacterWidth(line.content, state.cursorPosition.column)}px` : undefined,
+                        width: state.mode === 'NORMAL' ? `${getCharacterWidth(line.content, state.cursorPosition.column)}px` : undefined,
                       }}
                     >
-                      {state.mode === 'COMMAND' && line.content[state.cursorPosition.column] ? line.content[state.cursorPosition.column] : ' '}
+                      {state.mode === 'NORMAL' && line.content[state.cursorPosition.column] ? line.content[state.cursorPosition.column] : ' '}
                     </span>
                   )}
                 </div>
@@ -365,17 +369,17 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
       <div className="bg-ctp-surface0 border-ctp-overlay0 flex items-center justify-between border-t px-4 py-2 text-xs">
         <span className={isStatusMessageError ? 'text-ctp-red font-semibold' : 'text-ctp-subtext1'}>{statusLine}</span>
         <div className="text-ctp-subtext0 flex items-center space-x-4">
-          <span>Press ESC for command mode</span>
+          <span>Press ESC for normal mode</span>
           <span>:w to save</span>
           <span>:q to quit</span>
           <span>:wq to save and quit</span>
         </div>
       </div>
 
-      {/* Help overlay for command mode */}
-      {state.mode === 'COMMAND' && (
+      {/* Help overlay for normal mode */}
+      {state.mode === 'NORMAL' && (
         <div className="bg-ctp-surface1 border-ctp-overlay0 text-ctp-subtext1 absolute top-20 right-4 max-w-md rounded-lg border p-4 text-xs">
-          <h3 className="text-ctp-text mb-2 font-semibold">Command Mode</h3>
+          <h3 className="text-ctp-text mb-2 font-semibold">Normal Mode</h3>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <div className="text-ctp-green">i</div>

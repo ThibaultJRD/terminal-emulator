@@ -46,7 +46,7 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
   const command = parts[0];
   const pathArg = parts[parts.length - 1];
 
-  if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'nano', 'vi'].includes(command)) {
+  if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'wc', 'vi'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
   }
 

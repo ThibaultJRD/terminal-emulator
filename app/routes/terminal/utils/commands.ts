@@ -372,41 +372,6 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output };
   },
 
-  nano: (args: string[], filesystem: FileSystemState): CommandResult => {
-    if (args.length === 0) {
-      return {
-        success: false,
-        output: '',
-        error: 'nano: missing filename argument',
-      };
-    }
-
-    const filename = args[0];
-
-    // Check if file exists and get content
-    const targetPath = resolvePath(filesystem, filename);
-    const existingFile = getNodeAtPath(filesystem, targetPath);
-
-    let content = '';
-    if (existingFile) {
-      if (existingFile.type === 'directory') {
-        return {
-          success: false,
-          output: '',
-          error: `nano: ${filename}: Is a directory`,
-        };
-      }
-      content = existingFile.content || '';
-    }
-
-    // This command needs special handling in the terminal component
-    // It will open the text editor with the file content
-    return {
-      success: true,
-      output: `OPEN_EDITOR:${filename}:${btoa(content)}`, // Base64 encode content to handle special characters
-    };
-  },
-
   vi: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       return {
@@ -457,7 +422,6 @@ export const commands: Record<string, CommandHandler> = {
       '  rmdir <dir>      - Remove empty directory',
       '',
       'Text Editor:',
-      '  nano <file>      - Open file in nano text editor',
       '  vi <file>        - Open file in vi text editor',
       '',
       'Filesystem Management:',
@@ -485,7 +449,7 @@ export const commands: Record<string, CommandHandler> = {
       '  ls -la > file_list.txt',
       '  wc < example.md',
       '  cat readme.txt >> log.txt',
-      '  nano myfile.txt',
+      '  vi myfile.txt',
       '  reset-fs',
     ].join('\n');
 

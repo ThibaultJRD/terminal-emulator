@@ -21,53 +21,6 @@ describe('Text Editor Integration', () => {
     };
   });
 
-  describe('nano command integration', () => {
-    it('should open existing file with nano command', () => {
-      // Create a test file
-      createFile(filesystem, ['home', 'user'], 'test.txt', 'Hello World\nLine 2');
-
-      const result = executeCommand('nano test.txt', filesystem);
-
-      expect(result.success).toBe(true);
-      expect(result.output).toContain('OPEN_EDITOR:test.txt:');
-
-      // Decode the base64 content
-      const base64Content = (result.output as string).split(':')[2];
-      const decodedContent = atob(base64Content);
-      expect(decodedContent).toBe('Hello World\nLine 2');
-    });
-
-    it('should open new file with nano command', () => {
-      const result = executeCommand('nano newfile.txt', filesystem);
-
-      expect(result.success).toBe(true);
-      expect(result.output).toContain('OPEN_EDITOR:newfile.txt:');
-
-      // Decode the base64 content (should be empty)
-      const base64Content = (result.output as string).split(':')[2];
-      const decodedContent = atob(base64Content);
-      expect(decodedContent).toBe('');
-    });
-
-    it('should fail to open directory with nano', () => {
-      const result = executeCommand('nano documents', filesystem);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('nano: documents: Is a directory');
-    });
-
-    it('should handle files with special characters', () => {
-      createFile(filesystem, ['home', 'user'], 'special-file.txt', 'Content with accents: café, résumé');
-
-      const result = executeCommand('nano special-file.txt', filesystem);
-
-      expect(result.success).toBe(true);
-      const base64Content = (result.output as string).split(':')[2];
-      const decodedContent = atob(base64Content);
-      expect(decodedContent).toBe('Content with accents: café, résumé');
-    });
-  });
-
   describe('vi command integration', () => {
     it('should open existing file with vi command', () => {
       createFile(filesystem, ['home', 'user'], 'code.js', 'function hello() {\n  console.log("Hello");\n}');
@@ -111,7 +64,7 @@ describe('Text Editor Integration', () => {
       createFile(filesystem, ['home', 'user'], 'workflow.txt', 'Initial content');
 
       // Step 2: Open with editor
-      const openResult = executeCommand('nano workflow.txt', filesystem);
+      const openResult = executeCommand('vi workflow.txt', filesystem);
       expect(openResult.success).toBe(true);
 
       // Step 3: Create editor state from opened file
@@ -168,7 +121,7 @@ describe('Text Editor Integration', () => {
     it('should handle quit without saving with confirmation', () => {
       createFile(filesystem, ['home', 'user'], 'unsaved.txt', 'Original');
 
-      const openResult = executeCommand('nano unsaved.txt', filesystem);
+      const openResult = executeCommand('vi unsaved.txt', filesystem);
       const base64Content = (openResult.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       let editorState = createTextEditorState('unsaved.txt', decodedContent);
@@ -193,7 +146,7 @@ describe('Text Editor Integration', () => {
 
     it('should handle creating new file through editor', () => {
       // Open non-existent file
-      const openResult = executeCommand('nano newfile.md', filesystem);
+      const openResult = executeCommand('vi newfile.md', filesystem);
       expect(openResult.success).toBe(true);
 
       // Editor should start with empty content
@@ -314,9 +267,9 @@ describe('Text Editor Integration', () => {
 
   describe('error handling and edge cases', () => {
     it('should handle missing files gracefully', () => {
-      const result = executeCommand('nano /nonexistent/path/file.txt', filesystem);
+      const result = executeCommand('vi /nonexistent/path/file.txt', filesystem);
 
-      expect(result.success).toBe(true); // nano creates new files
+      expect(result.success).toBe(true); // vi creates new files
       expect(result.output).toContain('OPEN_EDITOR:/nonexistent/path/file.txt:');
 
       // Content should be empty for non-existent file
@@ -343,7 +296,7 @@ describe('Text Editor Integration', () => {
       const manyLines = Array.from({ length: 1000 }, (_, i) => `Line ${i + 1}`).join('\n');
       createFile(filesystem, ['home', 'user'], 'manylines.txt', manyLines);
 
-      const result = executeCommand('nano manylines.txt', filesystem);
+      const result = executeCommand('vi manylines.txt', filesystem);
 
       expect(result.success).toBe(true);
 
@@ -401,13 +354,13 @@ describe('Text Editor Integration', () => {
       // Move cursor to end of content
       editorState.cursorPosition = { line: 0, column: editorState.lines[0].length };
       editorState = insertTextAtCursor(editorState, '\nAdded line');
-      editorState = switchMode(editorState, 'COMMAND');
+      editorState = switchMode(editorState, 'NORMAL');
 
       // Verify state consistency
       expect(editorState.content).toBe('Original content\nAdded line');
       expect(editorState.lines).toEqual(['Original content', 'Added line']);
       expect(editorState.isModified).toBe(true);
-      expect(editorState.mode).toBe('COMMAND');
+      expect(editorState.mode).toBe('NORMAL');
       // Check the actual cursor position after insertion
       // Note: cursor position depends on insertTextAtCursor implementation
       expect(editorState.cursorPosition.line).toBeGreaterThanOrEqual(0);
@@ -423,11 +376,11 @@ describe('Text Editor Integration', () => {
       createFile(filesystem, ['tmp'], 'temp-file.txt', 'Temporary content');
 
       // Test opening from current directory
-      const homeResult = executeCommand('nano home-file.txt', filesystem);
+      const homeResult = executeCommand('vi home-file.txt', filesystem);
       expect(homeResult.success).toBe(true);
 
       // Test opening from subdirectory
-      const docResult = executeCommand('nano documents/doc-file.txt', filesystem);
+      const docResult = executeCommand('vi documents/doc-file.txt', filesystem);
       expect(docResult.success).toBe(true);
 
       // Test opening with absolute path
@@ -448,7 +401,7 @@ describe('Text Editor Integration', () => {
       createFile(filesystem, ['home', 'user'], '.config', 'Configuration data');
       createFile(filesystem, ['home', 'user'], '.bashrc', '# Bash configuration\nalias ll="ls -la"');
 
-      const configResult = executeCommand('nano .config', filesystem);
+      const configResult = executeCommand('vi .config', filesystem);
       const bashrcResult = executeCommand('vi .bashrc', filesystem);
 
       expect(configResult.success).toBe(true);
@@ -478,7 +431,7 @@ describe('Text Editor Integration', () => {
         currentDir.children['metadata-test.txt'] = node;
       }
 
-      const result = executeCommand('nano metadata-test.txt', filesystem);
+      const result = executeCommand('vi metadata-test.txt', filesystem);
       expect(result.success).toBe(true);
 
       // Verify the file still exists with same metadata after opening

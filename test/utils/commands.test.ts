@@ -326,60 +326,6 @@ describe('Commands', () => {
     });
   });
 
-  describe('nano command', () => {
-    it('should open existing file for editing', () => {
-      commands.touch(['test.txt'], filesystem);
-      const result = commands.nano(['test.txt'], filesystem);
-
-      expect(result.success).toBe(true);
-      expect(result.output).toContain('OPEN_EDITOR:test.txt:');
-    });
-
-    it('should open new file for editing', () => {
-      const result = commands.nano(['newfile.txt'], filesystem);
-
-      expect(result.success).toBe(true);
-      expect(result.output).toContain('OPEN_EDITOR:newfile.txt:');
-
-      // Content should be empty (base64 encoded empty string)
-      const base64Content = (result.output as string).split(':')[2];
-      expect(atob(base64Content)).toBe('');
-    });
-
-    it('should fail to open directory', () => {
-      commands.mkdir(['testdir'], filesystem);
-      const result = commands.nano(['testdir'], filesystem);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('nano: testdir: Is a directory');
-    });
-
-    it('should require filename argument', () => {
-      const result = commands.nano([], filesystem);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('nano: missing filename argument');
-    });
-
-    it('should handle files with content', () => {
-      // Create file with content using echo
-      commands.echo(['hello', 'world'], filesystem);
-      // Since we can't directly create file with content, let's test with existing files
-
-      // Change to documents directory which has files with content
-      filesystem.currentPath = ['home', 'user', 'documents'];
-      const result = commands.nano(['readme.txt'], filesystem);
-
-      expect(result.success).toBe(true);
-      expect(result.output).toContain('OPEN_EDITOR:readme.txt:');
-
-      // Should have base64 encoded content
-      const base64Content = (result.output as string).split(':')[2];
-      const decodedContent = atob(base64Content);
-      expect(decodedContent.length).toBeGreaterThan(0);
-    });
-  });
-
   describe('vi command', () => {
     it('should open existing file for editing', () => {
       commands.touch(['test.txt'], filesystem);
@@ -411,16 +357,18 @@ describe('Commands', () => {
       expect(result.error).toBe('vi: missing filename argument');
     });
 
-    it('should work identically to nano', () => {
-      commands.touch(['same-file.txt'], filesystem);
+    it('should handle files with content', () => {
+      // Change to documents directory which has files with content
+      filesystem.currentPath = ['home', 'user', 'documents'];
+      const result = commands.vi(['readme.txt'], filesystem);
 
-      const nanoResult = commands.nano(['same-file.txt'], filesystem);
-      const viResult = commands.vi(['same-file.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('OPEN_EDITOR:readme.txt:');
 
-      expect(nanoResult.success).toBe(viResult.success);
-      // Both should open the same file with same content
-      expect((nanoResult.output as string).split(':')[0]).toBe('OPEN_EDITOR');
-      expect((viResult.output as string).split(':')[0]).toBe('OPEN_EDITOR');
+      // Should have base64 encoded content
+      const base64Content = (result.output as string).split(':')[2];
+      const decodedContent = atob(base64Content);
+      expect(decodedContent.length).toBeGreaterThan(0);
     });
   });
 

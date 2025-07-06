@@ -2,9 +2,9 @@ import type { FileSystemNode } from '~/routes/terminal/types/filesystem';
 
 /**
  * Editor modes for the text editor.
- * INSERT mode allows typing text, COMMAND mode allows executing commands.
+ * INSERT mode allows typing text, NORMAL mode allows executing commands.
  */
-export type EditorMode = 'INSERT' | 'COMMAND';
+export type EditorMode = 'INSERT' | 'NORMAL';
 
 /**
  * Cursor position in the editor.
@@ -60,10 +60,10 @@ export function createTextEditorState(filename: string, content: string = ''): T
     content,
     lines,
     cursorPosition: { line: 0, column: 0 },
-    mode: 'COMMAND',
+    mode: 'NORMAL',
     isModified: false,
     showLineNumbers: true,
-    statusMessage: `Editing ${filename} - COMMAND mode`,
+    statusMessage: `Editing ${filename} - NORMAL mode`,
     scrollOffset: 0,
     maxVisibleLines: 20,
     isVisible: true,
@@ -122,7 +122,7 @@ export function moveCursor(state: TextEditorState, newPosition: Partial<CursorPo
 }
 
 /**
- * Switches the editor mode between INSERT and COMMAND.
+ * Switches the editor mode between INSERT and NORMAL.
  *
  * @param state - Current editor state
  * @param mode - New editor mode
@@ -263,7 +263,7 @@ export function insertNewLineBelow(state: TextEditorState): TextEditorState {
 }
 
 /**
- * Executes a command in COMMAND mode.
+ * Executes a command in NORMAL mode.
  *
  * @param state - Current editor state
  * @param command - Command to execute
@@ -361,7 +361,7 @@ export function handleKeyboardInput(state: TextEditorState, event: KeyboardEvent
   if (state.mode === 'INSERT') {
     return handleInsertModeInput(state, event);
   } else {
-    return handleCommandModeInput(state, event);
+    return handleNormalModeInput(state, event);
   }
 }
 
@@ -375,7 +375,7 @@ export function handleKeyboardInput(state: TextEditorState, event: KeyboardEvent
 function handleInsertModeInput(state: TextEditorState, event: KeyboardEvent): { state: TextEditorState; commandResult?: EditorCommandResult } {
   switch (event.key) {
     case 'Escape':
-      return { state: switchMode(state, 'COMMAND') };
+      return { state: switchMode(state, 'NORMAL') };
 
     case 'Enter':
       return { state: insertNewLine(state) };
@@ -425,13 +425,13 @@ function handleInsertModeInput(state: TextEditorState, event: KeyboardEvent): { 
 }
 
 /**
- * Handles keyboard input in COMMAND mode.
+ * Handles keyboard input in NORMAL mode.
  *
  * @param state - Current editor state
  * @param event - Keyboard event
  * @returns Updated editor state and possible command result
  */
-function handleCommandModeInput(state: TextEditorState, event: KeyboardEvent): { state: TextEditorState; commandResult?: EditorCommandResult } {
+function handleNormalModeInput(state: TextEditorState, event: KeyboardEvent): { state: TextEditorState; commandResult?: EditorCommandResult } {
   switch (event.key) {
     case 'i':
       return { state: switchMode(state, 'INSERT') };
@@ -479,7 +479,7 @@ function handleCommandModeInput(state: TextEditorState, event: KeyboardEvent): {
       return { state };
 
     default:
-      // For unhandled keys in command mode, do nothing
+      // For unhandled keys in normal mode, do nothing
       return { state };
   }
 }

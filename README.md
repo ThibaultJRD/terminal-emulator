@@ -14,7 +14,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 - **Navigation**: `cd`, `pwd`, `ls` (with options `-a`, `-l`, `-la`)
 - **Files**: `touch`, `cat`, `rm` (with `-r`, `-f`), `rmdir`
 - **Directories**: `mkdir` (with `-p` to create parents)
-- **Text Editor**: `nano`, `vi` (vim-inspired editor with INSERT/COMMAND modes)
+- **Text Editor**: `vi` (vim-inspired editor with INSERT/NORMAL modes)
 - **Filesystem Management**: `reset-fs`, `storage-info`
 - **Utilities**: `echo`, `wc`, `clear`, `help`
 
@@ -188,11 +188,11 @@ cat << EOF                     # Simplified heredoc
 
 ## 📝 Text Editor
 
-The terminal includes a powerful vim-inspired text editor accessible via `nano` or `vi` commands.
+The terminal includes a powerful vim-inspired text editor accessible via the `vi` command.
 
 ### Editor Features
 
-- **Modal Editing**: COMMAND mode for navigation (default), INSERT mode for typing
+- **Modal Editing**: NORMAL mode for navigation (default), INSERT mode for typing
 - **Vim Shortcuts**: Comprehensive vim navigation and text manipulation commands
 - **File Operations**: Save (`:w`), quit (`:q`), save & quit (`:wq`), force quit (`:q!`)
 - **Visual Feedback**: Line numbers, status bar, mode indicator, cursor positioning
@@ -206,16 +206,16 @@ The terminal includes a powerful vim-inspired text editor accessible via `nano` 
 
 ```bash
 # Open existing file
-nano myfile.txt
+vi myfile.txt
 vi document.md
 
 # Create new file
-nano newfile.txt
+vi newfile.txt
 ```
 
 ### Editor Commands
 
-#### COMMAND Mode (default)
+#### NORMAL Mode (default)
 
 **Navigation:**
 
@@ -245,7 +245,7 @@ nano newfile.txt
 - **Backspace/Delete** to remove text
 - **Arrow keys** for navigation
 - **Tab** - Insert 2 spaces
-- **Escape** - Return to COMMAND mode
+- **Escape** - Return to NORMAL mode
 
 #### Command Prompt (after pressing :)
 
@@ -260,7 +260,7 @@ nano newfile.txt
 - **Ctrl+S** - Save file (any mode)
 - **Ctrl+C** - Quit editor (prompts if unsaved)
 - **Tab** - Insert 2 spaces
-- **Escape** - Switch to COMMAND mode
+- **Escape** - Switch to NORMAL mode
 
 ### Advanced Editor Examples
 
@@ -268,9 +268,9 @@ nano newfile.txt
 
 ```bash
 # Create and open a new configuration file
-nano config.json
+vi config.json
 
-# In the editor (starts in COMMAND mode):
+# In the editor (starts in NORMAL mode):
 # 1. Press 'i' to enter INSERT mode
 # 2. Type your JSON content:
 {
@@ -278,7 +278,7 @@ nano config.json
   "fontSize": 14,
   "features": ["vim-mode", "unicode-support"]
 }
-# 3. Press Escape to return to COMMAND mode
+# 3. Press Escape to return to NORMAL mode
 # 4. Type ':wq' to save and quit
 ```
 
@@ -300,7 +300,7 @@ vi script.js
 
 ```bash
 # Create a file with international content
-nano international.txt
+vi international.txt
 
 # The editor fully supports:
 # - Accented characters: café, résumé, naïve
@@ -315,7 +315,7 @@ nano international.txt
 
 **Q: I'm stuck in INSERT mode and can't save**
 
-- **Solution**: Press `Escape` to enter COMMAND mode, then type `:w` to save
+- **Solution**: Press `Escape` to enter NORMAL mode, then type `:w` to save
 
 **Q: The editor won't let me quit**
 
@@ -335,11 +335,11 @@ nano international.txt
 
 **Q: Can't type accented characters**
 
-- **Solution**: Make sure you're in INSERT mode (press `i` from COMMAND mode) and your keyboard input method is working.
+- **Solution**: Make sure you're in INSERT mode (press `i` from NORMAL mode) and your keyboard input method is working.
 
 #### Best Practices
 
-1. **Always start in COMMAND mode**: Remember the editor opens in COMMAND mode by default
+1. **Always start in NORMAL mode**: Remember the editor opens in NORMAL mode by default
 2. **Save frequently**: Use `:w` to save your work regularly
 3. **Use proper navigation**: Learn vim keys (hjkl) for efficient movement
 4. **Check the status bar**: Monitor your current mode and cursor position
