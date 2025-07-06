@@ -135,6 +135,35 @@ npm test -- --coverage  # Run tests with coverage report
 - Autocompletion: Command completion, path completion, and redirection completion
 - Integration: Complex workflows, error scenarios, and real-world usage patterns
 
+## Deployment
+
+### Vercel (Recommended)
+
+The project is configured for easy deployment on Vercel:
+
+1. **Connect Repository**: Link your GitHub repository to Vercel
+2. **Environment Variables**: Set `VITE_FILESYSTEM_MODE` (default: 'default')
+3. **Deploy**: Vercel will automatically use the configuration in `vercel.json`
+
+#### Vercel Configuration
+
+- **Build Command**: `npm run build`
+- **Output Directory**: `build/client`
+- **SPA Routing**: Configured with rewrites to handle client-side routing
+- **Asset Caching**: Static assets cached for 1 year with immutable headers
+
+#### Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+- `VITE_FILESYSTEM_MODE`: Choose 'default' or 'portfolio' filesystem structure
+
+### Alternative Platforms
+
+- **Netlify**: Requires `_redirects` file for SPA routing
+- **Firebase Hosting**: Configure `firebase.json` with rewrites
+- **GitHub Pages**: Limited but free option
+
 ## Development Notes
 
 - Always run `npm run typecheck` after making changes to ensure TypeScript compliance
