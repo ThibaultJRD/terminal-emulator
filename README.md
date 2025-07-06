@@ -15,7 +15,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 - **Files**: `touch`, `cat`, `rm` (with `-r`, `-f`), `rmdir`
 - **Directories**: `mkdir` (with `-p` to create parents)
 - **Text Editor**: `nano`, `vi` (vim-inspired editor with INSERT/COMMAND modes)
-- **Filesystem Management**: `switch-fs`, `reset-fs`, `storage-info`
+- **Filesystem Management**: `reset-fs`, `storage-info`
 - **Utilities**: `echo`, `wc`, `clear`, `help`
 
 ### 🔄 I/O Redirection
@@ -158,8 +158,7 @@ nano file.txt          # Open file in nano text editor
 vi document.md         # Open file in vi text editor
 
 # Filesystem Management
-switch-fs portfolio    # Switch to portfolio filesystem
-reset-fs default       # Reset to default filesystem
+reset-fs               # Reset to deployment-configured filesystem
 storage-info           # Show storage information
 
 # Utilities
@@ -186,7 +185,6 @@ cat << EOF                     # Simplified heredoc
 - `Tab` after partial path → completes file/directory
 - `Tab` after `>` or `>>` → completes destination files
 - `Tab` after `<` → completes source files only
-- `Tab` after `switch-fs` → completes filesystem modes
 
 ## 📝 Text Editor
 
@@ -251,15 +249,11 @@ nano newfile.txt
 
 ## 🗂️ Filesystem Configuration
 
-The terminal supports multiple filesystem modes for different use cases.
+The terminal supports multiple filesystem modes configured at deployment time.
 
 ### Available Modes
 
 #### Default Mode
-
-```bash
-switch-fs default
-```
 
 A comprehensive Unix-like filesystem with:
 
@@ -272,10 +266,6 @@ A comprehensive Unix-like filesystem with:
 
 #### Portfolio Mode
 
-```bash
-switch-fs portfolio
-```
-
 A portfolio-focused structure designed for showcasing:
 
 - `/about/` - Personal information, skills, CV
@@ -283,20 +273,26 @@ A portfolio-focused structure designed for showcasing:
 - `/contact/` - Contact information and social links
 - `/blog/` - Technical articles and blog posts
 
+### Configuration
+
+Filesystem mode is configured at deployment time using the `VITE_FILESYSTEM_MODE` environment variable:
+
+```bash
+# Development (defaults to 'default')
+npm run dev
+
+# Production with portfolio mode
+VITE_FILESYSTEM_MODE=portfolio npm run build
+
+# Production with default mode (explicit)
+VITE_FILESYSTEM_MODE=default npm run build
+```
+
 ### Filesystem Management Commands
 
 ```bash
-# View current mode and available options
-switch-fs
-
-# Switch to portfolio mode
-switch-fs portfolio
-
-# Reset to fresh default filesystem
-reset-fs default
-
-# Reset to fresh portfolio filesystem
-reset-fs portfolio
+# Reset to deployment-configured filesystem
+reset-fs
 
 # View storage information
 storage-info
@@ -308,8 +304,7 @@ The filesystem automatically saves to browser localStorage:
 
 - **Auto-save**: Changes saved automatically after 1 second of inactivity
 - **Session restore**: Filesystem state restored on page reload
-- **Mode memory**: Last used filesystem mode is remembered
-- **Backup system**: Previous filesystem backed up when switching modes
+- **Mode consistency**: Filesystem mode determined by deployment configuration
 
 ### Custom Filesystem Development
 
