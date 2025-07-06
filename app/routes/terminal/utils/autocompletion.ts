@@ -45,14 +45,27 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
   // Path completion
   const command = parts[0];
 
-  // Detect if we just finished typing a command (ends with space)
+  // Determine what to complete based on the input structure
   let pathArg: string;
-  if (input.endsWith(' ') && parts.length === 1) {
-    // Just typed "cat " - complete all files
-    pathArg = '';
+  if (input.endsWith(' ')) {
+    // Input ends with space - we're starting a new argument
+    if (parts.length === 1) {
+      // Just typed "cat " - complete all files
+      pathArg = '';
+    } else {
+      // Typed "ls -a " or "cat -n " - complete all files after options
+      pathArg = '';
+    }
   } else {
-    // Normal case - complete the last argument
-    pathArg = parts[parts.length - 1];
+    // Input doesn't end with space - we're completing the current argument
+    const lastArg = parts[parts.length - 1];
+    if (isOption(lastArg)) {
+      // Last argument is an option like "-a" - no completion for options
+      return { completions: [], commonPrefix: '' };
+    } else {
+      // Last argument is a path - complete it
+      pathArg = lastArg;
+    }
   }
 
   if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'wc', 'vi'].includes(command)) {
@@ -140,6 +153,24 @@ function getFileCompletions(partialPath: string, filesystem: FileSystemState): A
   };
 }
 
+// Helper to check if an argument is an option (starts with -)
+function isOption(arg: string): boolean {
+  return arg.startsWith('-') && arg.length > 1;
+}
+
+// Helper to find the last non-option argument for path completion
+function getLastNonOptionArg(parts: string[]): string {
+  // Start from the end and find the first non-option argument
+  for (let i = parts.length - 1; i >= 1; i--) {
+    // Skip index 0 (command)
+    if (!isOption(parts[i])) {
+      return parts[i];
+    }
+  }
+  // If all arguments are options, return empty string (complete all files)
+  return '';
+}
+
 function getCommonPrefix(strings: string[]): string {
   if (strings.length === 0) return '';
   if (strings.length === 1) return strings[0];
@@ -175,13 +206,20 @@ export function applyCompletion(input: string, completion: string): string {
   }
 
   // Path completion - handle the case where input ends with space
-  if (input.endsWith(' ') && parts.length === 1) {
-    // Input like "cat " - append the completion
+  if (input.endsWith(' ')) {
+    // Input ends with space - append the completion
     return `${trimmedInput} ${completion}`;
   } else {
-    // Input like "cat file" - replace last part
-    parts[parts.length - 1] = completion;
-    return parts.join(' ');
+    // Input doesn't end with space - replace the last non-option argument
+    const lastArg = parts[parts.length - 1];
+    if (isOption(lastArg)) {
+      // Last argument is an option - this shouldn't happen in normal flow
+      return `${trimmedInput} ${completion}`;
+    } else {
+      // Replace the last argument (which should be a path)
+      parts[parts.length - 1] = completion;
+      return parts.join(' ');
+    }
   }
 }
 
@@ -204,12 +242,19 @@ export function applyCompletionNoSpace(input: string, completion: string): strin
   }
 
   // Path completion - handle the case where input ends with space
-  if (input.endsWith(' ') && parts.length === 1) {
-    // Input like "cat " - append the completion (no trailing space for cycling)
+  if (input.endsWith(' ')) {
+    // Input ends with space - append the completion (no trailing space for cycling)
     return `${trimmedInput} ${completion}`;
   } else {
-    // Input like "cat file" - replace last part
-    parts[parts.length - 1] = completion;
-    return parts.join(' ');
+    // Input doesn't end with space - replace the last non-option argument
+    const lastArg = parts[parts.length - 1];
+    if (isOption(lastArg)) {
+      // Last argument is an option - this shouldn't happen in normal flow
+      return `${trimmedInput} ${completion}`;
+    } else {
+      // Replace the last argument (which should be a path)
+      parts[parts.length - 1] = completion;
+      return parts.join(' ');
+    }
   }
 }
