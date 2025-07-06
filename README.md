@@ -5,7 +5,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-135%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-294%20passing-green?logo=vitest)
 
 ## ✨ Features
 
@@ -45,7 +45,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 
 ### 🧪 Testing
 
-- **135 tests** with comprehensive coverage
+- **294 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
@@ -192,11 +192,15 @@ The terminal includes a powerful vim-inspired text editor accessible via `nano` 
 
 ### Editor Features
 
-- **Modal Editing**: INSERT mode for typing, COMMAND mode for operations
-- **Vim Shortcuts**: Basic vim navigation and commands
-- **File Operations**: Save (`:w`), quit (`:q`), save & quit (`:wq`)
-- **Visual Feedback**: Line numbers, status bar, mode indicator
-- **Keyboard Navigation**: Arrow keys, hjkl, home/end, page up/down
+- **Modal Editing**: COMMAND mode for navigation (default), INSERT mode for typing
+- **Vim Shortcuts**: Comprehensive vim navigation and text manipulation commands
+- **File Operations**: Save (`:w`), quit (`:q`), save & quit (`:wq`), force quit (`:q!`)
+- **Visual Feedback**: Line numbers, status bar, mode indicator, cursor positioning
+- **Keyboard Navigation**: Arrow keys, vim hjkl, home/end, page up/down
+- **Text Manipulation**: Character deletion, line operations, cursor movement
+- **Unicode Support**: Full support for emojis, accented characters, and international text
+- **Smart Cursor**: Proper positioning with emoji and Unicode character support
+- **Dynamic Viewport**: Automatically adjusts to window size for optimal editing experience
 
 ### Usage
 
@@ -211,26 +215,37 @@ nano newfile.txt
 
 ### Editor Commands
 
-#### INSERT Mode (default)
+#### COMMAND Mode (default)
+
+**Navigation:**
+
+- **h/j/k/l** - Navigate left/down/up/right
+- **Arrow keys** - Alternative navigation
+- **0** - Beginning of line
+- **$** - End of line
+- **G** - Go to end of file
+- **gg** - Go to beginning of file
+- **Page Up/Down** - Navigate by pages
+- **Home/End** - Move to line start/end
+
+**Text Operations:**
+
+- **i** - Enter INSERT mode at cursor
+- **a** - Append after cursor (INSERT mode)
+- **o** - Open new line below cursor (INSERT mode)
+- **O** - Open new line above cursor (INSERT mode)
+- **x** - Delete character under cursor
+- **X** - Delete character before cursor
+- **:** - Enter command prompt
+
+#### INSERT Mode
 
 - **Type** to insert text
 - **Enter** for new line
 - **Backspace/Delete** to remove text
 - **Arrow keys** for navigation
-- **Escape** to enter COMMAND mode
-
-#### COMMAND Mode
-
-- **i** - Enter INSERT mode
-- **a** - Append after cursor (INSERT mode)
-- **o** - Open new line below (INSERT mode)
-- **h/j/k/l** - Navigate left/down/up/right
-- **0** - Beginning of line
-- **$** - End of line
-- **G** - Go to end of file
-- **x** - Delete character under cursor
-- **X** - Delete character before cursor
-- **:** - Enter command prompt
+- **Tab** - Insert 2 spaces
+- **Escape** - Return to COMMAND mode
 
 #### Command Prompt (after pressing :)
 
@@ -246,6 +261,89 @@ nano newfile.txt
 - **Ctrl+C** - Quit editor (prompts if unsaved)
 - **Tab** - Insert 2 spaces
 - **Escape** - Switch to COMMAND mode
+
+### Advanced Editor Examples
+
+#### Creating and Editing a Configuration File
+
+```bash
+# Create and open a new configuration file
+nano config.json
+
+# In the editor (starts in COMMAND mode):
+# 1. Press 'i' to enter INSERT mode
+# 2. Type your JSON content:
+{
+  "theme": "catppuccin-mocha",
+  "fontSize": 14,
+  "features": ["vim-mode", "unicode-support"]
+}
+# 3. Press Escape to return to COMMAND mode
+# 4. Type ':wq' to save and quit
+```
+
+#### Editing Code Files
+
+```bash
+# Open a JavaScript file
+vi script.js
+
+# Navigate and edit:
+# - Use 'j' and 'k' to move between lines
+# - Press '0' to go to line start, '$' to go to line end
+# - Press 'o' to open a new line below and start typing
+# - Use 'x' to delete characters
+# - Save with ':w' and continue editing
+```
+
+#### Working with Unicode and Emojis
+
+```bash
+# Create a file with international content
+nano international.txt
+
+# The editor fully supports:
+# - Accented characters: café, résumé, naïve
+# - Unicode symbols: ∀x∈ℝ, α + β = γ
+# - Emojis: 🚀 🌟 💻 ⚛️
+# - Asian characters: 你好世界, こんにちは, 안녕하세요
+```
+
+### Editor Troubleshooting
+
+#### Common Issues and Solutions
+
+**Q: I'm stuck in INSERT mode and can't save**
+
+- **Solution**: Press `Escape` to enter COMMAND mode, then type `:w` to save
+
+**Q: The editor won't let me quit**
+
+- **Solution**: If you have unsaved changes, use `:q!` to force quit without saving, or `:wq` to save and quit
+
+**Q: Cursor positioning looks wrong with emojis**
+
+- **Solution**: The editor uses smart cursor positioning for Unicode characters. This is normal behavior.
+
+**Q: Line numbers don't appear**
+
+- **Solution**: Line numbers are enabled by default. Check if your window is wide enough to display them.
+
+**Q: Text appears cut off**
+
+- **Solution**: The editor dynamically adjusts to window size. Try resizing your browser window.
+
+**Q: Can't type accented characters**
+
+- **Solution**: Make sure you're in INSERT mode (press `i` from COMMAND mode) and your keyboard input method is working.
+
+#### Best Practices
+
+1. **Always start in COMMAND mode**: Remember the editor opens in COMMAND mode by default
+2. **Save frequently**: Use `:w` to save your work regularly
+3. **Use proper navigation**: Learn vim keys (hjkl) for efficient movement
+4. **Check the status bar**: Monitor your current mode and cursor position
+5. **Unicode awareness**: The editor handles Unicode properly, but complex scripts may need special attention
 
 ## 🗂️ Filesystem Configuration
 
@@ -431,23 +529,29 @@ Shows:
 
 ### Test Structure
 
-- **Unit Tests** (115 tests)
-  - File system operations
-  - Command and option parsers
-  - Individual commands
-  - Autocompletion
-- **Integration Tests** (20 tests)
-  - Complete command execution
-  - Redirection scenarios
-  - Error handling
+- **Unit Tests** (203 tests)
+  - File system operations and persistence
+  - Command implementations (including text editor commands)
+  - Command and option parsers with advanced features
+  - Text editor functionality (69 comprehensive tests)
+  - Autocompletion system with Unicode support
+- **Integration Tests** (91 tests)
+  - Complete command execution workflows
+  - Text editor integration with filesystem
+  - I/O redirection scenarios with Unicode content
+  - Unicode and emoji support across all features
+  - Error handling and edge cases
 
 ### Coverage
 
-- ✅ All commands with options
-- ✅ Parsing and redirection
-- ✅ Navigation and path resolution
-- ✅ Autocompletion in all contexts
-- ✅ Error scenarios and edge cases
+- ✅ All commands with comprehensive option testing
+- ✅ Advanced parsing and I/O redirection
+- ✅ Navigation and path resolution with Unicode
+- ✅ Complete text editor functionality (modes, vim commands, file operations)
+- ✅ Autocompletion in all contexts including Unicode filenames
+- ✅ Unicode and emoji support throughout the system
+- ✅ Error scenarios, edge cases, and performance testing
+- ✅ Browser storage and persistence functionality
 
 ## 🎨 Catppuccin Theme
 

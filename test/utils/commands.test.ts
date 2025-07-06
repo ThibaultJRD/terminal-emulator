@@ -342,7 +342,7 @@ describe('Commands', () => {
       expect(result.output).toContain('OPEN_EDITOR:newfile.txt:');
 
       // Content should be empty (base64 encoded empty string)
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       expect(atob(base64Content)).toBe('');
     });
 
@@ -374,7 +374,7 @@ describe('Commands', () => {
       expect(result.output).toContain('OPEN_EDITOR:readme.txt:');
 
       // Should have base64 encoded content
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent.length).toBeGreaterThan(0);
     });
@@ -419,8 +419,8 @@ describe('Commands', () => {
 
       expect(nanoResult.success).toBe(viResult.success);
       // Both should open the same file with same content
-      expect(nanoResult.output.split(':')[0]).toBe('OPEN_EDITOR');
-      expect(viResult.output.split(':')[0]).toBe('OPEN_EDITOR');
+      expect((nanoResult.output as string).split(':')[0]).toBe('OPEN_EDITOR');
+      expect((viResult.output as string).split(':')[0]).toBe('OPEN_EDITOR');
     });
   });
 

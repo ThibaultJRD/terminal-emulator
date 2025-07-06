@@ -6,6 +6,11 @@ import { createDefaultFilesystem } from '~/routes/terminal/utils/defaultFilesyst
 import { createFile, getNodeAtPath } from '~/routes/terminal/utils/filesystem';
 import { createTextEditorState, executeEditorCommand, handleKeyboardInput, insertTextAtCursor, switchMode } from '~/routes/terminal/utils/textEditor';
 
+// Helper function to safely split command output
+const getOutputAsString = (output: string | any[]): string => {
+  return typeof output === 'string' ? output : output.map((seg) => seg.text).join('');
+};
+
 describe('Text Editor Integration', () => {
   let filesystem: FileSystemState;
 
@@ -27,7 +32,7 @@ describe('Text Editor Integration', () => {
       expect(result.output).toContain('OPEN_EDITOR:test.txt:');
 
       // Decode the base64 content
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('Hello World\nLine 2');
     });
@@ -39,7 +44,7 @@ describe('Text Editor Integration', () => {
       expect(result.output).toContain('OPEN_EDITOR:newfile.txt:');
 
       // Decode the base64 content (should be empty)
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('');
     });
@@ -57,7 +62,7 @@ describe('Text Editor Integration', () => {
       const result = executeCommand('nano special-file.txt', filesystem);
 
       expect(result.success).toBe(true);
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('Content with accents: café, résumé');
     });
@@ -72,7 +77,7 @@ describe('Text Editor Integration', () => {
       expect(result.success).toBe(true);
       expect(result.output).toContain('OPEN_EDITOR:code.js:');
 
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('function hello() {\n  console.log("Hello");\n}');
     });
@@ -94,7 +99,7 @@ describe('Text Editor Integration', () => {
       const result = executeCommand('vi main.c', filesystem);
 
       expect(result.success).toBe(true);
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('#include <stdio.h>\nint main() { return 0; }');
     });
@@ -110,7 +115,7 @@ describe('Text Editor Integration', () => {
       expect(openResult.success).toBe(true);
 
       // Step 3: Create editor state from opened file
-      const base64Content = openResult.output.split(':')[2];
+      const base64Content = (openResult.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       let editorState = createTextEditorState('workflow.txt', decodedContent);
 
@@ -143,7 +148,7 @@ describe('Text Editor Integration', () => {
 
       // Open file
       const openResult = executeCommand('vi saveandquit.txt', filesystem);
-      const base64Content = openResult.output.split(':')[2];
+      const base64Content = (openResult.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       let editorState = createTextEditorState('saveandquit.txt', decodedContent);
 
@@ -164,7 +169,7 @@ describe('Text Editor Integration', () => {
       createFile(filesystem, ['home', 'user'], 'unsaved.txt', 'Original');
 
       const openResult = executeCommand('nano unsaved.txt', filesystem);
-      const base64Content = openResult.output.split(':')[2];
+      const base64Content = (openResult.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       let editorState = createTextEditorState('unsaved.txt', decodedContent);
 
@@ -192,7 +197,7 @@ describe('Text Editor Integration', () => {
       expect(openResult.success).toBe(true);
 
       // Editor should start with empty content
-      const base64Content = openResult.output.split(':')[2];
+      const base64Content = (openResult.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('');
 
@@ -315,7 +320,7 @@ describe('Text Editor Integration', () => {
       expect(result.output).toContain('OPEN_EDITOR:/nonexistent/path/file.txt:');
 
       // Content should be empty for non-existent file
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe('');
     });
@@ -328,7 +333,7 @@ describe('Text Editor Integration', () => {
 
       expect(result.success).toBe(true);
 
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe(largeContent);
       expect(decodedContent.length).toBe(20001); // 10000 + 1 + 10000
@@ -342,7 +347,7 @@ describe('Text Editor Integration', () => {
 
       expect(result.success).toBe(true);
 
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       const lines = decodedContent.split('\n');
       expect(lines.length).toBe(1000);
@@ -359,7 +364,7 @@ describe('Text Editor Integration', () => {
 
       expect(result.success).toBe(true);
 
-      const base64Content = result.output.split(':')[2];
+      const base64Content = (result.output as string).split(':')[2];
       const decodedContent = atob(base64Content);
       expect(decodedContent).toBe(binaryContent);
     });
@@ -430,9 +435,9 @@ describe('Text Editor Integration', () => {
       expect(tempResult.success).toBe(true);
 
       // Verify content
-      const homeBase64 = homeResult.output.split(':')[2];
-      const docBase64 = docResult.output.split(':')[2];
-      const tempBase64 = tempResult.output.split(':')[2];
+      const homeBase64 = (homeResult.output as string).split(':')[2];
+      const docBase64 = (docResult.output as string).split(':')[2];
+      const tempBase64 = (tempResult.output as string).split(':')[2];
 
       expect(atob(homeBase64)).toBe('Home content');
       expect(atob(docBase64)).toBe('Document content');
@@ -449,8 +454,8 @@ describe('Text Editor Integration', () => {
       expect(configResult.success).toBe(true);
       expect(bashrcResult.success).toBe(true);
 
-      const configContent = atob(configResult.output.split(':')[2]);
-      const bashrcContent = atob(bashrcResult.output.split(':')[2]);
+      const configContent = atob((configResult.output as string).split(':')[2]);
+      const bashrcContent = atob((bashrcResult.output as string).split(':')[2]);
 
       expect(configContent).toBe('Configuration data');
       expect(bashrcContent).toBe('# Bash configuration\nalias ll="ls -la"');
