@@ -44,7 +44,16 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
 
   // Path completion
   const command = parts[0];
-  const pathArg = parts[parts.length - 1];
+
+  // Detect if we just finished typing a command (ends with space)
+  let pathArg: string;
+  if (input.endsWith(' ') && parts.length === 1) {
+    // Just typed "cat " - complete all files
+    pathArg = '';
+  } else {
+    // Normal case - complete the last argument
+    pathArg = parts[parts.length - 1];
+  }
 
   if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'wc', 'vi'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
@@ -157,14 +166,50 @@ export function applyCompletion(input: string, completion: string): string {
     return `${commandPart} ${operator} ${completion}`;
   }
 
-  const parts = input.trim().split(/\s+/);
+  const trimmedInput = input.trim();
+  const parts = trimmedInput.split(/\s+/);
 
   if (parts.length === 0 || (parts.length === 1 && !input.endsWith(' '))) {
     // Command completion
     return completion + ' ';
   }
 
-  // Path completion
-  parts[parts.length - 1] = completion;
-  return parts.join(' ');
+  // Path completion - handle the case where input ends with space
+  if (input.endsWith(' ') && parts.length === 1) {
+    // Input like "cat " - append the completion
+    return `${trimmedInput} ${completion}`;
+  } else {
+    // Input like "cat file" - replace last part
+    parts[parts.length - 1] = completion;
+    return parts.join(' ');
+  }
+}
+
+// Apply completion without adding trailing space (for cycling)
+export function applyCompletionNoSpace(input: string, completion: string): string {
+  // Check for redirection operators
+  const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
+
+  if (redirectMatch) {
+    const [, commandPart, operator] = redirectMatch;
+    return `${commandPart} ${operator} ${completion}`;
+  }
+
+  const trimmedInput = input.trim();
+  const parts = trimmedInput.split(/\s+/);
+
+  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(' '))) {
+    // Command completion without space
+    return completion;
+  }
+
+  // Path completion - handle the case where input ends with space
+  if (input.endsWith(' ') && parts.length === 1) {
+    // Input like "cat " - append the completion (no trailing space for cycling)
+    return `${trimmedInput} ${completion}`;
+  } else {
+    // Input like "cat file" - replace last part
+    parts[parts.length - 1] = completion;
+    return parts.join(' ');
+  }
 }

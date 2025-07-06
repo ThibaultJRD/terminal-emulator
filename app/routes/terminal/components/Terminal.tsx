@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TextEditor } from '~/routes/terminal/components/TextEditor';
 import type { OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
-import { applyCompletion, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
+import { applyCompletion, applyCompletionNoSpace, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
 import { getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
@@ -310,7 +310,10 @@ export function Terminal() {
           if (completionState.selectedIndex === -1) {
             // First selection: start with first item
             const selectedCompletion = completionState.completions[0];
-            const newInput = applyCompletion(completionState.originalInput, selectedCompletion);
+            const isCmd = isCommandCompletion(completionState.originalInput);
+            const newInput = isCmd
+              ? applyCompletionNoSpace(completionState.originalInput, selectedCompletion)
+              : applyCompletion(completionState.originalInput, selectedCompletion);
 
             setCompletionState((prev) => ({
               ...prev,
@@ -325,7 +328,10 @@ export function Terminal() {
             // Cycle through completions
             const nextIndex = (completionState.selectedIndex + 1) % completionState.completions.length;
             const selectedCompletion = completionState.completions[nextIndex];
-            const newInput = applyCompletion(completionState.originalInput, selectedCompletion);
+            const isCmd = isCommandCompletion(completionState.originalInput);
+            const newInput = isCmd
+              ? applyCompletionNoSpace(completionState.originalInput, selectedCompletion)
+              : applyCompletion(completionState.originalInput, selectedCompletion);
 
             setCompletionState((prev) => ({
               ...prev,
@@ -572,6 +578,13 @@ export function Terminal() {
 
   const generatePromptText = (path: string[]): string => {
     return `user@terminal:${formatPath(path)} ❯ `;
+  };
+
+  // Helper to check if we're completing a command (not a path)
+  const isCommandCompletion = (originalInput: string): boolean => {
+    const trimmed = originalInput.trim();
+    const parts = trimmed.split(/\s+/);
+    return parts.length === 1 && !originalInput.endsWith(' ');
   };
 
   const currentPrompt = {
