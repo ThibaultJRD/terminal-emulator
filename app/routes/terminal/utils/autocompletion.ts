@@ -50,28 +50,7 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
     return getPathCompletions(pathArg, filesystem);
   }
 
-  // Special completions for new commands
-  if (command === 'switch-fs' && parts.length === 2) {
-    const modes = ['default', 'portfolio'];
-    const prefix = parts[1] || '';
-    const matchingModes = modes.filter((mode) => mode.startsWith(prefix));
-
-    return {
-      completions: matchingModes,
-      commonPrefix: getCommonPrefix(matchingModes),
-    };
-  }
-
-  if (command === 'reset-fs' && parts.length === 2) {
-    const modes = ['default', 'portfolio'];
-    const prefix = parts[1] || '';
-    const matchingModes = modes.filter((mode) => mode.startsWith(prefix));
-
-    return {
-      completions: matchingModes,
-      commonPrefix: getCommonPrefix(matchingModes),
-    };
-  }
+  // No special completions needed for reset-fs as it no longer takes arguments
 
   return { completions: [], commonPrefix: '' };
 }

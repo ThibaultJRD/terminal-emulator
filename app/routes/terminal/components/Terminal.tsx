@@ -3,11 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { TextEditor } from '~/routes/terminal/components/TextEditor';
 import type { OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { applyCompletion, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
+import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
-import { getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
+import { getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
 import { formatPath } from '~/routes/terminal/utils/filesystem';
-import { type FilesystemMode, resetToDefaultFilesystem, saveFilesystemState, switchFilesystemMode } from '~/routes/terminal/utils/persistence';
+import { type FilesystemMode, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import { type TextEditorState, createTextEditorState } from '~/routes/terminal/utils/textEditor';
 
 interface TerminalOutputLine {
@@ -25,7 +26,7 @@ export function Terminal() {
     filesystem: createDefaultFileSystem(),
   }));
 
-  const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>('default');
+  const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>(getFilesystemModeFromEnv());
   const [textEditorState, setTextEditorState] = useState<TextEditorState | null>(null);
   const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
 
@@ -64,8 +65,11 @@ export function Terminal() {
   // Auto-save filesystem changes to localStorage
   useEffect(() => {
     const saveTimeout = setTimeout(() => {
-      saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
-    }, 1000); // Save after 1 second of inactivity
+      const result = saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
+      if (!result.success) {
+        console.error('Failed to auto-save filesystem:', result.error);
+      }
+    }, 200); // Save after 200ms of inactivity (more responsive)
 
     return () => clearTimeout(saveTimeout);
   }, [terminalState.filesystem, currentFilesystemMode]);
@@ -118,35 +122,6 @@ export function Terminal() {
             historyIndex: -1,
             currentInput: '',
           }));
-          return;
-        }
-
-        // Handle filesystem switching
-        if (result.output.startsWith('SWITCH_FILESYSTEM:')) {
-          const mode = result.output.split(':')[1] as FilesystemMode;
-          const switchResult = switchFilesystemMode(mode, terminalState.filesystem.root, terminalState.filesystem.currentPath);
-
-          setTerminalState((prev) => ({
-            ...prev,
-            filesystem: {
-              root: switchResult.filesystem,
-              currentPath: switchResult.currentPath,
-            },
-            history: [...prev.history, input],
-            historyIndex: -1,
-            currentInput: '',
-          }));
-
-          setCurrentFilesystemMode(mode);
-
-          setOutputLines((prev) => [
-            ...prev,
-            {
-              type: 'output',
-              content: `Switched to ${mode} filesystem mode`,
-              timestamp: new Date(),
-            },
-          ]);
           return;
         }
 
@@ -228,8 +203,25 @@ export function Terminal() {
         historyIndex: -1,
         currentInput: '',
       }));
+
+      // Immediate save for filesystem-modifying commands and redirections
+      const filesystemCommands = ['touch', 'mkdir', 'rm', 'rmdir', 'nano', 'vi'];
+      const commandName = input.trim().split(/\s+/)[0];
+      const parsed = parseCommand(input);
+      const hasOutputRedirection = parsed.redirectOutput !== undefined;
+
+      if (result.success && (filesystemCommands.includes(commandName) || hasOutputRedirection)) {
+        const saveResult = saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
+        if (!saveResult.success) {
+          console.error('Failed to immediately save filesystem after command:', saveResult.error);
+        } else {
+          const reason = hasOutputRedirection
+            ? `redirection (${commandName} ${parsed.redirectOutput?.type} ${parsed.redirectOutput?.filename})`
+            : `filesystem command (${commandName})`;
+        }
+      }
     },
-    [terminalState.filesystem],
+    [terminalState.filesystem, currentFilesystemMode],
   );
 
   const handleKeyDown = useCallback(
@@ -344,6 +336,13 @@ export function Terminal() {
       const success = createFile(terminalState.filesystem, terminalState.filesystem.currentPath, filename, content);
 
       if (success) {
+        // Immediate save to localStorage after editor modification
+        const saveResult = saveFilesystemState(terminalState.filesystem.root, currentFilesystemMode, terminalState.filesystem.currentPath);
+        if (!saveResult.success) {
+          console.error('Failed to save filesystem after editor modification:', saveResult.error);
+        } else {
+        }
+
         setOutputLines((prev) => [
           ...prev,
           {
@@ -363,7 +362,7 @@ export function Terminal() {
         ]);
       }
     },
-    [terminalState.filesystem],
+    [terminalState.filesystem, currentFilesystemMode],
   );
 
   const handleTextEditorClose = useCallback((saved: boolean) => {

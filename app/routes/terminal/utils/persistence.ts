@@ -95,6 +95,9 @@ export function loadFilesystemState(): PersistenceResult {
       };
     }
 
+    // Restore Date objects in the filesystem
+    data.filesystem = restoreDateObjects(data.filesystem);
+
     // Check version compatibility
     if (data.version !== STORAGE_CONFIG.CURRENT_VERSION) {
       console.warn(`Version mismatch: saved ${data.version}, current ${STORAGE_CONFIG.CURRENT_VERSION}`);
@@ -243,58 +246,6 @@ export function resetToDefaultFilesystem(mode: FilesystemMode): {
 }
 
 /**
- * Switches to a different filesystem mode.
- * This preserves the current filesystem state before switching.
- *
- * @param newMode - The mode to switch to
- * @param currentFilesystem - The current filesystem state (optional, for backup)
- * @param currentPath - The current directory path (optional, for backup)
- * @returns Object containing the new filesystem state
- */
-export function switchFilesystemMode(
-  newMode: FilesystemMode,
-  currentFilesystem?: FileSystemNode,
-  currentPath?: string[],
-): {
-  filesystem: FileSystemNode;
-  mode: FilesystemMode;
-  currentPath: string[];
-} {
-  // Save current state as backup if provided
-  if (currentFilesystem && currentPath) {
-    const currentMode = loadCurrentMode();
-    const backupKey = `${STORAGE_CONFIG.FILESYSTEM_KEY}-backup-${currentMode}`;
-
-    try {
-      const backupData = {
-        filesystem: currentFilesystem,
-        mode: currentMode,
-        version: STORAGE_CONFIG.CURRENT_VERSION,
-        savedAt: new Date().toISOString(),
-        currentPath,
-      };
-
-      localStorage.setItem(backupKey, JSON.stringify(backupData));
-    } catch (error) {
-      console.warn('Failed to create backup of current filesystem:', error);
-    }
-  }
-
-  // Clear current state
-  clearFilesystemState();
-
-  // Save new mode
-  saveCurrentMode(newMode);
-
-  // Return new filesystem
-  return {
-    filesystem: getFilesystemByMode(newMode),
-    mode: newMode,
-    currentPath: ['home', 'user'],
-  };
-}
-
-/**
  * Gets storage usage information for the terminal emulator.
  * This helps users understand how much browser storage is being used.
  *
@@ -350,6 +301,42 @@ export function getStorageInfo(): {
       hasBackups: false,
     };
   }
+}
+
+/**
+ * Recursively restores Date objects in a filesystem node and its children.
+ * This fixes the issue where JSON.parse converts Date objects to strings.
+ *
+ * @param node - The filesystem node to process
+ * @returns The node with restored Date objects
+ */
+function restoreDateObjects(node: any): FileSystemNode {
+  // Restore dates for this node
+  if (node.createdAt && typeof node.createdAt === 'string') {
+    node.createdAt = new Date(node.createdAt);
+  }
+  if (node.modifiedAt && typeof node.modifiedAt === 'string') {
+    node.modifiedAt = new Date(node.modifiedAt);
+  }
+
+  // Ensure we have valid Date objects, create them if missing
+  if (!node.createdAt || !(node.createdAt instanceof Date) || isNaN(node.createdAt.getTime())) {
+    node.createdAt = new Date();
+  }
+  if (!node.modifiedAt || !(node.modifiedAt instanceof Date) || isNaN(node.modifiedAt.getTime())) {
+    node.modifiedAt = new Date();
+  }
+
+  // Recursively process children
+  if (node.children && typeof node.children === 'object') {
+    for (const childName in node.children) {
+      if (node.children.hasOwnProperty(childName)) {
+        node.children[childName] = restoreDateObjects(node.children[childName]);
+      }
+    }
+  }
+
+  return node as FileSystemNode;
 }
 
 /**

@@ -1,5 +1,5 @@
 import type { FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
-import { getDefaultFilesystem } from '~/routes/terminal/utils/defaultFilesystems';
+import { getDefaultFilesystem, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
 import { initializeFilesystem } from '~/routes/terminal/utils/persistence';
 
 /**
@@ -9,7 +9,7 @@ import { initializeFilesystem } from '~/routes/terminal/utils/persistence';
  * @returns FileSystemState with either persisted or default data
  */
 export function createDefaultFileSystem(): FileSystemState {
-  const initialized = initializeFilesystem();
+  const initialized = initializeFilesystem(getFilesystemModeFromEnv());
 
   return {
     root: initialized.filesystem,

@@ -1053,13 +1053,31 @@ function isUserId(value: string): value is UserId {
 }
 
 /**
+ * Gets the filesystem mode from environment variables or returns default.
+ * Used at deployment time to configure which filesystem structure to use.
+ *
+ * @returns The filesystem mode from VITE_FILESYSTEM_MODE env var or 'default'
+ */
+export function getFilesystemModeFromEnv(): FilesystemMode {
+  const envMode = import.meta.env.VITE_FILESYSTEM_MODE as FilesystemMode | undefined;
+
+  // Validate that the env var contains a valid filesystem mode
+  if (envMode && FILESYSTEM_MODES.includes(envMode)) {
+    return envMode;
+  }
+
+  // Default to 'default' mode if no env var or invalid value
+  return 'default';
+}
+
+/**
  * Returns the appropriate filesystem based on the specified mode.
  * This function serves as the main entry point for filesystem initialization.
  *
  * @param mode - The filesystem mode ('default' or 'portfolio')
  * @returns The complete filesystem structure for the specified mode
  */
-export function getFilesystemByMode(mode: 'default' | 'portfolio' = 'default'): FileSystemNode {
+export function getFilesystemByMode(mode: FilesystemMode = getFilesystemModeFromEnv()): FileSystemNode {
   switch (mode) {
     case 'portfolio':
       return createPortfolioFilesystem();

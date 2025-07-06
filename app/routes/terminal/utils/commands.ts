@@ -1,10 +1,10 @@
 import type { CommandHandler, CommandResult, FileSystemState, OutputSegment } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
-import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
+import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDirectory, createFile, deleteNode, formatPath, getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
-import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState, switchFilesystemMode } from '~/routes/terminal/utils/persistence';
+import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState): CommandResult => {
@@ -341,42 +341,9 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: results.join('\n') };
   },
 
-  'switch-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
-    if (args.length === 0) {
-      const currentMode = 'default'; // This would be passed from the terminal component
-      return {
-        success: true,
-        output: `Current filesystem mode: ${currentMode}\nAvailable modes: ${FILESYSTEM_MODES.join(', ')}\nUsage: switch-fs <mode>`,
-      };
-    }
-
-    const mode = args[0] as FilesystemMode;
-    if (!FILESYSTEM_MODES.includes(mode)) {
-      return {
-        success: false,
-        output: '',
-        error: `switch-fs: invalid mode '${mode}'. Available modes: ${FILESYSTEM_MODES.join(', ')}`,
-      };
-    }
-
-    // This command needs special handling in the terminal component
-    // It will trigger a filesystem switch and state update
-    return {
-      success: true,
-      output: `SWITCH_FILESYSTEM:${mode}`,
-    };
-  },
-
   'reset-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
-    const mode = args.length > 0 ? (args[0] as FilesystemMode) : 'default';
-
-    if (!FILESYSTEM_MODES.includes(mode)) {
-      return {
-        success: false,
-        output: '',
-        error: `reset-fs: invalid mode '${mode}'. Available modes: ${FILESYSTEM_MODES.join(', ')}`,
-      };
-    }
+    // Use the environment-configured filesystem mode
+    const mode = getFilesystemModeFromEnv();
 
     // This command needs special handling in the terminal component
     // It will trigger a filesystem reset to default state
@@ -402,8 +369,7 @@ export const commands: Record<string, CommandHandler> = {
       info.lastSaved ? `  Last saved: ${new Date(info.lastSaved).toLocaleString()}` : '  Last saved: Never',
       '',
       'Commands:',
-      '  reset-fs [mode] - Reset filesystem to default state',
-      '  switch-fs <mode> - Switch between filesystem modes',
+      '  reset-fs - Reset filesystem to deployment-configured state',
     ].join('\n');
 
     return { success: true, output };
@@ -498,8 +464,7 @@ export const commands: Record<string, CommandHandler> = {
       '  vi <file>        - Open file in vi text editor',
       '',
       'Filesystem Management:',
-      '  switch-fs <mode> - Switch between filesystem modes (default, portfolio)',
-      '  reset-fs [mode]  - Reset filesystem to default state',
+      '  reset-fs         - Reset filesystem to deployment-configured state',
       '  storage-info     - Show browser storage information',
       '',
       'Utilities:',
@@ -524,8 +489,7 @@ export const commands: Record<string, CommandHandler> = {
       '  wc < example.md',
       '  cat readme.txt >> log.txt',
       '  nano myfile.txt',
-      '  switch-fs portfolio',
-      '  reset-fs default',
+      '  reset-fs',
     ].join('\n');
 
     return { success: true, output: helpText };
