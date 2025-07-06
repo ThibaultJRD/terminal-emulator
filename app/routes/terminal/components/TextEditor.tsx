@@ -10,12 +10,64 @@ interface TextEditorProps {
   onStateChange?: (state: TextEditorState) => void;
 }
 
+/**
+ * Calculate the actual display width of text up to the cursor position.
+ * This handles emojis, unicode characters, and tabs correctly.
+ */
+function getTextWidth(text: string, position: number): number {
+  if (position === 0) return 0;
+
+  // Create a temporary span element to measure text width
+  const span = document.createElement('span');
+  span.style.font = '0.875rem ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  span.style.visibility = 'hidden';
+  span.style.position = 'absolute';
+  span.style.whiteSpace = 'pre';
+
+  // Get the text up to the cursor position, handling tabs
+  const textToCursor = text.substring(0, position).replace(/\t/g, '  ');
+  span.textContent = textToCursor;
+
+  document.body.appendChild(span);
+  const width = span.offsetWidth;
+  document.body.removeChild(span);
+
+  return width;
+}
+
+/**
+ * Calculate the width of a single character at the given position.
+ * This handles emojis, unicode characters, and tabs correctly for cursor display.
+ */
+function getCharacterWidth(text: string, position: number): number {
+  if (position >= text.length) return 8; // Default width for empty space
+
+  const character = text[position];
+  if (character === '\t') return 16; // Tab width (2 spaces * 8px)
+
+  // Create a temporary span element to measure character width
+  const span = document.createElement('span');
+  span.style.font = '0.875rem ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  span.style.visibility = 'hidden';
+  span.style.position = 'absolute';
+  span.style.whiteSpace = 'pre';
+
+  span.textContent = character;
+
+  document.body.appendChild(span);
+  const width = span.offsetWidth;
+  document.body.removeChild(span);
+
+  return width;
+}
+
 export function TextEditor({ initialState, onSave, onClose, onStateChange }: TextEditorProps) {
   const [state, setState] = useState<TextEditorState>(initialState);
   const [commandInput, setCommandInput] = useState('');
   const [isCommandInputVisible, setIsCommandInputVisible] = useState(false);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [commandHistoryIndex, setCommandHistoryIndex] = useState(-1);
+  const [isStatusMessageError, setIsStatusMessageError] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const commandInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,6 +82,46 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
   useEffect(() => {
     onStateChange?.(state);
   }, [state, onStateChange]);
+
+  // Calculate and update viewport size based on available height
+  useEffect(() => {
+    const calculateViewportSize = () => {
+      const windowHeight = window.innerHeight;
+
+      // Calculate fixed heights
+      const headerHeight = 50; // Header with py-2
+      const statusBarHeight = 50; // Status bar with py-2
+      const commandInputHeight = isCommandInputVisible ? 50 : 0; // Command input if visible
+      const helpOverlayHeight = 0; // Help overlay is absolute, doesn't affect layout
+      const paddingHeight = 32; // py-4 padding in editor content (16px top + 16px bottom)
+
+      // Calculate available height for editor lines
+      const availableHeight = windowHeight - headerHeight - statusBarHeight - commandInputHeight - paddingHeight;
+
+      // Each line is 24px (h-6), calculate number of visible lines
+      const lineHeight = 24;
+      const maxVisibleLines = Math.floor(availableHeight / lineHeight);
+
+      // Ensure minimum of 10 lines and maximum reasonable limit
+      const clampedMaxVisibleLines = Math.max(10, Math.min(maxVisibleLines, 100));
+
+      // Update state if the calculated value is different
+      if (clampedMaxVisibleLines !== state.maxVisibleLines) {
+        setState((prevState) => ({
+          ...prevState,
+          maxVisibleLines: clampedMaxVisibleLines,
+        }));
+      }
+    };
+
+    // Calculate on mount and window resize
+    calculateViewportSize();
+    window.addEventListener('resize', calculateViewportSize);
+
+    return () => {
+      window.removeEventListener('resize', calculateViewportSize);
+    };
+  }, [isCommandInputVisible, state.maxVisibleLines]);
 
   // Handle keyboard events
   useEffect(() => {
@@ -110,20 +202,25 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
       }
     }
 
-    // Show message temporarily
+    // Show message temporarily (both success and error messages)
     if (result.message) {
       setState((prevState) => ({
         ...prevState,
         statusMessage: result.message || '',
       }));
 
-      // Reset to normal status after 3 seconds
+      // Set error state for styling
+      setIsStatusMessageError(!result.success);
+
+      // Reset to normal status after 5 seconds for errors, 3 seconds for success
+      const timeout = result.success ? 3000 : 5000;
       setTimeout(() => {
         setState((prevState) => ({
           ...prevState,
           statusMessage: formatStatusLine(prevState),
         }));
-      }, 3000);
+        setIsStatusMessageError(false);
+      }, timeout);
     }
   };
 
@@ -230,10 +327,11 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
                   {/* Cursor */}
                   {isCursorLine && (
                     <span
-                      className={`bg-ctp-text text-ctp-base absolute ${state.mode === 'INSERT' ? 'w-0.5' : 'w-2'} h-6 animate-pulse`}
+                      className={`bg-ctp-text text-ctp-base absolute h-6 animate-pulse ${state.mode === 'INSERT' ? 'w-0.5' : ''}`}
                       style={{
-                        left: `${state.cursorPosition.column * 0.6}rem`,
+                        left: `${getTextWidth(line.content, state.cursorPosition.column)}px`,
                         top: 0,
+                        width: state.mode === 'COMMAND' ? `${getCharacterWidth(line.content, state.cursorPosition.column)}px` : undefined,
                       }}
                     >
                       {state.mode === 'COMMAND' && line.content[state.cursorPosition.column] ? line.content[state.cursorPosition.column] : ' '}
@@ -265,7 +363,7 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
 
       {/* Status bar */}
       <div className="bg-ctp-surface0 border-ctp-overlay0 flex items-center justify-between border-t px-4 py-2 text-xs">
-        <span className="text-ctp-subtext1">{statusLine}</span>
+        <span className={isStatusMessageError ? 'text-ctp-red font-semibold' : 'text-ctp-subtext1'}>{statusLine}</span>
         <div className="text-ctp-subtext0 flex items-center space-x-4">
           <span>Press ESC for command mode</span>
           <span>:w to save</span>

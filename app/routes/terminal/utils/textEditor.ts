@@ -60,10 +60,10 @@ export function createTextEditorState(filename: string, content: string = ''): T
     content,
     lines,
     cursorPosition: { line: 0, column: 0 },
-    mode: 'INSERT',
+    mode: 'COMMAND',
     isModified: false,
     showLineNumbers: true,
-    statusMessage: `Editing ${filename} - INSERT mode`,
+    statusMessage: `Editing ${filename} - COMMAND mode`,
     scrollOffset: 0,
     maxVisibleLines: 20,
     isVisible: true,
@@ -237,6 +237,24 @@ export function insertNewLine(state: TextEditorState): TextEditorState {
   const newLines = [...state.lines];
   newLines[line] = before;
   newLines.splice(line + 1, 0, after);
+
+  const newContent = newLines.join('\n');
+  const newCursorPosition = { line: line + 1, column: 0 };
+
+  return moveCursor(updateEditorContent(state, newContent), newCursorPosition);
+}
+
+/**
+ * Inserts a new empty line below the current line (for 'o' command).
+ *
+ * @param state - Current editor state
+ * @returns Updated editor state
+ */
+export function insertNewLineBelow(state: TextEditorState): TextEditorState {
+  const { line } = state.cursorPosition;
+
+  const newLines = [...state.lines];
+  newLines.splice(line + 1, 0, '');
 
   const newContent = newLines.join('\n');
   const newCursorPosition = { line: line + 1, column: 0 };
@@ -424,7 +442,7 @@ function handleCommandModeInput(state: TextEditorState, event: KeyboardEvent): {
       };
 
     case 'o':
-      const newState = insertNewLine(state);
+      const newState = insertNewLineBelow(state);
       return { state: switchMode(newState, 'INSERT') };
 
     case 'h':
@@ -444,7 +462,7 @@ function handleCommandModeInput(state: TextEditorState, event: KeyboardEvent): {
 
     case '$':
       const currentLine = state.lines[state.cursorPosition.line] || '';
-      return { state: moveCursor(state, { column: Math.max(0, currentLine.length - 1) }) };
+      return { state: moveCursor(state, { column: currentLine.length }) };
 
     case 'G':
       return { state: moveCursor(state, { line: state.lines.length - 1 }) };

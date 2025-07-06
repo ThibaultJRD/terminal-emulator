@@ -230,16 +230,9 @@ export const commands: Record<string, CommandHandler> = {
     }
 
     const dirname = args[0];
-    const currentDir = getCurrentDirectory(filesystem);
-    if (!currentDir || currentDir.type !== 'directory' || !currentDir.children) {
-      return {
-        success: false,
-        output: '',
-        error: 'rmdir: cannot access current directory',
-      };
-    }
+    const targetPath = resolvePath(filesystem, dirname);
+    const dir = getNodeAtPath(filesystem, targetPath);
 
-    const dir = currentDir.children[dirname];
     if (!dir) {
       return {
         success: false,
@@ -264,7 +257,11 @@ export const commands: Record<string, CommandHandler> = {
       };
     }
 
-    const success = deleteNode(filesystem, filesystem.currentPath, dirname);
+    // Get parent path and clean filename for deletion
+    const parentPath = targetPath.slice(0, -1);
+    const cleanDirname = targetPath[targetPath.length - 1];
+
+    const success = deleteNode(filesystem, parentPath, cleanDirname);
     if (!success) {
       return {
         success: false,
@@ -693,16 +690,9 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
 }
 
 function removeFile(filesystem: FileSystemState, filename: string, recursive: boolean, force: boolean): CommandResult {
-  const currentDir = getCurrentDirectory(filesystem);
-  if (!currentDir || currentDir.type !== 'directory' || !currentDir.children) {
-    return {
-      success: false,
-      output: '',
-      error: 'rm: cannot access current directory',
-    };
-  }
+  const targetPath = resolvePath(filesystem, filename);
+  const file = getNodeAtPath(filesystem, targetPath);
 
-  const file = currentDir.children[filename];
   if (!file) {
     if (force) {
       return { success: true, output: '' }; // Force mode ignores missing files
@@ -727,7 +717,7 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
     if (file.children && Object.keys(file.children).length > 0) {
       // Save current path and change to the directory being removed
       const originalPath = filesystem.currentPath.slice();
-      filesystem.currentPath = [...originalPath, filename];
+      filesystem.currentPath = targetPath;
 
       for (const childName of Object.keys(file.children)) {
         const childResult = removeFile(filesystem, childName, true, force);
@@ -742,7 +732,11 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
     }
   }
 
-  const success = deleteNode(filesystem, filesystem.currentPath, filename);
+  // Get parent path and clean filename for deletion
+  const parentPath = targetPath.slice(0, -1);
+  const cleanFilename = targetPath[targetPath.length - 1];
+
+  const success = deleteNode(filesystem, parentPath, cleanFilename);
   if (!success && !force) {
     return {
       success: false,
