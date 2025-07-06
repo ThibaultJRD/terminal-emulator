@@ -5,7 +5,13 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-294%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-285%20passing-green?logo=vitest)
+
+## 🚀 Live Demo
+
+**[Try the Terminal Emulator](https://terminal-emulator-nine.vercel.app/)**
+
+Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more.
 
 ## ✨ Features
 
@@ -45,7 +51,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 
 ### 🧪 Testing
 
-- **294 tests** with comprehensive coverage
+- **285 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
