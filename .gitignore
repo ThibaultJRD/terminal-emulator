@@ -5,3 +5,14 @@
 # React Router
 /.react-router/
 /build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Security logs
+*.log
+security-audit.json
