@@ -10,6 +10,7 @@ import {
   handleKeyboardInput,
   hasUnsavedChanges,
   insertNewLine,
+  insertNewLineAbove,
   insertNewLineBelow,
   insertTextAtCursor,
   moveCursor,
@@ -272,6 +273,28 @@ describe('textEditor utilities', () => {
       expect(newState.content).toBe('Line1\nLine2\n');
       expect(newState.lines).toEqual(['Line1', 'Line2', '']);
       expect(newState.cursorPosition).toEqual({ line: 2, column: 0 });
+    });
+  });
+
+  describe('insertNewLineAbove', () => {
+    it('should insert empty line above current line', () => {
+      const state = createTextEditorState('test.txt', 'Line1\nLine2\nLine3');
+      const cursorState = moveCursor(state, { line: 1, column: 2 });
+      const newState = insertNewLineAbove(cursorState);
+
+      expect(newState.content).toBe('Line1\n\nLine2\nLine3');
+      expect(newState.lines).toEqual(['Line1', '', 'Line2', 'Line3']);
+      expect(newState.cursorPosition).toEqual({ line: 1, column: 0 });
+    });
+
+    it('should work at first line', () => {
+      const state = createTextEditorState('test.txt', 'Line1\nLine2');
+      const cursorState = moveCursor(state, { line: 0 });
+      const newState = insertNewLineAbove(cursorState);
+
+      expect(newState.content).toBe('\nLine1\nLine2');
+      expect(newState.lines).toEqual(['', 'Line1', 'Line2']);
+      expect(newState.cursorPosition).toEqual({ line: 0, column: 0 });
     });
   });
 
@@ -571,6 +594,34 @@ describe('textEditor utilities', () => {
         const result = handleKeyboardInput(state, createKeyEvent('z'));
 
         expect(result.state).toBe(state);
+      });
+
+      it('should handle A key - insert at end of line', () => {
+        const state = createTextEditorState('test.txt', 'Hello\nWorld');
+        const cursorState = moveCursor(state, { line: 0, column: 2 });
+        const result = handleKeyboardInput(cursorState, createKeyEvent('A'));
+
+        expect(result.state.mode).toBe('INSERT');
+        expect(result.state.cursorPosition).toEqual({ line: 0, column: 5 });
+      });
+
+      it('should handle I key - insert at beginning of line', () => {
+        const state = createTextEditorState('test.txt', 'Hello\nWorld');
+        const cursorState = moveCursor(state, { line: 0, column: 3 });
+        const result = handleKeyboardInput(cursorState, createKeyEvent('I'));
+
+        expect(result.state.mode).toBe('INSERT');
+        expect(result.state.cursorPosition).toEqual({ line: 0, column: 0 });
+      });
+
+      it('should handle O key - insert line above', () => {
+        const state = createTextEditorState('test.txt', 'Hello\nWorld');
+        const cursorState = moveCursor(state, { line: 1, column: 2 });
+        const result = handleKeyboardInput(cursorState, createKeyEvent('O'));
+
+        expect(result.state.mode).toBe('INSERT');
+        expect(result.state.content).toBe('Hello\n\nWorld');
+        expect(result.state.cursorPosition).toEqual({ line: 1, column: 0 });
       });
     });
   });

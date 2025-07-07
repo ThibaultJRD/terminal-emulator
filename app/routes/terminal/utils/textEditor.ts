@@ -263,6 +263,24 @@ export function insertNewLineBelow(state: TextEditorState): TextEditorState {
 }
 
 /**
+ * Inserts a new empty line above the current line (for 'O' command).
+ *
+ * @param state - Current editor state
+ * @returns Updated editor state
+ */
+export function insertNewLineAbove(state: TextEditorState): TextEditorState {
+  const { line } = state.cursorPosition;
+
+  const newLines = [...state.lines];
+  newLines.splice(line, 0, '');
+
+  const newContent = newLines.join('\n');
+  const newCursorPosition = { line: line, column: 0 };
+
+  return moveCursor(updateEditorContent(state, newContent), newCursorPosition);
+}
+
+/**
  * Executes a command in NORMAL mode.
  *
  * @param state - Current editor state
@@ -444,6 +462,21 @@ function handleNormalModeInput(state: TextEditorState, event: KeyboardEvent): { 
     case 'o':
       const newState = insertNewLineBelow(state);
       return { state: switchMode(newState, 'INSERT') };
+
+    case 'A':
+      const currentLineForA = state.lines[state.cursorPosition.line] || '';
+      return {
+        state: moveCursor(switchMode(state, 'INSERT'), { column: currentLineForA.length }),
+      };
+
+    case 'I':
+      return {
+        state: moveCursor(switchMode(state, 'INSERT'), { column: 0 }),
+      };
+
+    case 'O':
+      const newStateAbove = insertNewLineAbove(state);
+      return { state: switchMode(newStateAbove, 'INSERT') };
 
     case 'h':
       return { state: moveCursor(state, { column: state.cursorPosition.column - 1 }) };
