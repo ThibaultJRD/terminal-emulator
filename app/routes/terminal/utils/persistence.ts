@@ -227,10 +227,11 @@ export function resetToDefaultFilesystem(mode: FilesystemMode): {
   saveCurrentMode(mode);
 
   // Return fresh filesystem
+  const defaultPath = mode === 'portfolio' ? [] : ['home', 'user'];
   return {
     filesystem: getFilesystemByMode(mode),
     mode,
-    currentPath: ['home', 'user'],
+    currentPath: defaultPath,
   };
 }
 

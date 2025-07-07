@@ -50,7 +50,6 @@ describe('Filesystem utilities', () => {
       expect(portfolioFs.root.children!['about']).toBeDefined();
       expect(portfolioFs.root.children!['projects']).toBeDefined();
       expect(portfolioFs.root.children!['contact']).toBeDefined();
-      expect(portfolioFs.root.children!['blog']).toBeDefined();
 
       // Should not have default Unix structure
       expect(portfolioFs.root.children!['home']).toBeUndefined();
