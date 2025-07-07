@@ -70,6 +70,9 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
   const [isStatusMessageError, setIsStatusMessageError] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const commandInputRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const statusBarRef = useRef<HTMLDivElement>(null);
+  const commandInputContainerRef = useRef<HTMLDivElement>(null);
 
   // Focus the editor when it mounts
   useEffect(() => {
@@ -88,22 +91,23 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
     const calculateViewportSize = () => {
       const windowHeight = window.innerHeight;
 
-      // Calculate fixed heights
-      const headerHeight = 50; // Header with py-2
-      const statusBarHeight = 50; // Status bar with py-2
-      const commandInputHeight = isCommandInputVisible ? 50 : 0; // Command input if visible
+      // Measure actual DOM element heights using getBoundingClientRect()
+      const headerHeight = headerRef.current?.getBoundingClientRect().height || 50;
+      const statusBarHeight = statusBarRef.current?.getBoundingClientRect().height || 50;
+      const commandInputHeight =
+        isCommandInputVisible && commandInputContainerRef.current ? commandInputContainerRef.current.getBoundingClientRect().height : 0;
       const helpOverlayHeight = 0; // Help overlay is absolute, doesn't affect layout
       const paddingHeight = 32; // py-4 padding in editor content (16px top + 16px bottom)
 
       // Calculate available height for editor lines
       const availableHeight = windowHeight - headerHeight - statusBarHeight - commandInputHeight - paddingHeight;
 
-      // Each line is 24px (h-6), calculate number of visible lines
-      const lineHeight = 24;
+      // Use fixed line height that matches CSS (h-6 = 24px)
+      const lineHeight = 24; // Must match "h-6" class on line divs
       const maxVisibleLines = Math.floor(availableHeight / lineHeight);
 
-      // Ensure minimum of 10 lines and maximum reasonable limit
-      const clampedMaxVisibleLines = Math.max(10, Math.min(maxVisibleLines, 100));
+      // Ensure minimum of 5 lines and maximum reasonable limit
+      const clampedMaxVisibleLines = Math.max(5, Math.min(maxVisibleLines, 200));
 
       // Update state if the calculated value is different
       if (clampedMaxVisibleLines !== state.maxVisibleLines) {
@@ -114,12 +118,20 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
       }
     };
 
+    // Debounce resize handler to avoid excessive calculations
+    let resizeTimeout: NodeJS.Timeout;
+    const debouncedCalculateViewportSize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(calculateViewportSize, 100);
+    };
+
     // Calculate on mount and window resize
     calculateViewportSize();
-    window.addEventListener('resize', calculateViewportSize);
+    window.addEventListener('resize', debouncedCalculateViewportSize);
 
     return () => {
-      window.removeEventListener('resize', calculateViewportSize);
+      window.removeEventListener('resize', debouncedCalculateViewportSize);
+      clearTimeout(resizeTimeout);
     };
   }, [isCommandInputVisible, state.maxVisibleLines]);
 
@@ -287,7 +299,7 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
   return (
     <div className="bg-ctp-base text-ctp-text fixed inset-0 z-50 flex flex-col font-mono text-sm">
       {/* Header */}
-      <div className="bg-ctp-surface0 border-ctp-overlay0 flex items-center justify-between border-b px-4 py-2">
+      <div ref={headerRef} className="bg-ctp-surface0 border-ctp-overlay0 flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center space-x-4">
           <h1 className="text-ctp-text font-semibold">
             {state.filename}
@@ -320,7 +332,7 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
         <div className="flex-1 overflow-auto px-4 py-4">
           <div className="relative">
             {visibleLines.map((line, index) => {
-              const actualLineIndex = state.scrollOffset + index;
+              const actualLineIndex = line.lineNumber - 1; // Convert to 0-based index
               const isCursorLine = actualLineIndex === state.cursorPosition.line;
 
               return (
@@ -350,7 +362,7 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
 
       {/* Command input */}
       {isCommandInputVisible && (
-        <div className="bg-ctp-surface0 border-ctp-overlay0 flex items-center border-t px-4 py-2">
+        <div ref={commandInputContainerRef} className="bg-ctp-surface0 border-ctp-overlay0 flex items-center border-t px-4 py-2">
           <span className="text-ctp-subtext1 mr-2">:</span>
           <input
             ref={commandInputRef}
@@ -366,7 +378,7 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
       )}
 
       {/* Status bar */}
-      <div className="bg-ctp-surface0 border-ctp-overlay0 flex items-center justify-between border-t px-4 py-2 text-xs">
+      <div ref={statusBarRef} className="bg-ctp-surface0 border-ctp-overlay0 flex items-center justify-between border-t px-4 py-2 text-xs">
         <span className={isStatusMessageError ? 'text-ctp-red font-semibold' : 'text-ctp-subtext1'}>{statusLine}</span>
         <div className="text-ctp-subtext0 flex items-center space-x-4">
           <span>Press ESC for normal mode</span>

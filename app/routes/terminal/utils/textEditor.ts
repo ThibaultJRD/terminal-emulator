@@ -114,6 +114,11 @@ export function moveCursor(state: TextEditorState, newPosition: Partial<CursorPo
     scrollOffset = line - state.maxVisibleLines + 1;
   }
 
+  // Ensure scroll offset is within bounds
+  // Allow scrolling to show the last line, even if it means showing fewer lines
+  const maxScrollOffset = Math.max(0, state.lines.length - 1);
+  scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+
   return {
     ...state,
     cursorPosition,
@@ -524,11 +529,15 @@ function handleNormalModeInput(state: TextEditorState, event: KeyboardEvent): { 
  * @returns Array of visible lines with their line numbers
  */
 export function getVisibleLines(state: TextEditorState): Array<{ lineNumber: number; content: string }> {
-  const startLine = state.scrollOffset;
+  const startLine = Math.max(0, state.scrollOffset);
   const endLine = Math.min(startLine + state.maxVisibleLines, state.lines.length);
 
-  return state.lines.slice(startLine, endLine).map((content, index) => ({
-    lineNumber: startLine + index + 1,
+  // For files shorter than maxVisibleLines, show all lines from the beginning
+  const actualStartLine = state.lines.length <= state.maxVisibleLines ? 0 : startLine;
+  const actualEndLine = Math.max(actualStartLine, endLine);
+
+  return state.lines.slice(actualStartLine, actualEndLine).map((content, index) => ({
+    lineNumber: actualStartLine + index + 1,
     content,
   }));
 }
