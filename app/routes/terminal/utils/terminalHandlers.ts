@@ -22,9 +22,9 @@ export interface SpecialCommandResult {
 /**
  * Executes a command and returns the result with error handling
  */
-export function executeCommandSafely(input: string, filesystem: FileSystemState): CommandResult {
+export function executeCommandSafely(input: string, filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult {
   try {
-    return executeCommand(input, filesystem);
+    return executeCommand(input, filesystem, currentMode);
   } catch (error) {
     console.error('Error executing command:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

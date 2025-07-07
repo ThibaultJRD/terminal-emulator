@@ -4,10 +4,10 @@ import { TextEditor } from '~/routes/terminal/components/TextEditor';
 import { useFilesystemPersistence } from '~/routes/terminal/hooks/useFilesystemPersistence';
 import type { OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { applyCompletion, applyCompletionNoSpace, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
-import { getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
+import { getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
 import { formatPath } from '~/routes/terminal/utils/filesystem';
-import { type FilesystemMode, saveFilesystemState } from '~/routes/terminal/utils/persistence';
+import { type FilesystemMode, initializeFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import {
   analyzeSpecialCommand,
   createOutputLine,
@@ -25,16 +25,34 @@ interface OutputLine {
   timestamp: Date;
 }
 
-export function Terminal() {
-  const [terminalState, setTerminalState] = useState<TerminalState>(() => ({
-    history: [],
-    historyIndex: -1,
-    currentInput: '',
-    output: [],
-    filesystem: createDefaultFileSystem(),
-  }));
+interface TerminalProps {
+  mode?: 'default' | 'portfolio';
+}
 
-  const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>(getFilesystemModeFromEnv());
+export function Terminal({ mode = 'default' }: TerminalProps) {
+  const filesystemMode: FilesystemMode = mode === 'portfolio' ? 'portfolio' : 'default';
+
+  const [terminalState, setTerminalState] = useState<TerminalState>(() => {
+    // Initialize filesystem with persistence support
+    const { filesystem, mode: initializedMode, currentPath } = initializeFilesystem(filesystemMode);
+
+    return {
+      history: [],
+      historyIndex: -1,
+      currentInput: '',
+      output: [],
+      filesystem: {
+        root: filesystem,
+        currentPath: currentPath,
+      },
+    };
+  });
+
+  const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>(() => {
+    // Use the mode from initialized filesystem (in case it was loaded from storage)
+    const { mode: initializedMode } = initializeFilesystem(filesystemMode);
+    return initializedMode;
+  });
   const [textEditorState, setTextEditorState] = useState<TextEditorState | null>(null);
   const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
 
@@ -51,18 +69,40 @@ export function Terminal() {
     originalInput: '',
   });
 
-  const [outputLines, setOutputLines] = useState<OutputLine[]>([
-    {
-      type: 'output',
-      content: 'Welcome to Terminal Emulator v1.0',
-      timestamp: new Date(),
-    },
-    {
-      type: 'output',
-      content: 'Type "help" for available commands.',
-      timestamp: new Date(),
-    },
-  ]);
+  const [outputLines, setOutputLines] = useState<OutputLine[]>(() => {
+    if (mode === 'portfolio') {
+      return [
+        {
+          type: 'output',
+          content: "Welcome to Thibault Jaillard's Interactive Portfolio",
+          timestamp: new Date(),
+        },
+        {
+          type: 'output',
+          content: 'Senior Mobile Developer | React Native | TypeScript | Blockchain',
+          timestamp: new Date(),
+        },
+        {
+          type: 'output',
+          content: 'Explore my projects and experience with Unix commands. Type "help" to get started.',
+          timestamp: new Date(),
+        },
+      ];
+    }
+
+    return [
+      {
+        type: 'output',
+        content: 'Welcome to Terminal Emulator v1.0',
+        timestamp: new Date(),
+      },
+      {
+        type: 'output',
+        content: 'Type "help" for available commands.',
+        timestamp: new Date(),
+      },
+    ];
+  });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -100,7 +140,7 @@ export function Terminal() {
       setOutputLines((prev) => [...prev, createOutputLine('command', prompt + input)]);
 
       // Execute command safely
-      const result = executeCommandSafely(input, terminalState.filesystem);
+      const result = executeCommandSafely(input, terminalState.filesystem, filesystemMode);
 
       // Handle command execution error
       if (!result.success) {

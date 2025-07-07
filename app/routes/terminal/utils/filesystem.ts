@@ -1,15 +1,16 @@
 import type { FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
-import { getDefaultFilesystem, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
+import { type FilesystemMode, getDefaultFilesystem, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { initializeFilesystem } from '~/routes/terminal/utils/persistence';
 
 /**
  * Creates a FileSystemState using the persistence system.
  * This will load from localStorage if available, or create a default filesystem.
  *
+ * @param mode - The filesystem mode to use (optional, defaults to environment variable)
  * @returns FileSystemState with either persisted or default data
  */
-export function createDefaultFileSystem(): FileSystemState {
-  const initialized = initializeFilesystem(getFilesystemModeFromEnv());
+export function createDefaultFileSystem(mode: FilesystemMode = 'default'): FileSystemState {
+  const initialized = initializeFilesystem(mode);
 
   return {
     root: initialized.filesystem,
@@ -27,6 +28,21 @@ export function createFreshDefaultFileSystem(): FileSystemState {
   return {
     root: getDefaultFilesystem(),
     currentPath: ['home', 'user'],
+  };
+}
+
+/**
+ * Creates a fresh FileSystemState for the specified mode.
+ * This bypasses persistence and always returns a clean state.
+ *
+ * @param mode - The filesystem mode to create
+ * @returns FileSystemState with fresh data for the specified mode
+ */
+export function createFreshFileSystem(mode: FilesystemMode): FileSystemState {
+  const defaultPath = mode === 'portfolio' ? ['about'] : ['home', 'user'];
+  return {
+    root: getFilesystemByMode(mode),
+    currentPath: defaultPath,
   };
 }
 

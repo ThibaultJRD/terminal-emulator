@@ -173,21 +173,6 @@ export function saveCurrentMode(mode: FilesystemMode): boolean {
 }
 
 /**
- * Loads the previously saved filesystem mode from localStorage.
- *
- * @returns The saved mode or 'default' if none exists
- */
-export function loadCurrentMode(): FilesystemMode {
-  try {
-    const saved = localStorage.getItem(STORAGE_CONFIG.MODE_KEY);
-    return (saved === 'portfolio' ? 'portfolio' : 'default') as FilesystemMode;
-  } catch (error) {
-    console.error('Failed to load current mode:', error);
-    return 'default';
-  }
-}
-
-/**
  * Initializes the filesystem with either saved state or default state.
  * This is the main function used when the terminal starts up.
  *
@@ -202,21 +187,25 @@ export function initializeFilesystem(preferredMode: FilesystemMode = 'default'):
   const loadResult = loadFilesystemState();
 
   if (loadResult.success && loadResult.data) {
-    // Use saved state
-    return {
-      filesystem: loadResult.data.filesystem,
-      mode: loadResult.data.mode,
-      currentPath: loadResult.data.currentPath,
-    };
-  } else {
-    // Use default state
-    const mode = preferredMode || loadCurrentMode();
-    return {
-      filesystem: getFilesystemByMode(mode),
-      mode,
-      currentPath: ['home', 'user'],
-    };
+    // Only use saved state if the mode matches the preferred mode
+    if (loadResult.data.mode === preferredMode) {
+      return {
+        filesystem: loadResult.data.filesystem,
+        mode: loadResult.data.mode,
+        currentPath: loadResult.data.currentPath,
+      };
+    }
+    // Mode mismatch: saved data is for a different route, ignore it
   }
+
+  // Use default state with the preferred mode (no saved data or mode mismatch)
+  const mode = preferredMode;
+  const defaultPath = mode === 'portfolio' ? ['about'] : ['home', 'user'];
+  return {
+    filesystem: getFilesystemByMode(mode),
+    mode,
+    currentPath: defaultPath,
+  };
 }
 
 /**

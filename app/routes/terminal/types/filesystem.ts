@@ -54,5 +54,5 @@ export interface TerminalState {
 export type Command = 'cd' | 'ls' | 'touch' | 'cat' | 'mkdir' | 'rm' | 'rmdir' | 'pwd' | 'echo' | 'wc' | 'clear' | 'help' | 'vi' | 'reset-fs' | 'storage-info';
 
 export interface CommandHandler {
-  (args: string[], filesystem: FileSystemState): CommandResult;
+  (args: string[], filesystem: FileSystemState, currentMode?: import('~/routes/terminal/utils/defaultFilesystems').FilesystemMode): CommandResult;
 }

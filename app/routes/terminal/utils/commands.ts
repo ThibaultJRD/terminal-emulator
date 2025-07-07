@@ -10,14 +10,14 @@ import {
   joinOutputSegments,
   sortDirectoryEntries,
 } from '~/routes/terminal/utils/commandUtils';
-import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode, getFilesystemModeFromEnv } from '~/routes/terminal/utils/defaultFilesystems';
+import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDirectory, createFile, deleteNode, formatPath, getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
 import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 
 export const commands: Record<string, CommandHandler> = {
-  cd: (args: string[], filesystem: FileSystemState): CommandResult => {
+  cd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
       filesystem.currentPath = ['home', 'user'];
       return { success: true, output: '' };
@@ -46,7 +46,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  ls: (args: string[], filesystem: FileSystemState): CommandResult => {
+  ls: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
     const showHidden = flags.has('a');
     const showDetails = flags.has('l');
@@ -85,11 +85,11 @@ export const commands: Record<string, CommandHandler> = {
     }
   },
 
-  pwd: (args: string[], filesystem: FileSystemState): CommandResult => {
+  pwd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     return { success: true, output: formatPath(filesystem.currentPath) };
   },
 
-  touch: (args: string[], filesystem: FileSystemState): CommandResult => {
+  touch: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
@@ -117,7 +117,7 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult('');
   },
 
-  cat: (args: string[], filesystem: FileSystemState): CommandResult => {
+  cat: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('cat', 'file'));
     }
@@ -144,7 +144,7 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult(content);
   },
 
-  mkdir: (args: string[], filesystem: FileSystemState): CommandResult => {
+  mkdir: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
@@ -163,7 +163,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  rm: (args: string[], filesystem: FileSystemState): CommandResult => {
+  rm: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
@@ -183,7 +183,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  rmdir: (args: string[], filesystem: FileSystemState): CommandResult => {
+  rmdir: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'rmdir: missing operand' };
     }
@@ -232,16 +232,16 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  clear: (args: string[], filesystem: FileSystemState): CommandResult => {
+  clear: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     return { success: true, output: 'CLEAR' };
   },
 
-  echo: (args: string[], filesystem: FileSystemState): CommandResult => {
+  echo: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const output = args.join(' ');
     return { success: true, output };
   },
 
-  wc: (args: string[], filesystem: FileSystemState): CommandResult => {
+  wc: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'wc: missing operand' };
     }
@@ -297,9 +297,9 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: results.join('\n') };
   },
 
-  'reset-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
-    // Use the environment-configured filesystem mode
-    const mode = getFilesystemModeFromEnv();
+  'reset-fs': (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+    // Use the current route's filesystem mode
+    const mode = currentMode || 'default';
 
     // This command needs special handling in the terminal component
     // It will trigger a filesystem reset to default state
@@ -309,7 +309,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  'storage-info': (args: string[], filesystem: FileSystemState): CommandResult => {
+  'storage-info': (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const info = getStorageInfo();
     const formatSize = (bytes: number): string => {
       if (bytes < 1024) return `${bytes} B`;
@@ -331,7 +331,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output };
   },
 
-  vi: (args: string[], filesystem: FileSystemState): CommandResult => {
+  vi: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
       return {
         success: false,
@@ -366,7 +366,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  help: (args: string[], filesystem: FileSystemState): CommandResult => {
+  help: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const helpText = [
       'Available commands:',
       '',
@@ -416,7 +416,7 @@ export const commands: Record<string, CommandHandler> = {
   },
 };
 
-export function executeCommand(input: string, filesystem: FileSystemState): CommandResult {
+export function executeCommand(input: string, filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult {
   const parsed = parseCommand(input);
   const { command, args, redirectOutput, redirectInput } = parsed;
 
@@ -465,7 +465,7 @@ export function executeCommand(input: string, filesystem: FileSystemState): Comm
     };
   }
 
-  const result = handler(finalArgs, filesystem);
+  const result = handler(finalArgs, filesystem, currentMode);
 
   // Handle output redirection
   if (result.success && redirectOutput) {

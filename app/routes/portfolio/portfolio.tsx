@@ -1,14 +1,14 @@
 import { TerminalErrorBoundary } from '~/routes/terminal/components/ErrorBoundary';
 import { Terminal } from '~/routes/terminal/components/Terminal';
 
-import type { Route } from './+types/terminal';
+import type { Route } from './+types/portfolio';
 
 export function meta({}: Route.MetaArgs) {
-  const title = 'Terminal Emulator - Interactive Web Terminal';
+  const title = 'Thibault Jaillard - Interactive Portfolio';
   const description =
-    'A beautiful web-based terminal emulator with Unix-like commands, file system, and Catppuccin Mocha theme. Features command history, autocompletion, and text editing.';
-  const keywords = 'terminal, emulator, web terminal, unix, commands, filesystem, catppuccin, react, typescript';
-  const author = 'Terminal Emulator';
+    'Senior Mobile Developer specializing in React Native, TypeScript, and blockchain development. Interactive terminal-based portfolio showcasing projects including Fruitz (acquired by Bumble) and BNC Banking App (4M+ users).';
+  const keywords = 'Thibault Jaillard, portfolio, terminal, React Native, TypeScript, mobile developer, blockchain, Fruitz, BNC, Montreal developer';
+  const author = 'Thibault Jaillard';
 
   return [
     { title },
@@ -22,14 +22,14 @@ export function meta({}: Route.MetaArgs) {
     { property: 'og:type', content: 'website' },
     { property: 'og:title', content: title },
     { property: 'og:description', content: description },
-    { property: 'og:site_name', content: 'Terminal Emulator' },
+    { property: 'og:site_name', content: 'Thibault Jaillard Portfolio' },
     { property: 'og:locale', content: 'en_US' },
 
     // Twitter
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: title },
     { name: 'twitter:description', content: description },
-    { name: 'twitter:creator', content: '@terminal_emulator' },
+    { name: 'twitter:creator', content: '@ThibaultJRD' },
 
     // Additional meta tags
     { name: 'robots', content: 'index, follow' },
@@ -41,7 +41,7 @@ export function meta({}: Route.MetaArgs) {
     { name: 'mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-    { name: 'apple-mobile-web-app-title', content: 'Terminal' },
+    { name: 'apple-mobile-web-app-title', content: 'Portfolio' },
 
     // Security
     { httpEquiv: 'X-Content-Type-Options', content: 'nosniff' },
@@ -50,22 +50,22 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function TerminalScreen() {
+export default function PortfolioScreen() {
   return (
     <TerminalErrorBoundary
       onError={(error, errorInfo) => {
         // Custom error handling logic
-        console.error('Terminal route error:', error, errorInfo);
+        console.error('Portfolio route error:', error, errorInfo);
 
         // Could send to analytics or error reporting service
-        // analytics.track('terminal_error', {
+        // analytics.track('portfolio_error', {
         //   error: error.message,
         //   stack: error.stack,
         //   componentStack: errorInfo.componentStack,
         // });
       }}
     >
-      <Terminal />
+      <Terminal mode="portfolio" />
     </TerminalErrorBoundary>
   );
 }

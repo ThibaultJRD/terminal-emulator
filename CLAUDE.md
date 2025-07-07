@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a web-based terminal emulator built with React Router v7, TypeScript, and TailwindCSS. The application features an in-memory file system, basic Unix commands, command history, autocompletion, and a beautiful Catppuccin Mocha theme.
+This is a web-based terminal emulator built with React Router v7, TypeScript, and TailwindCSS. The application features an in-memory file system, basic Unix commands, command history, autocompletion, and a beautiful Catppuccin Mocha theme. It serves as both a technical demonstration and an interactive portfolio platform.
 
 ## Development Commands
 
@@ -16,15 +16,20 @@ This is a web-based terminal emulator built with React Router v7, TypeScript, an
 
 ## Configuration
 
-### Environment Variables
+### Route-Based Filesystem Modes
 
-- `VITE_FILESYSTEM_MODE` - Configure which filesystem structure to use at deployment time
-  - `default` - Unix-like filesystem with /home, /etc, /var, etc. (default if not set)
-  - `portfolio` - Portfolio-focused structure with /about, /projects, /contact, /blog
+The application now supports multiple filesystem modes through different routes:
+
+- **`/` (Root Route)** - Default Unix-like filesystem with /home, /etc, /var, etc.
+- **`/portfolio`** - Portfolio-focused structure with /about, /projects, /contact, /blog
 
 ### Filesystem Mode Selection
 
-The filesystem mode is determined at deployment time using the `VITE_FILESYSTEM_MODE` environment variable. If not set, it defaults to 'default' mode. This ensures consistent filesystem structure across all users for a given deployment.
+Filesystem modes are determined by the route accessed:
+
+- Visiting `{domain}/` loads the default Unix-like filesystem
+- Visiting `{domain}/portfolio` loads the portfolio-focused filesystem
+- The `reset-fs` command resets to the filesystem mode based on the current route
 
 ## Architecture
 
@@ -40,21 +45,24 @@ The filesystem mode is determined at deployment time using the `VITE_FILESYSTEM_
 ```
 app/
 ├── root.tsx                 # Root layout component
-├── routes.ts                # Route configuration
+├── routes.ts                # Route configuration with default and portfolio routes
 ├── routes/
-│   └── terminal/
-│       ├── terminal.tsx     # Main terminal route
-│       ├── components/
-│       │   └── Terminal.tsx # Main terminal component
-│       ├── types/
-│       │   └── filesystem.ts # TypeScript types for filesystem
-│       └── utils/
-│           ├── filesystem.ts    # In-memory filesystem utilities
-│           ├── commands.ts      # Terminal command implementations
-│           ├── commandParser.ts # Command parsing with redirection support
-│           ├── optionParser.ts  # Unix-style option parsing (e.g., -la, -rf)
-│           ├── autocompletion.ts # Tab completion system
-│           └── markdown.ts      # Markdown rendering with Catppuccin
+│   ├── terminal/
+│   │   ├── terminal.tsx     # Default terminal route (Unix filesystem)
+│   │   ├── components/
+│   │   │   └── Terminal.tsx # Main terminal component (accepts mode prop)
+│   │   ├── types/
+│   │   │   └── filesystem.ts # TypeScript types for filesystem
+│   │   └── utils/
+│   │       ├── filesystem.ts        # In-memory filesystem utilities
+│   │       ├── commands.ts          # Terminal command implementations
+│   │       ├── commandParser.ts     # Command parsing with redirection support
+│   │       ├── optionParser.ts      # Unix-style option parsing (e.g., -la, -rf)
+│   │       ├── autocompletion.ts    # Tab completion system
+│   │       ├── defaultFilesystems.ts # Default and portfolio filesystem definitions
+│   │       └── markdown.ts          # Markdown rendering with Catppuccin
+│   └── portfolio/
+│       └── portfolio.tsx    # Portfolio route (portfolio filesystem)
 ├── test/                    # Comprehensive test suite
 │   ├── utils/              # Unit tests for utilities
 │   └── integration/        # Integration tests for commands
@@ -68,7 +76,9 @@ app/
   - `ls -a` (show hidden), `-l` (long format), `-la` (combined)
   - `mkdir -p` (create parent directories)
   - `rm -r` (recursive), `-f` (force), `-rf` (combined)
-- **File System**: In-memory hierarchical filesystem with configurable structure
+- **File System**: In-memory hierarchical filesystem with route-based structure selection
+  - Default route (`/`): Unix-like filesystem with /home, /etc, /var directories
+  - Portfolio route (`/portfolio`): Portfolio-focused structure with /about, /projects, /contact, /blog
 - **Redirection**: Full I/O redirection support
   - `command > file` - Write output to file (overwrite)
   - `command >> file` - Append output to file
@@ -101,6 +111,30 @@ The application uses Catppuccin Mocha theme colors defined in `app.css`:
 - Prompt: `--color-ctp-green` (#a6e3a1)
 - Errors: `--color-ctp-red` (#f38ba8)
 - Directories: `--color-ctp-blue` (#89b4fa)
+
+### Portfolio Content
+
+The portfolio filesystem (`/portfolio` route) contains real professional information:
+
+- **About Directory** (`/about/`):
+  - `bio.md` - Professional summary for Thibault Jaillard, Senior Mobile Developer
+  - `skills.json` - Comprehensive technical skills including React Native, TypeScript, blockchain
+  - `cv.pdf` - Curriculum vitae with career highlights
+  - `philosophy.txt` - Development philosophy and approach
+
+- **Projects Directory** (`/projects/`):
+  - `fruitz-app/` - Dating app with 50k+ downloads, acquired by Bumble
+  - `banking-app/` - BNC Banking App serving 4M+ monthly users
+  - `blockchain-projects/` - Lum Network Explorer, Chain-Bridge, Cosmos Millions
+  - `other-projects/` - Bonjour Menu (COVID-19 solution), Terminal Emulator
+
+- **Contact Directory** (`/contact/`):
+  - `info.txt` - Contact information and professional status
+  - `social.json` - Professional links and project details
+
+- **Blog Directory** (`/blog/`):
+  - Technical articles and development insights
+  - `2024/terminal-emulator.md` - Deep dive into building the terminal emulator
 
 ## Testing
 
@@ -142,8 +176,7 @@ npm test -- --coverage  # Run tests with coverage report
 The project is configured for easy deployment on Vercel:
 
 1. **Connect Repository**: Link your GitHub repository to Vercel
-2. **Environment Variables**: Set `VITE_FILESYSTEM_MODE` (default: 'default')
-3. **Deploy**: Vercel will automatically use the configuration in `vercel.json`
+2. **Deploy**: Vercel will automatically use the configuration in `vercel.json`
 
 #### Vercel Configuration
 
@@ -152,11 +185,12 @@ The project is configured for easy deployment on Vercel:
 - **SPA Routing**: Configured with rewrites to handle client-side routing
 - **Asset Caching**: Static assets cached for 1 year with immutable headers
 
-#### Environment Variables
+#### Route-based Filesystem
 
-Copy `.env.example` to `.env` and configure:
+The application automatically serves the appropriate filesystem based on the accessed route:
 
-- `VITE_FILESYSTEM_MODE`: Choose 'default' or 'portfolio' filesystem structure
+- **`/`** - Default Unix-like filesystem
+- **`/portfolio`** - Portfolio-focused filesystem structure
 
 ### Alternative Platforms
 

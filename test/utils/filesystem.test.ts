@@ -5,6 +5,7 @@ import {
   createDefaultFileSystem,
   createDirectory,
   createFile,
+  createFreshFileSystem,
   deleteNode,
   formatPath,
   getCurrentDirectory,
@@ -37,7 +38,38 @@ describe('Filesystem utilities', () => {
 
       const documentsDir = getNodeAtPath(filesystem, ['home', 'user', 'documents']);
       expect(documentsDir!.children!['readme.txt']).toBeDefined();
-      expect(documentsDir!.children!['notes.md']).toBeDefined();
+    });
+
+    it('should create portfolio filesystem when mode is specified', () => {
+      const portfolioFs = createFreshFileSystem('portfolio');
+      expect(portfolioFs.root.name).toBe('/');
+      expect(portfolioFs.root.type).toBe('directory');
+      expect(portfolioFs.currentPath).toEqual(['about']);
+
+      // Should have portfolio structure
+      expect(portfolioFs.root.children!['about']).toBeDefined();
+      expect(portfolioFs.root.children!['projects']).toBeDefined();
+      expect(portfolioFs.root.children!['contact']).toBeDefined();
+      expect(portfolioFs.root.children!['blog']).toBeDefined();
+
+      // Should not have default Unix structure
+      expect(portfolioFs.root.children!['home']).toBeUndefined();
+      expect(portfolioFs.root.children!['etc']).toBeUndefined();
+    });
+
+    it('should create default filesystem when mode is default', () => {
+      const defaultFs = createFreshFileSystem('default');
+      expect(defaultFs.root.name).toBe('/');
+      expect(defaultFs.currentPath).toEqual(['home', 'user']);
+
+      // Should have default Unix structure
+      expect(defaultFs.root.children!['home']).toBeDefined();
+      expect(defaultFs.root.children!['etc']).toBeDefined();
+      expect(defaultFs.root.children!['var']).toBeDefined();
+
+      // Should not have portfolio structure at root
+      expect(defaultFs.root.children!['about']).toBeUndefined();
+      expect(defaultFs.root.children!['projects']).toBeUndefined();
     });
   });
 

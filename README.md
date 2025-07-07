@@ -1,6 +1,6 @@
 # 🖥️ Terminal Emulator
 
-A modern and elegant terminal emulator built with React Router v7, TypeScript, and TailwindCSS. This application features an in-memory file system, basic Unix commands, command history, autocompletion, and a beautiful Catppuccin Mocha theme.
+A modern and elegant terminal emulator built with React Router v7, TypeScript, and TailwindCSS. This application features an in-memory file system, basic Unix commands, command history, autocompletion, and a beautiful Catppuccin Mocha theme. Experience both a traditional Unix environment and an interactive portfolio showcasing real professional projects and experience.
 
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
@@ -9,9 +9,10 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 
 ## 🚀 Live Demo
 
-**[Try the Terminal Emulator](https://terminal-emulator-nine.vercel.app/)**
+**[Default Terminal](https://terminal-emulator-nine.vercel.app/)** - Unix-like filesystem experience  
+**[Interactive Portfolio](https://terminal-emulator-nine.vercel.app/portfolio)** - Explore professional experience
 
-Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more.
+Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more. Try both modes to see the difference!
 
 ## ✨ Features
 
@@ -353,11 +354,11 @@ vi international.txt
 
 ## 🗂️ Filesystem Configuration
 
-The terminal supports multiple filesystem modes configured at deployment time.
+The terminal supports multiple filesystem modes through different routes, providing both a traditional Unix-like environment and an interactive portfolio experience.
 
-### Available Modes
+### Route-Based Filesystem Modes
 
-#### Default Mode
+#### Default Route (`/`)
 
 A comprehensive Unix-like filesystem with:
 
@@ -368,28 +369,39 @@ A comprehensive Unix-like filesystem with:
 - `/usr/` - User programs and documentation
 - `/root/` - Administrator files
 
-#### Portfolio Mode
+#### Portfolio Route (`/portfolio`)
 
-A portfolio-focused structure designed for showcasing:
+An interactive portfolio showcasing real professional experience:
 
-- `/about/` - Personal information, skills, CV
-- `/projects/` - Software projects and demos
-- `/contact/` - Contact information and social links
-- `/blog/` - Technical articles and blog posts
+- `/about/` - Professional bio, skills, CV, and development philosophy
+- `/projects/` - Real projects including:
+  - **Fruitz App**: Dating app with 50k+ downloads, acquired by Bumble
+  - **BNC Banking App**: Mobile banking serving 4M+ monthly users
+  - **Blockchain Projects**: Lum Network Explorer, Chain-Bridge, Cosmos Millions
+  - **Other Projects**: Bonjour Menu (COVID-19 solution), Terminal Emulator
+- `/contact/` - Contact information and professional social links
+- `/blog/` - Technical articles and development insights
 
-### Configuration
+### Accessing Different Modes
 
-Filesystem mode is configured at deployment time using the `VITE_FILESYSTEM_MODE` environment variable:
+Simply navigate to different URLs to access different filesystem modes:
 
 ```bash
-# Development (defaults to 'default')
-npm run dev
+# Access default Unix-like filesystem
+https://your-domain.com/
 
-# Production with portfolio mode
-VITE_FILESYSTEM_MODE=portfolio npm run build
+# Access interactive portfolio
+https://your-domain.com/portfolio
+```
 
-# Production with default mode (explicit)
-VITE_FILESYSTEM_MODE=default npm run build
+### Legacy Environment Variable Configuration
+
+The `VITE_FILESYSTEM_MODE` environment variable is still used for the `reset-fs` command:
+
+```bash
+# Configure which filesystem the reset-fs command uses
+VITE_FILESYSTEM_MODE=default npm run build   # Reset to Unix filesystem
+VITE_FILESYSTEM_MODE=portfolio npm run build # Reset to portfolio filesystem
 ```
 
 ### Filesystem Management Commands
@@ -408,7 +420,8 @@ The filesystem automatically saves to browser localStorage:
 
 - **Auto-save**: Changes saved automatically after 1 second of inactivity
 - **Session restore**: Filesystem state restored on page reload
-- **Mode consistency**: Filesystem mode determined by deployment configuration
+- **Route-specific persistence**: Each route (default vs portfolio) maintains its own filesystem state
+- **Mode consistency**: Filesystem mode determined by the current route
 
 ### Custom Filesystem Development
 
