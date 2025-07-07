@@ -79,7 +79,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         },
         {
           type: 'output',
-          content: 'Senior Mobile Developer | React Native | TypeScript | Blockchain',
+          content: 'Senior Frontend and Mobile Developer | React | React Native | TypeScript | Web 3.0',
           timestamp: new Date(),
         },
         {
