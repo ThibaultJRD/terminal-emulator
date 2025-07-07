@@ -200,7 +200,7 @@ export function initializeFilesystem(preferredMode: FilesystemMode = 'default'):
 
   // Use default state with the preferred mode (no saved data or mode mismatch)
   const mode = preferredMode;
-  const defaultPath = mode === 'portfolio' ? ['about'] : ['home', 'user'];
+  const defaultPath = mode === 'portfolio' ? [] : ['home', 'user'];
   return {
     filesystem: getFilesystemByMode(mode),
     mode,
