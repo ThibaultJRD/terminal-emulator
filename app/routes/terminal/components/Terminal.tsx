@@ -134,7 +134,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     (input: string) => {
       if (!input.trim()) return;
 
-      const prompt = generatePromptText(terminalState.filesystem.currentPath);
+      const prompt = generatePromptText(terminalState.filesystem.currentPath, mode);
 
       // Add command to output
       setOutputLines((prev) => [...prev, createOutputLine('command', prompt + input)]);
@@ -534,8 +534,9 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     }
   };
 
-  const generatePromptText = (path: string[]): string => {
-    return `user@terminal:${formatPath(path)} ❯ `;
+  const generatePromptText = (path: string[], currentMode: 'default' | 'portfolio'): string => {
+    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+    return `${user}@terminal:${formatPath(path)} ❯ `;
   };
 
   // Helper to check if we're completing a command (not a path)
