@@ -1006,6 +1006,143 @@ Open to discussing:
           },
         },
       },
+      '.easter-egg.md': {
+        name: '.easter-egg.md',
+        type: 'file',
+        content: `# 🐰 Easter Egg - Code Comedy
+
+*You found the hidden file! Congratulations!*
+
+## 🎭 Code Comedy Club
+
+### The developer and their 99 problems
+
+\`\`\`typescript
+interface Developer {
+  problems: number;
+  solutions: number;
+  coffee: number;
+}
+
+const me: Developer = {
+  problems: 99,
+  solutions: 1,
+  coffee: Infinity
+};
+
+// I got 99 problems but React.FC ain't one
+const MyComponent = ({ children }: { children: React.ReactNode }) => {
+  return <div>{children}</div>;
+};
+\`\`\`
+
+### The function that always works
+
+\`\`\`javascript
+function worksPerfectly() {
+  // TODO: Implement this function
+  return "It works on my machine 🤷‍♂️";
+}
+
+// Production usage
+console.log(worksPerfectly()); // "It works on my machine 🤷‍♂️"
+\`\`\`
+
+### The art of naming
+
+\`\`\`typescript
+// Before refactoring
+const a = getData();
+const b = processData(a);
+const c = formatData(b);
+
+// After "professional" refactoring
+const dataFromServer = getData();
+const processedDataFromServer = processData(dataFromServer);
+const formattedProcessedDataFromServer = formatData(processedDataFromServer);
+
+// 6 months later
+const wtfIsThis = formattedProcessedDataFromServer;
+\`\`\`
+
+### Promises we don't keep
+
+\`\`\`javascript
+const promise = new Promise((resolve, reject) => {
+  // "I'll fix it tomorrow"
+  setTimeout(() => {
+    resolve("Still not fixed");
+  }, 365 * 24 * 60 * 60 * 1000); // 1 year
+});
+
+promise.then(result => {
+  console.log(result); // In a year...
+});
+\`\`\`
+
+### CSS that does whatever it wants
+
+\`\`\`css
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Spoiler: it works... sometimes */
+\`\`\`
+
+### The shameful git commit
+
+\`\`\`bash
+git add .
+git commit -m "Fix stuff"
+git push --force origin main
+
+# 5 minutes later...
+git commit -m "Fix fix stuff"
+git push --force origin main
+
+# The cycle continues...
+\`\`\`
+
+### The useEffect that loops
+
+\`\`\`typescript
+const [count, setCount] = useState(0);
+
+useEffect(() => {
+  // "I forgot the dependencies"
+  setCount(count + 1);
+}); // Dependencies? Never heard of them!
+
+// RIP browser memory 🪦
+\`\`\`
+
+## 🎯 Bonus: Developer truths
+
+1. **99.9% of the time**: "It works on my machine"
+2. **0.1% of the time**: "Oh... I found the bug"
+3. **Stack Overflow**: My real mentor
+4. **Documentation**: "We'll see later"
+5. **Tests**: "Users will test it"
+
+---
+
+*Created with ❤️ and lots of ☕ by a developer who owns their 99 problems.*
+
+**PS**: If you found this file, you know how to use \`ls -a\`. You're already better than 50% of developers! 😄`,
+        permissions: '-rw-r--r--',
+        size: 2720,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      },
     },
   };
 }
