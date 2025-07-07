@@ -134,7 +134,7 @@ function parseInlineMarkdown(text: string): OutputSegment[] {
     if (linkMatch) {
       const before = current.slice(0, linkMatch.index);
       if (before) result.push({ text: before, type: 'normal' });
-      result.push({ text: linkMatch[1], type: 'link' });
+      result.push({ text: linkMatch[1], type: 'link', url: linkMatch[2] });
       current = current.slice(linkMatch.index! + linkMatch[0].length);
       continue;
     }

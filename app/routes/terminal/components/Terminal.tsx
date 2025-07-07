@@ -488,7 +488,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
             className = 'text-ctp-overlay0';
             break;
           case 'link':
-            className = 'text-ctp-sapphire underline';
+            className = 'text-ctp-sapphire underline hover:text-ctp-sky transition-colors cursor-pointer';
             break;
           case 'blockquote':
             className = 'text-ctp-subtext1 italic';
@@ -526,6 +526,15 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           default:
             className = 'text-ctp-text';
             break;
+        }
+
+        // Special handling for links to make them clickable
+        if (segment.type === 'link' && segment.url) {
+          return (
+            <a key={segIndex} href={segment.url} target="_blank" rel="noopener noreferrer" className={className}>
+              {segment.text}
+            </a>
+          );
         }
 
         return (

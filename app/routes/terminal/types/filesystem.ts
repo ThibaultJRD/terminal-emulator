@@ -47,6 +47,7 @@ export interface OutputSegment {
     | 'path'
     | 'prompt-symbol'
     | 'command';
+  url?: string;
 }
 
 export interface TerminalState {
