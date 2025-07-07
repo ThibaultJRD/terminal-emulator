@@ -132,12 +132,20 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
 
   const handleCommand = useCallback(
     (input: string) => {
-      if (!input.trim()) return;
+      // Create structured prompt segments
+      const promptSegments = generatePromptSegments(terminalState.filesystem.currentPath, mode);
 
-      const prompt = generatePromptText(terminalState.filesystem.currentPath, mode);
+      // Add command segment if there's input
+      const commandSegments = input.trim() ? [...promptSegments, { type: 'command' as const, text: input }] : promptSegments;
 
       // Add command to output
-      setOutputLines((prev) => [...prev, createOutputLine('command', prompt + input)]);
+      setOutputLines((prev) => [...prev, createOutputLine('command', commandSegments)]);
+
+      // If no input, just update terminal state and return
+      if (!input.trim()) {
+        setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
+        return;
+      }
 
       // Execute command safely
       const result = executeCommandSafely(input, terminalState.filesystem, filesystemMode);
@@ -497,6 +505,24 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           case 'hr':
             className = 'text-ctp-overlay1';
             break;
+          case 'user':
+            className = 'text-ctp-mauve';
+            break;
+          case 'separator':
+            className = 'text-ctp-subtext0';
+            break;
+          case 'host':
+            className = 'text-ctp-blue';
+            break;
+          case 'path':
+            className = 'text-ctp-yellow';
+            break;
+          case 'prompt-symbol':
+            className = 'text-ctp-green';
+            break;
+          case 'command':
+            className = 'text-ctp-text';
+            break;
           default:
             className = 'text-ctp-text';
             break;
@@ -513,7 +539,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     switch (line.type) {
       case 'command':
         return (
-          <div key={index} className={`${baseClasses} text-ctp-green`}>
+          <div key={index} className={baseClasses}>
             {renderContent(line.content)}
           </div>
         );
@@ -537,6 +563,18 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   const generatePromptText = (path: string[], currentMode: 'default' | 'portfolio'): string => {
     const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
     return `${user}@terminal:${formatPath(path)} ❯ `;
+  };
+
+  const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio'): OutputSegment[] => {
+    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+    return [
+      { type: 'user' as const, text: user },
+      { type: 'separator' as const, text: '@' },
+      { type: 'host' as const, text: 'terminal' },
+      { type: 'separator' as const, text: ':' },
+      { type: 'path' as const, text: formatPath(path) },
+      { type: 'prompt-symbol' as const, text: ' ❯ ' },
+    ];
   };
 
   // Helper to check if we're completing a command (not a path)

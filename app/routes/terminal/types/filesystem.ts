@@ -40,7 +40,13 @@ export interface OutputSegment {
     | 'blockquote-symbol'
     | 'list-bullet'
     | 'list-number'
-    | 'hr';
+    | 'hr'
+    | 'user'
+    | 'separator'
+    | 'host'
+    | 'path'
+    | 'prompt-symbol'
+    | 'command';
 }
 
 export interface TerminalState {
