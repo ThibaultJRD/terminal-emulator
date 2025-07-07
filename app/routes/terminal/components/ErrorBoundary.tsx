@@ -131,16 +131,8 @@ export class TerminalErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
             <div className="mt-8 text-sm text-[var(--color-ctp-subtext0)]">
               <p>
-                If this error persists, please report it on our{' '}
-                <a
-                  href="https://github.com/your-repo/issues"
-                  className="text-[var(--color-ctp-blue)] underline hover:text-[var(--color-ctp-sapphire)]"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  GitHub issues page
-                </a>
-                .
+                If this error persists, please try refreshing the page or clearing your browser cache. For persistent issues, check the browser console for more
+                detailed error information.
               </p>
             </div>
           </div>

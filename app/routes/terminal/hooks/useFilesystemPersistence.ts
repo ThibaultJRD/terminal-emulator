@@ -59,7 +59,7 @@ export function useFilesystemPersistence(
         lastSaveRef.current = Date.now();
         lastFilesystemHashRef.current = createFilesystemHash(filesystem);
 
-        if (enableLogs) {
+        if (enableLogs && process.env.NODE_ENV === 'development') {
           console.debug('Filesystem saved immediately');
         }
         return true;
@@ -93,7 +93,7 @@ export function useFilesystemPersistence(
     // Check if filesystem has actually changed
     const currentHash = createFilesystemHash(filesystem);
     if (currentHash === lastFilesystemHashRef.current) {
-      if (enableLogs) {
+      if (enableLogs && process.env.NODE_ENV === 'development') {
         console.debug('Filesystem unchanged, skipping save');
       }
       return;
@@ -118,7 +118,7 @@ export function useFilesystemPersistence(
       }
     }, timeout) as unknown as number;
 
-    if (enableLogs) {
+    if (enableLogs && process.env.NODE_ENV === 'development') {
       console.debug(`Auto-save scheduled in ${timeout}ms`);
     }
   }, [filesystem, debounceMs, maxDebounceMs, enableLogs, createFilesystemHash, saveImmediately, cancelPendingSave]);

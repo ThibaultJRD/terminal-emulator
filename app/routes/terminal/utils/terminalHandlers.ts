@@ -1,4 +1,4 @@
-import type { CommandResult, FileSystemState, TerminalState } from '~/routes/terminal/types/filesystem';
+import type { CommandResult, FileSystemState, OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
 import type { FilesystemMode } from '~/routes/terminal/utils/defaultFilesystems';
@@ -7,7 +7,7 @@ import { createTextEditorState } from '~/routes/terminal/utils/textEditor';
 
 export interface TerminalOutputLine {
   type: 'command' | 'output' | 'error';
-  content: string | import('~/routes/terminal/types/filesystem').OutputSegment[];
+  content: string | OutputSegment[];
   timestamp: Date;
 }
 
@@ -100,11 +100,17 @@ export function handleFilesystemSaveAfterCommand(input: string, result: CommandR
           ? `redirection (${commandName} ${parsed.redirectOutput?.type} ${parsed.redirectOutput?.filename})`
           : `filesystem command (${commandName})`;
 
-        console.debug(`Filesystem saved immediately: ${reason}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug(`Filesystem saved immediately: ${reason}`);
+        }
       }
     })
     .catch((error) => {
-      console.error('Failed to immediately save filesystem after command:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to immediately save filesystem after command:', error);
+      }
+      // In production, we might want to show a user-friendly message
+      // or retry the save operation
     });
 
   return true;
@@ -113,10 +119,7 @@ export function handleFilesystemSaveAfterCommand(input: string, result: CommandR
 /**
  * Creates a new output line for the terminal
  */
-export function createOutputLine(
-  type: TerminalOutputLine['type'],
-  content: string | import('~/routes/terminal/types/filesystem').OutputSegment[],
-): TerminalOutputLine {
+export function createOutputLine(type: TerminalOutputLine['type'], content: string | OutputSegment[]): TerminalOutputLine {
   return {
     type,
     content,
