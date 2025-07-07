@@ -5,6 +5,8 @@ import type { FilesystemMode } from '~/routes/terminal/utils/defaultFilesystems'
 import { resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import { createTextEditorState } from '~/routes/terminal/utils/textEditor';
 
+import { unicodeSafeAtob } from './unicodeBase64';
+
 export interface TerminalOutputLine {
   type: 'command' | 'output' | 'error';
   content: string | OutputSegment[];
@@ -58,7 +60,7 @@ export function analyzeSpecialCommand(result: CommandResult): SpecialCommandResu
   if (output.startsWith('OPEN_EDITOR:')) {
     const parts = output.split(':');
     const filename = parts[1];
-    const content = parts[2] ? atob(parts[2]) : ''; // Base64 decode
+    const content = parts[2] ? unicodeSafeAtob(parts[2]) : ''; // Unicode-safe Base64 decode
     return { type: 'open_editor', data: { filename, content } };
   }
 

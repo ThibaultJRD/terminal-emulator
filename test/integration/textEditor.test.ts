@@ -5,6 +5,7 @@ import { executeCommand } from '~/routes/terminal/utils/commands';
 import { createDefaultFilesystem } from '~/routes/terminal/utils/defaultFilesystems';
 import { createFile, getNodeAtPath } from '~/routes/terminal/utils/filesystem';
 import { createTextEditorState, executeEditorCommand, handleKeyboardInput, insertTextAtCursor, switchMode } from '~/routes/terminal/utils/textEditor';
+import { unicodeSafeAtob } from '~/routes/terminal/utils/unicodeBase64';
 
 // Helper function to safely split command output
 const getOutputAsString = (output: string | any[]): string => {
@@ -318,7 +319,7 @@ describe('Text Editor Integration', () => {
       expect(result.success).toBe(true);
 
       const base64Content = (result.output as string).split(':')[2];
-      const decodedContent = atob(base64Content);
+      const decodedContent = unicodeSafeAtob(base64Content);
       expect(decodedContent).toBe(binaryContent);
     });
 

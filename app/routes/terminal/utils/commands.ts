@@ -16,6 +16,8 @@ import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
 import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 
+import { unicodeSafeBtoa } from './unicodeBase64';
+
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
@@ -363,7 +365,7 @@ export const commands: Record<string, CommandHandler> = {
     // It will open the text editor with the file content
     return {
       success: true,
-      output: `OPEN_EDITOR:${filename}:${btoa(content)}`, // Base64 encode content to handle special characters
+      output: `OPEN_EDITOR:${filename}:${unicodeSafeBtoa(content)}`, // Unicode-safe Base64 encode content
     };
   },
 
