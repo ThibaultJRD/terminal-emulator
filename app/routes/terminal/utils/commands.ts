@@ -19,7 +19,8 @@ import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState } from '~
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     if (args.length === 0) {
-      filesystem.currentPath = ['home', 'user'];
+      // Use appropriate home directory based on filesystem mode
+      filesystem.currentPath = currentMode === 'portfolio' ? [] : ['home', 'user'];
       return { success: true, output: '' };
     }
 
@@ -57,7 +58,7 @@ export const commands: Record<string, CommandHandler> = {
     const targetNode = getNodeAtPath(filesystem, targetPath);
 
     if (!targetNode) {
-      return createErrorResult(`ls: ${ERROR_MESSAGES.FILE_NOT_FOUND(pathArg)}`);
+      return createErrorResult(`ls: ${ERROR_MESSAGES.FILE_NOT_FOUND(pathArg || formatPath(targetPath))}`);
     }
 
     // Handle single file case

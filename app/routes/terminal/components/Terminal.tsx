@@ -546,7 +546,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   };
 
   const currentPrompt = {
-    user: 'user',
+    user: mode === 'portfolio' ? 'ThibaultJRD' : 'user',
     host: 'terminal',
     path: formatPath(terminalState.filesystem.currentPath),
     symbol: '❯',
