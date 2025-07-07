@@ -21,6 +21,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,html,json}' --config ./.prettierrc.json",
+    "format:check": "prettier --check './**/*.{js,jsx,ts,tsx,css,md,html,json}' --config ./.prettierrc.json",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
