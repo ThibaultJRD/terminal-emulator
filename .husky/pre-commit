@@ -1,0 +1,30 @@
+#!/bin/sh
+
+echo "🔍 Running pre-commit hook..."
+
+# Check formatting with Prettier
+echo "📝 Checking code formatting..."
+if ! yarn format:check; then
+    echo "❌ Formatting errors detected!"
+    echo "💡 Run 'yarn format' to fix automatically."
+    exit 1
+fi
+echo "✅ Code formatting is correct"
+
+# Check TypeScript compilation
+echo "🔧 Checking TypeScript compilation..."
+if ! yarn typecheck; then
+    echo "❌ TypeScript compilation errors detected!"
+    exit 1
+fi
+echo "✅ TypeScript compilation successful"
+
+# Run tests
+echo "🧪 Running tests..."
+if ! yarn test:run; then
+    echo "❌ Tests failed!"
+    exit 1
+fi
+echo "✅ All tests pass"
+
+echo "🎉 Pre-commit hook completed successfully!"
