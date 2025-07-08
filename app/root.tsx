@@ -1,4 +1,4 @@
-import { Analytics } from '@vercel/analytics/remix';
+import { Analytics } from '@vercel/analytics/react';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from 'react-router';
 
 import type { Route } from './+types/root';
