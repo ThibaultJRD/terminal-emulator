@@ -1,8 +1,10 @@
-import { Analytics } from '@vercel/analytics/react';
+import { inject } from '@vercel/analytics';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from 'react-router';
 
 import type { Route } from './+types/root';
 import './app.css';
+
+inject();
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -40,7 +42,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        <Analytics />
       </body>
     </html>
   );
