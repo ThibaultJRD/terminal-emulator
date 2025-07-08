@@ -11,10 +11,20 @@ export const links: Route.LinksFunction = () => [
     crossOrigin: 'anonymous',
   },
   {
+    rel: 'preload',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
+    as: 'style',
+    onLoad: "this.onload=null;this.rel='stylesheet'",
+  },
+  {
     rel: 'stylesheet',
     href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
+    media: 'print',
+    onLoad: "this.media='all'",
   },
   { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+  { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
+  { rel: 'apple-touch-icon', href: '/favicon.svg' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

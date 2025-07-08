@@ -1,0 +1,194 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#313244;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e1e2e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="terminalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#313244;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#45475a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Terminal Window -->
+  <rect x="50" y="80" width="600" height="420" rx="12" fill="url(#terminalGradient)" stroke="#585b70" stroke-width="2"/>
+  
+  <!-- Terminal Header -->
+  <rect x="50" y="80" width="600" height="35" rx="12" fill="#45475a"/>
+  <rect x="50" y="105" width="600" height="10" fill="#45475a"/>
+  
+  <!-- Traffic Light Buttons -->
+  <circle cx="75" cy="98" r="6" fill="#f38ba8"/>
+  <circle cx="95" cy="98" r="6" fill="#fab387"/>
+  <circle cx="115" cy="98" r="6" fill="#a6e3a1"/>
+  
+  <!-- Terminal Content -->
+  <text x="70" y="140" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@portfolio:~$
+  </text>
+  <text x="220" y="140" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    ls /about
+  </text>
+  
+  <text x="70" y="165" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    README.md
+  </text>
+  <text x="200" y="165" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    skills.md
+  </text>
+  
+  <text x="70" y="190" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@portfolio:~$
+  </text>
+  <text x="220" y="190" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    cat /about/README.md
+  </text>
+  
+  <text x="70" y="215" font-family="'Courier New', monospace" font-size="12" fill="#f9e2af">
+    # Thibault Jaillard
+  </text>
+  
+  <text x="70" y="235" font-family="'Courier New', monospace" font-size="11" fill="#fab387">
+    **Senior Mobile Developer**
+  </text>
+  <text x="250" y="235" font-family="'Courier New', monospace" font-size="11" fill="#cdd6f4">
+    • Montréal, QC
+  </text>
+  
+  <text x="70" y="260" font-family="'Courier New', monospace" font-size="11" fill="#cdd6f4">
+    Mobile and web developer with 8+ years
+  </text>
+  
+  <text x="70" y="280" font-family="'Courier New', monospace" font-size="11" fill="#cdd6f4">
+    Built 10+ apps including Fruitz
+  </text>
+  
+  <text x="70" y="300" font-family="'Courier New', monospace" font-size="11" fill="#cba6f7">
+    (acquired by Bumble)
+  </text>
+  
+  <text x="70" y="325" font-family="'Courier New', monospace" font-size="11" fill="#cdd6f4">
+    Banking apps serving 4M+ users
+  </text>
+  
+  <text x="70" y="350" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@portfolio:~$
+  </text>
+  <text x="220" y="350" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    ls /projects
+  </text>
+  
+  <text x="70" y="375" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    fruitz.md
+  </text>
+  <text x="150" y="375" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    banking.md
+  </text>
+  <text x="250" y="375" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    blockchain.md
+  </text>
+  
+  <text x="70" y="400" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    terminal.md
+  </text>
+  
+  <text x="70" y="430" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@portfolio:~$
+  </text>
+  <rect x="220" y="418" width="8" height="15" fill="#cdd6f4" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0;0.8" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Profile Section -->
+  <g transform="translate(700, 120)">
+    <!-- Profile Card Background -->
+    <rect x="0" y="0" width="450" height="360" rx="16" fill="#313244" stroke="#585b70" stroke-width="2"/>
+    
+    <!-- Profile Picture Placeholder -->
+    <circle cx="225" cy="80" r="45" fill="#45475a" stroke="#a6e3a1" stroke-width="3"/>
+    <text x="225" y="88" text-anchor="middle" font-family="Inter" font-size="24" fill="#a6e3a1">TJ</text>
+    
+    <!-- Name -->
+    <text x="225" y="155" text-anchor="middle" font-family="Inter" font-size="32" font-weight="700" fill="#cdd6f4">
+      Thibault Jaillard
+    </text>
+    
+    <!-- Title -->
+    <text x="225" y="185" text-anchor="middle" font-family="Inter" font-size="18" font-weight="500" fill="#a6e3a1">
+      Senior Mobile Developer
+    </text>
+    
+    <!-- Technologies -->
+    <g transform="translate(50, 220)">
+      <!-- React Native -->
+      <rect x="0" y="0" width="80" height="25" rx="12" fill="#61dafb" fill-opacity="0.2" stroke="#61dafb" stroke-width="1"/>
+      <text x="40" y="17" text-anchor="middle" font-family="Inter" font-size="11" font-weight="500" fill="#61dafb">
+        React Native
+      </text>
+      
+      <!-- TypeScript -->
+      <rect x="90" y="0" width="70" height="25" rx="12" fill="#3178c6" fill-opacity="0.2" stroke="#3178c6" stroke-width="1"/>
+      <text x="125" y="17" text-anchor="middle" font-family="Inter" font-size="11" font-weight="500" fill="#3178c6">
+        TypeScript
+      </text>
+      
+      <!-- Blockchain -->
+      <rect x="170" y="0" width="70" height="25" rx="12" fill="#cba6f7" fill-opacity="0.2" stroke="#cba6f7" stroke-width="1"/>
+      <text x="205" y="17" text-anchor="middle" font-family="Inter" font-size="11" font-weight="500" fill="#cba6f7">
+        Blockchain
+      </text>
+      
+      <!-- React -->
+      <rect x="250" y="0" width="50" height="25" rx="12" fill="#61dafb" fill-opacity="0.2" stroke="#61dafb" stroke-width="1"/>
+      <text x="275" y="17" text-anchor="middle" font-family="Inter" font-size="11" font-weight="500" fill="#61dafb">
+        React
+      </text>
+      
+      <!-- Node.js -->
+      <rect x="310" y="0" width="60" height="25" rx="12" fill="#a6e3a1" fill-opacity="0.2" stroke="#a6e3a1" stroke-width="1"/>
+      <text x="340" y="17" text-anchor="middle" font-family="Inter" font-size="11" font-weight="500" fill="#a6e3a1">
+        Node.js
+      </text>
+    </g>
+    
+    <!-- Stats -->
+    <g transform="translate(40, 270)">
+      <text x="0" y="20" font-family="Inter" font-size="14" font-weight="600" fill="#fab387">8+</text>
+      <text x="25" y="20" font-family="Inter" font-size="12" fill="#cdd6f4">years experience</text>
+      
+      <text x="150" y="20" font-family="Inter" font-size="14" font-weight="600" fill="#f38ba8">5.6M+</text>
+      <text x="185" y="20" font-family="Inter" font-size="12" fill="#cdd6f4">Fruitz downloads</text>
+      
+      <text x="0" y="45" font-family="Inter" font-size="14" font-weight="600" fill="#a6e3a1">4M+</text>
+      <text x="25" y="45" font-family="Inter" font-size="12" fill="#cdd6f4">banking app users</text>
+      
+      <text x="150" y="45" font-family="Inter" font-size="14" font-weight="600" fill="#89b4fa">10+</text>
+      <text x="175" y="45" font-family="Inter" font-size="12" fill="#cdd6f4">apps built</text>
+    </g>
+    
+    <!-- Contact -->
+    <text x="225" y="340" text-anchor="middle" font-family="Inter" font-size="12" fill="#a6a8c7">
+      📧 thibault.jaillard@gmail.com
+    </text>
+  </g>
+  
+  <!-- Main Title -->
+  <text x="600" y="50" text-anchor="middle" font-family="Inter" font-size="36" font-weight="700" fill="#cdd6f4">
+    Interactive Portfolio
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="590" text-anchor="middle" font-family="Inter" font-size="20" font-weight="400" fill="#a6a8c7">
+    Explore my projects and experience through terminal commands
+  </text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="80" cy="50" r="3" fill="#fab387" opacity="0.6"/>
+  <circle cx="1120" cy="580" r="4" fill="#cba6f7" opacity="0.4"/>
+  <circle cx="30" cy="580" r="2" fill="#f38ba8" opacity="0.5"/>
+  <circle cx="1170" cy="50" r="3" fill="#a6e3a1" opacity="0.3"/>
+</svg>

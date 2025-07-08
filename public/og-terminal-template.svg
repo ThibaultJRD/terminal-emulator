@@ -1,0 +1,107 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1e1e2e"/>
+  
+  <!-- Terminal Window -->
+  <rect x="150" y="120" width="900" height="390" rx="12" fill="#313244" stroke="#45475a" stroke-width="2"/>
+  
+  <!-- Terminal Header -->
+  <rect x="150" y="120" width="900" height="40" rx="12" fill="#45475a"/>
+  <rect x="150" y="148" width="900" height="12" fill="#45475a"/>
+  
+  <!-- Traffic Light Buttons -->
+  <circle cx="180" cy="140" r="8" fill="#f38ba8"/>
+  <circle cx="210" cy="140" r="8" fill="#fab387"/>
+  <circle cx="240" cy="140" r="8" fill="#a6e3a1"/>
+  
+  <!-- Terminal Title -->
+  <text x="600" y="148" text-anchor="middle" font-family="Inter, monospace" font-size="16" font-weight="500" fill="#cdd6f4">
+    Terminal Emulator
+  </text>
+  
+  <!-- Terminal Content -->
+  <text x="170" y="190" font-family="'Courier New', monospace" font-size="16" fill="#a6e3a1">
+    user@terminal:~$
+  </text>
+  <text x="330" y="190" font-family="'Courier New', monospace" font-size="16" fill="#cdd6f4">
+    ls -la
+  </text>
+  
+  <text x="170" y="220" font-family="'Courier New', monospace" font-size="14" fill="#89b4fa">
+    drwxr-xr-x
+  </text>
+  <text x="280" y="220" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    3 user user 4096 Jan 01 12:00
+  </text>
+  <text x="520" y="220" font-family="'Courier New', monospace" font-size="14" fill="#89b4fa">
+    documents
+  </text>
+  
+  <text x="170" y="245" font-family="'Courier New', monospace" font-size="14" fill="#89b4fa">
+    drwxr-xr-x
+  </text>
+  <text x="280" y="245" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    2 user user 4096 Jan 01 12:00
+  </text>
+  <text x="520" y="245" font-family="'Courier New', monospace" font-size="14" fill="#89b4fa">
+    projects
+  </text>
+  
+  <text x="170" y="270" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    -rw-r--r--
+  </text>
+  <text x="280" y="270" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    1 user user  420 Jan 01 12:00
+  </text>
+  <text x="520" y="270" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    readme.txt
+  </text>
+  
+  <text x="170" y="295" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    -rw-r--r--
+  </text>
+  <text x="280" y="295" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    1 user user  628 Jan 01 12:00
+  </text>
+  <text x="520" y="295" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    notes.md
+  </text>
+  
+  <text x="170" y="330" font-family="'Courier New', monospace" font-size="16" fill="#a6e3a1">
+    user@terminal:~$
+  </text>
+  <text x="330" y="330" font-family="'Courier New', monospace" font-size="16" fill="#cdd6f4">
+    cat readme.txt
+  </text>
+  
+  <text x="170" y="360" font-family="'Courier New', monospace" font-size="14" fill="#f9e2af">
+    # Welcome to Terminal Emulator
+  </text>
+  
+  <text x="170" y="385" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    Interactive web-based terminal with Unix commands
+  </text>
+  
+  <text x="170" y="420" font-family="'Courier New', monospace" font-size="16" fill="#a6e3a1">
+    user@terminal:~$
+  </text>
+  <rect x="330" y="408" width="12" height="20" fill="#cdd6f4" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0;0.8" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Main Title -->
+  <text x="600" y="80" text-anchor="middle" font-family="Inter" font-size="42" font-weight="700" fill="#cdd6f4">
+    Terminal Emulator
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="580" text-anchor="middle" font-family="Inter" font-size="24" font-weight="400" fill="#a6a8c7">
+    Interactive Web Terminal with Unix Commands
+  </text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="100" cy="100" r="4" fill="#fab387" opacity="0.6"/>
+  <circle cx="1100" cy="530" r="6" fill="#cba6f7" opacity="0.4"/>
+  <circle cx="80" cy="550" r="3" fill="#f38ba8" opacity="0.5"/>
+  <circle cx="1120" cy="80" r="5" fill="#a6e3a1" opacity="0.3"/>
+</svg>

@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://terminal-emulator-nine.vercel.app/sitemap.xml
+
+# Crawl-delay (optional, 1 second)
+Crawl-delay: 1
+
+# Specific disallows for common bot paths (optional)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /build/
+Disallow: /node_modules/
