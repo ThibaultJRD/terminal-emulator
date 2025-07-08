@@ -1,4 +1,4 @@
-import type { CommandHandler, CommandResult, FileSystemState, OutputSegment } from '~/routes/terminal/types/filesystem';
+import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState, OutputSegment } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import {
   ERROR_MESSAGES,
@@ -17,6 +17,60 @@ import { parseOptions } from '~/routes/terminal/utils/optionParser';
 import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 
 import { unicodeSafeBtoa } from './unicodeBase64';
+
+// Security constants
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+const MAX_FILESYSTEM_SIZE = 50 * 1024 * 1024; // 50MB total limit
+const MAX_FILES_PER_DIRECTORY = 1000;
+
+/**
+ * Calculates the total size of a filesystem node
+ * @param node - The filesystem node to calculate size for
+ * @returns Size in bytes
+ */
+function calculateNodeSize(node: FileSystemNode): number {
+  if (node.type === 'file') {
+    return (node.content || '').length;
+  }
+
+  if (node.type === 'directory' && node.children) {
+    return Object.values(node.children).reduce((total: number, child) => total + calculateNodeSize(child), 0);
+  }
+
+  return 0;
+}
+
+/**
+ * Validates file content size
+ * @param content - The file content to validate
+ * @param filename - The filename for error messages
+ * @returns Validation result
+ */
+function validateFileSize(content: string, filename: string): { valid: boolean; error?: string } {
+  if (content.length > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: `File '${filename}' exceeds maximum size limit (${MAX_FILE_SIZE / (1024 * 1024)}MB)`,
+    };
+  }
+  return { valid: true };
+}
+
+/**
+ * Validates filesystem size limits
+ * @param filesystem - The filesystem to validate
+ * @returns Validation result
+ */
+function validateFilesystemSize(filesystem: FileSystemState): { valid: boolean; error?: string } {
+  const totalSize = calculateNodeSize(filesystem.root);
+  if (totalSize > MAX_FILESYSTEM_SIZE) {
+    return {
+      valid: false,
+      error: `Filesystem exceeds maximum size limit (${MAX_FILESYSTEM_SIZE / (1024 * 1024)}MB)`,
+    };
+  }
+  return { valid: true };
+}
 
 export const commands: Record<string, CommandHandler> = {
   cd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
@@ -98,8 +152,14 @@ export const commands: Record<string, CommandHandler> = {
     }
 
     const filename = args[0];
-    if (filename.includes('/')) {
-      return createErrorResult('touch: cannot create file with path separators');
+
+    // Security: Enhanced filename validation
+    if (filename.includes('/') || filename.includes('\\') || filename.includes('\0')) {
+      return createErrorResult('touch: invalid filename');
+    }
+
+    if (filename.length > 255) {
+      return createErrorResult('touch: filename too long');
     }
 
     const currentDir = getCurrentDirectory(filesystem);
@@ -107,9 +167,20 @@ export const commands: Record<string, CommandHandler> = {
       return createErrorResult('touch: cannot access current directory');
     }
 
+    // Security: Check directory file count limit
+    if (Object.keys(currentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
+      return createErrorResult(`touch: too many files in directory (max ${MAX_FILES_PER_DIRECTORY})`);
+    }
+
     if (currentDir.children[filename]) {
       currentDir.children[filename].modifiedAt = new Date();
       return createSuccessResult('');
+    }
+
+    // Security: Check filesystem size before creating file
+    const sizeValidation = validateFilesystemSize(filesystem);
+    if (!sizeValidation.valid) {
+      return createErrorResult(`touch: ${sizeValidation.error}`);
     }
 
     const success = createFile(filesystem, filesystem.currentPath, filename, '');

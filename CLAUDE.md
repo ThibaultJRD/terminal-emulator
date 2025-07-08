@@ -201,8 +201,8 @@ The application automatically serves the appropriate filesystem based on the acc
 
 ## Development Notes
 
-- Always run `npm run typecheck` after making changes to ensure TypeScript compliance
-- Run `npm test` to ensure all functionality works correctly
+- Always run `yarn typecheck` after making changes to ensure TypeScript compliance
+- Run `yarn test` to ensure all functionality works correctly
 - The filesystem is initialized with a default structure but can be customized in `routes/terminal/utils/filesystem.ts`
 - Command implementations follow Unix-like behavior and error messages
 - Tab completion supports single completion, multiple options, and redirection contexts
@@ -211,6 +211,38 @@ The application automatically serves the appropriate filesystem based on the acc
 - Redirection operators are parsed before command execution and handle both string and array outputs
 - Option parsing supports both individual flags (-a -l) and combined flags (-al)
 - Path resolution works consistently across all commands and supports nested directory structures
+
+## Security Features
+
+The application implements several security measures to protect against common vulnerabilities:
+
+### Input Validation
+
+- **Command Length Limits**: Commands are limited to 1000 characters to prevent ReDoS attacks
+- **Filename Validation**: Filenames are validated for length (255 chars) and forbidden characters
+- **Path Validation**: Path segments are validated against forbidden characters and reserved names
+- **URL Protocol Validation**: Markdown links are restricted to safe protocols (http/https/mailto)
+
+### Resource Limits
+
+- **File Size Limits**: Individual files are limited to 5MB to prevent memory exhaustion
+- **Filesystem Size Limits**: Total filesystem size is limited to 50MB
+- **Directory File Limits**: Maximum 1000 files per directory
+- **Path Depth Limits**: Maximum 20 levels of nested directories
+
+### Data Protection
+
+- **localStorage Validation**: All persisted data is validated before parsing
+- **Size Limits**: localStorage data is limited to 10MB to prevent abuse
+- **Error Handling**: Comprehensive error handling prevents information leakage
+- **Regex Security**: Improved regex patterns prevent ReDoS vulnerabilities
+
+### Safe Defaults
+
+- **No eval()**: The application never uses eval() or similar dangerous functions
+- **Client-side Only**: No server-side processing reduces attack surface
+- **TypeScript**: Strong typing helps prevent many common vulnerabilities
+- **Modular Architecture**: Well-separated concerns make security easier to maintain
 
 ### Static Files and Well-Known Routes
 

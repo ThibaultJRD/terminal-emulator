@@ -1,5 +1,23 @@
 import type { OutputSegment } from '~/routes/terminal/types/filesystem';
 
+// Security: Allowed URL protocols
+const ALLOWED_URL_PROTOCOLS = ['http:', 'https:', 'mailto:'];
+
+/**
+ * Validates if a URL is safe to use in links
+ * @param url - The URL to validate
+ * @returns boolean indicating if the URL is safe
+ */
+function isValidUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return ALLOWED_URL_PROTOCOLS.includes(urlObj.protocol);
+  } catch {
+    // If URL parsing fails, treat as relative URL (safe)
+    return !url.startsWith('javascript:') && !url.startsWith('data:') && !url.startsWith('vbscript:');
+  }
+}
+
 export function renderMarkdown(content: string): OutputSegment[] {
   const lines = content.split('\n');
   const result: OutputSegment[] = [];
@@ -134,7 +152,16 @@ function parseInlineMarkdown(text: string): OutputSegment[] {
     if (linkMatch) {
       const before = current.slice(0, linkMatch.index);
       if (before) result.push({ text: before, type: 'normal' });
-      result.push({ text: linkMatch[1], type: 'link', url: linkMatch[2] });
+
+      const url = linkMatch[2];
+      // Security: Validate URL protocol
+      if (isValidUrl(url)) {
+        result.push({ text: linkMatch[1], type: 'link', url });
+      } else {
+        // Render as plain text if URL is not safe
+        result.push({ text: `[${linkMatch[1]}](${url})`, type: 'normal' });
+      }
+
       current = current.slice(linkMatch.index! + linkMatch[0].length);
       continue;
     }

@@ -613,6 +613,53 @@ The project uses the Catppuccin Mocha theme with consistent colors:
 - Unified path resolution
 - Contextual autocompletion
 
+## 🔐 Security Features
+
+The terminal emulator implements comprehensive security measures to ensure safe operation:
+
+### 🛡️ Input Validation
+
+- **Command Length Limits**: Commands are limited to 1,000 characters to prevent ReDoS attacks
+- **Filename Validation**: Filenames are validated for length (255 chars) and forbidden characters
+- **Path Validation**: Path segments are validated against forbidden characters and reserved names
+- **URL Protocol Validation**: Markdown links are restricted to safe protocols (http/https/mailto)
+
+### 📏 Resource Limits
+
+- **File Size Limits**: Individual files are limited to 5MB to prevent memory exhaustion
+- **Filesystem Size Limits**: Total filesystem size is limited to 50MB
+- **Directory File Limits**: Maximum 1,000 files per directory
+- **Path Depth Limits**: Maximum 20 levels of nested directories
+
+### 🔒 Data Protection
+
+- **localStorage Validation**: All persisted data is validated before parsing
+- **Size Limits**: localStorage data is limited to 10MB to prevent abuse
+- **Error Handling**: Comprehensive error handling prevents information leakage
+- **Regex Security**: Improved regex patterns prevent ReDoS vulnerabilities
+
+### ✅ Safe Defaults
+
+- **No eval()**: The application never uses eval() or similar dangerous functions
+- **Client-side Only**: No server-side processing reduces attack surface
+- **TypeScript**: Strong typing helps prevent many common vulnerabilities
+- **Modular Architecture**: Well-separated concerns make security easier to maintain
+
+### 🔍 Security Testing
+
+All security features are thoroughly tested:
+
+```bash
+# Run security-focused tests
+yarn test
+
+# Check for vulnerabilities in dependencies
+yarn audit
+
+# Verify TypeScript compliance
+yarn typecheck
+```
+
 ## 🚀 Deployment
 
 ### Docker

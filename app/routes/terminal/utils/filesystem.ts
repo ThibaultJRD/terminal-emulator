@@ -2,6 +2,53 @@ import type { FileSystemNode, FileSystemState } from '~/routes/terminal/types/fi
 import { type FilesystemMode, getDefaultFilesystem, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { initializeFilesystem } from '~/routes/terminal/utils/persistence';
 
+// Security constants
+const MAX_PATH_DEPTH = 20;
+const MAX_SEGMENT_LENGTH = 255;
+const FORBIDDEN_CHARS = /[\x00-\x1f\x7f<>:"|?*]/;
+const RESERVED_NAMES = new Set([
+  'CON',
+  'PRN',
+  'AUX',
+  'NUL',
+  'COM1',
+  'COM2',
+  'COM3',
+  'COM4',
+  'COM5',
+  'COM6',
+  'COM7',
+  'COM8',
+  'COM9',
+  'LPT1',
+  'LPT2',
+  'LPT3',
+  'LPT4',
+  'LPT5',
+  'LPT6',
+  'LPT7',
+  'LPT8',
+  'LPT9',
+]);
+
+/**
+ * Validates a path segment for security
+ * @param segment - The path segment to validate
+ * @returns boolean indicating if the segment is valid
+ */
+function isValidPathSegment(segment: string): boolean {
+  if (!segment || segment.length === 0) return false;
+  if (segment.length > MAX_SEGMENT_LENGTH) return false;
+  if (FORBIDDEN_CHARS.test(segment)) return false;
+  if (RESERVED_NAMES.has(segment.toUpperCase())) return false;
+  if (segment.startsWith(' ') || segment.endsWith(' ')) return false;
+  if (segment.startsWith('.') && segment.length > 1 && segment !== '.' && segment !== '..') {
+    // Allow dotfiles but validate the rest
+    return isValidPathSegment(segment.slice(1));
+  }
+  return true;
+}
+
 /**
  * Creates a FileSystemState using the persistence system.
  * This will load from localStorage if available, or create a default filesystem.
@@ -64,12 +111,26 @@ export function getCurrentDirectory(filesystem: FileSystemState): FileSystemNode
 }
 
 export function resolvePath(filesystem: FileSystemState, inputPath: string): string[] {
+  // Security: Validate input path length
+  if (inputPath.length > 1000) {
+    throw new Error('Path too long');
+  }
+
   if (inputPath.startsWith('/')) {
     // Absolute path
-    return inputPath
+    const segments = inputPath
       .slice(1)
       .split('/')
       .filter((segment) => segment !== '');
+
+    // Security: Validate each segment
+    for (const segment of segments) {
+      if (!isValidPathSegment(segment) && segment !== '.' && segment !== '..') {
+        throw new Error(`Invalid path segment: ${segment}`);
+      }
+    }
+
+    return segments;
   } else if (inputPath === '..') {
     // Parent directory
     return filesystem.currentPath.slice(0, -1);
@@ -85,7 +146,16 @@ export function resolvePath(filesystem: FileSystemState, inputPath: string): str
       if (segment === '..') {
         newPath.pop();
       } else if (segment !== '.') {
+        // Security: Validate segment
+        if (!isValidPathSegment(segment)) {
+          throw new Error(`Invalid path segment: ${segment}`);
+        }
         newPath.push(segment);
+      }
+
+      // Security: Check path depth
+      if (newPath.length > MAX_PATH_DEPTH) {
+        throw new Error(`Path too deep (max depth: ${MAX_PATH_DEPTH})`);
       }
     }
 

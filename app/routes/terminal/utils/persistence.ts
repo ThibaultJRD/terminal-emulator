@@ -54,6 +54,61 @@ interface PersistenceResult {
 }
 
 /**
+ * Validates the structure of persisted filesystem data
+ * @param data - The data to validate
+ * @returns boolean indicating if the data is valid
+ */
+function isValidPersistedData(data: any): data is PersistedFilesystemData {
+  if (!data || typeof data !== 'object') return false;
+
+  // Check required fields
+  if (!data.filesystem || typeof data.filesystem !== 'object') return false;
+  if (!data.mode || typeof data.mode !== 'string') return false;
+  if (!data.version || typeof data.version !== 'string') return false;
+  if (!data.savedAt || typeof data.savedAt !== 'string') return false;
+  if (!Array.isArray(data.currentPath)) return false;
+
+  // Validate filesystem structure
+  if (!isValidFileSystemNode(data.filesystem)) return false;
+
+  // Validate mode
+  if (!['default', 'portfolio'].includes(data.mode)) return false;
+
+  // Validate currentPath
+  if (!data.currentPath.every((segment: any) => typeof segment === 'string')) return false;
+
+  return true;
+}
+
+/**
+ * Validates a file system node structure
+ * @param node - The node to validate
+ * @returns boolean indicating if the node is valid
+ */
+function isValidFileSystemNode(node: any): boolean {
+  if (!node || typeof node !== 'object') return false;
+
+  // Check required fields
+  if (!node.name || typeof node.name !== 'string') return false;
+  if (!node.type || !['file', 'directory'].includes(node.type)) return false;
+
+  // For files, check content
+  if (node.type === 'file') {
+    if (node.content !== undefined && typeof node.content !== 'string') return false;
+  }
+
+  // For directories, check children
+  if (node.type === 'directory' && node.children) {
+    if (typeof node.children !== 'object') return false;
+    for (const child of Object.values(node.children)) {
+      if (!isValidFileSystemNode(child)) return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * Saves the current filesystem state to localStorage.
  *
  * @param filesystem - The filesystem tree to save
@@ -113,7 +168,24 @@ export function loadFilesystemState(): PersistenceResult {
       };
     }
 
-    const data: PersistedFilesystemData = JSON.parse(stored);
+    // Security: Validate JSON size before parsing
+    if (stored.length > 10 * 1024 * 1024) {
+      // 10MB limit
+      return {
+        success: false,
+        error: 'Saved filesystem data too large',
+      };
+    }
+
+    let data: PersistedFilesystemData;
+    try {
+      data = JSON.parse(stored);
+    } catch (parseError) {
+      return {
+        success: false,
+        error: 'Failed to parse saved filesystem data',
+      };
+    }
 
     // Validate the data structure
     if (!isValidPersistedData(data)) {
@@ -395,7 +467,7 @@ function restoreDateObjects(node: unknown): FileSystemNode {
  * @param data - The data to validate
  * @returns boolean indicating if the data is valid
  */
-function isValidPersistedData(data: unknown): data is PersistedFilesystemData {
+function isValidPersistedDataLegacy(data: unknown): data is PersistedFilesystemData {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
