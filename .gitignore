@@ -16,3 +16,6 @@
 # Security logs
 *.log
 security-audit.json
+
+# Vercel
+.vercel/

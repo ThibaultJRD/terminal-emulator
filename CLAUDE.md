@@ -10,7 +10,8 @@ This is a web-based terminal emulator built with React Router v7, TypeScript, an
 
 - `npm run dev` - Start development server with HMR (usually at <http://localhost:5173>)
 - `npm run build` - Create production build
-- `npm run start` - Start production server (serves from build/server/index.js)
+- `npm run start` - Start production server (serves from build/server/index.js) - **For Vercel deployment**
+- `npm run start:local` - Start production server locally (serves from build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js) - **For local testing**
 - `npm run typecheck` - Generate React Router types and run TypeScript compiler
 - `npm test` - Run comprehensive test suite (unit and integration tests)
 
@@ -210,3 +211,27 @@ The application automatically serves the appropriate filesystem based on the acc
 - Redirection operators are parsed before command execution and handle both string and array outputs
 - Option parsing supports both individual flags (-a -l) and combined flags (-al)
 - Path resolution works consistently across all commands and supports nested directory structures
+
+### Static Files and Well-Known Routes
+
+For `.well-known` routes and other static files, place them in the `public/` directory:
+
+- Files in `public/` are served directly by the web server without React Router processing
+- Example: `public/.well-known/apple-app-site-association` will be accessible at `/.well-known/apple-app-site-association`
+- This approach is more efficient than creating React routes for static content
+- Common use cases: SSL certificates, app associations, security.txt, robots.txt, etc.
+
+### Important: Vercel Preset Build Structure
+
+This project uses the `@vercel/react-router` preset, which creates a different build structure than standard React Router v7 projects:
+
+- **Standard build**: `build/server/index.js`
+- **With Vercel preset**: `build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js`
+
+**For local development and testing:**
+
+- Use `yarn build && yarn start:local` to test the production build locally
+- Use `yarn start` only for Vercel deployment (will fail locally)
+
+**Why this happens:**
+The Vercel preset optimizes the build for Vercel's serverless environment, creating runtime-specific folders that don't match the standard React Router build structure.

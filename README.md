@@ -89,8 +89,11 @@ yarn run dev
 # Production build
 yarn run build
 
-# Production server
+# Production server (Vercel deployment)
 yarn run start
+
+# Production server (local testing)
+yarn run start:local
 
 # TypeScript checking
 yarn run typecheck
@@ -100,6 +103,15 @@ yarn test
 yarn test -- --watch     # Watch mode
 yarn test -- --coverage  # With coverage
 ```
+
+### Important: Local Development vs Production
+
+Due to the Vercel preset configuration, the build process creates a different server structure:
+
+- **For Vercel deployment**: Use `yarn start` (expects `build/server/index.js`)
+- **For local testing**: Use `yarn start:local` (uses `build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js`)
+
+The Vercel preset optimizes builds for Vercel's serverless environment, creating runtime-specific directories that don't match the standard React Router v7 build structure.
 
 ## 📁 Project Structure
 

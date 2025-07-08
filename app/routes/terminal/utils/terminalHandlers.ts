@@ -10,7 +10,7 @@ import { unicodeSafeAtob } from './unicodeBase64';
 export interface TerminalOutputLine {
   type: 'command' | 'output' | 'error';
   content: string | OutputSegment[];
-  timestamp: Date;
+  timestamp: string;
 }
 
 // Use the existing TerminalState type from filesystem.ts
@@ -125,7 +125,7 @@ export function createOutputLine(type: TerminalOutputLine['type'], content: stri
   return {
     type,
     content,
-    timestamp: new Date(),
+    timestamp: new Date().toISOString(),
   };
 }
 

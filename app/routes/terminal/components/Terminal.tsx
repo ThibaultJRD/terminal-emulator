@@ -22,7 +22,7 @@ import { type TextEditorState } from '~/routes/terminal/utils/textEditor';
 interface OutputLine {
   type: 'command' | 'output' | 'error';
   content: string | OutputSegment[];
-  timestamp: Date;
+  timestamp: string;
 }
 
 interface TerminalProps {
@@ -75,17 +75,17 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         {
           type: 'output',
           content: "Welcome to Thibault Jaillard's Interactive Portfolio",
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         },
         {
           type: 'output',
           content: 'Senior Frontend and Mobile Developer | React | React Native | TypeScript | Web 3.0',
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         },
         {
           type: 'output',
           content: 'Explore my projects and experience with Unix commands. Type "help" to get started.',
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         },
       ];
     }
@@ -94,12 +94,12 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       {
         type: 'output',
         content: 'Welcome to Terminal Emulator v1.0',
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       },
       {
         type: 'output',
         content: 'Type "help" for available commands.',
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       },
     ];
   });
@@ -414,7 +414,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           {
             type: 'output',
             content: `"${filename}" written`,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
           },
         ]);
       } else {
@@ -423,7 +423,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           {
             type: 'error',
             content: `Failed to save "${filename}"`,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
           },
         ]);
       }

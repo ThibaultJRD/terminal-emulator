@@ -18,6 +18,20 @@ const STORAGE_CONFIG = {
 } as const;
 
 /**
+ * Checks if localStorage is available in the current environment.
+ * This is used to ensure compatibility with server-side rendering.
+ *
+ * @returns boolean indicating if localStorage is available
+ */
+function isLocalStorageAvailable(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.localStorage !== undefined;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Interface for the persisted filesystem data structure.
  * This includes the filesystem tree, current mode, and metadata.
  */
@@ -49,6 +63,13 @@ interface PersistenceResult {
  */
 export function saveFilesystemState(filesystem: FileSystemNode, mode: FilesystemMode, currentPath: string[]): PersistenceResult {
   try {
+    if (!isLocalStorageAvailable()) {
+      return {
+        success: false,
+        error: 'localStorage not available',
+      };
+    }
+
     const data: PersistedFilesystemData = {
       filesystem,
       mode,
@@ -76,6 +97,13 @@ export function saveFilesystemState(filesystem: FileSystemNode, mode: Filesystem
  */
 export function loadFilesystemState(): PersistenceResult {
   try {
+    if (!isLocalStorageAvailable()) {
+      return {
+        success: false,
+        error: 'localStorage not available',
+      };
+    }
+
     const stored = localStorage.getItem(STORAGE_CONFIG.FILESYSTEM_KEY);
 
     if (!stored) {
@@ -129,6 +157,13 @@ export function loadFilesystemState(): PersistenceResult {
  */
 export function clearFilesystemState(): PersistenceResult {
   try {
+    if (!isLocalStorageAvailable()) {
+      return {
+        success: false,
+        error: 'localStorage not available',
+      };
+    }
+
     localStorage.removeItem(STORAGE_CONFIG.FILESYSTEM_KEY);
     return { success: true };
   } catch (error) {
@@ -147,6 +182,10 @@ export function clearFilesystemState(): PersistenceResult {
  */
 export function hasSavedFilesystemState(): boolean {
   try {
+    if (!isLocalStorageAvailable()) {
+      return false;
+    }
+
     const stored = localStorage.getItem(STORAGE_CONFIG.FILESYSTEM_KEY);
     return stored !== null;
   } catch (error) {
@@ -164,6 +203,10 @@ export function hasSavedFilesystemState(): boolean {
  */
 export function saveCurrentMode(mode: FilesystemMode): boolean {
   try {
+    if (!isLocalStorageAvailable()) {
+      return false;
+    }
+
     localStorage.setItem(STORAGE_CONFIG.MODE_KEY, mode);
     return true;
   } catch (error) {
@@ -248,6 +291,14 @@ export function getStorageInfo(): {
   lastSaved?: string;
 } {
   try {
+    if (!isLocalStorageAvailable()) {
+      return {
+        totalSize: 0,
+        filesystemSize: 0,
+        hasBackups: false,
+      };
+    }
+
     let totalSize = 0;
     let filesystemSize = 0;
     let hasBackups = false;
@@ -422,6 +473,13 @@ export function exportFilesystemData(filesystem: FileSystemNode, mode: Filesyste
  */
 export function importFilesystemData(jsonData: string): PersistenceResult {
   try {
+    if (!isLocalStorageAvailable()) {
+      return {
+        success: false,
+        error: 'localStorage not available',
+      };
+    }
+
     const data = JSON.parse(jsonData);
 
     if (!isValidPersistedData(data)) {
