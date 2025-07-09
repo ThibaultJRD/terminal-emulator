@@ -200,7 +200,7 @@ describe('Unicode and Emoji Support', () => {
     it('should handle echo with unicode content', () => {
       const echoResult = executeCommand('echo "Hello 世界 🌍"', filesystem);
       expect(echoResult.success).toBe(true);
-      expect(echoResult.output).toBe('Hello 世界 🌍');
+      expect(echoResult.output).toBe('Hello 世界 🌍\n');
     });
   });
 
@@ -211,7 +211,7 @@ describe('Unicode and Emoji Support', () => {
 
       const catResult = executeCommand('cat unicode-output.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('Unicode: 你好 🌍');
+      expect(catResult.output).toBe('Unicode: 你好 🌍\n');
     });
 
     it('should handle appending unicode content', () => {
@@ -221,7 +221,7 @@ describe('Unicode and Emoji Support', () => {
 
       const catResult = executeCommand('cat append-test.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('Line 1: 🚀Line 2: 🌟');
+      expect(catResult.output).toBe('Line 1: 🚀\nLine 2: 🌟\n');
     });
 
     it('should handle reading unicode content from files', () => {

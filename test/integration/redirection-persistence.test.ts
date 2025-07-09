@@ -44,7 +44,7 @@ describe('Redirection Persistence Integration', () => {
       const helloFile = getNodeAtPath(filesystem, ['home', 'user', 'hello.txt']);
       expect(helloFile).toBeTruthy();
       expect(helloFile?.type).toBe('file');
-      expect(helloFile?.content).toBe('Hello World');
+      expect(helloFile?.content).toBe('Hello World\n');
 
       // Save the filesystem
       const saveResult = saveFilesystemState(filesystem.root, 'default', filesystem.currentPath);
@@ -66,7 +66,7 @@ describe('Redirection Persistence Integration', () => {
         const restoredFile = getNodeAtPath(newFilesystem, ['home', 'user', 'hello.txt']);
         expect(restoredFile).toBeTruthy();
         expect(restoredFile?.type).toBe('file');
-        expect(restoredFile?.content).toBe('Hello World');
+        expect(restoredFile?.content).toBe('Hello World\n');
 
         // Verify dates are restored as Date objects
         expect(restoredFile?.createdAt).toBeInstanceOf(Date);
@@ -86,7 +86,7 @@ describe('Redirection Persistence Integration', () => {
 
       // Verify content
       const testFile = getNodeAtPath(filesystem, ['home', 'user', 'test.txt']);
-      expect(testFile?.content).toBe('Line 1Line 2');
+      expect(testFile?.content).toBe('Line 1\nLine 2\n');
 
       // Test persistence
       const saveResult = saveFilesystemState(filesystem.root, 'default', filesystem.currentPath);
@@ -102,7 +102,7 @@ describe('Redirection Persistence Integration', () => {
         };
 
         const restoredFile = getNodeAtPath(newFilesystem, ['home', 'user', 'test.txt']);
-        expect(restoredFile?.content).toBe('Line 1Line 2');
+        expect(restoredFile?.content).toBe('Line 1\nLine 2\n');
       }
     });
 

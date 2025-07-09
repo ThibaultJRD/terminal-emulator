@@ -231,13 +231,13 @@ describe('Commands', () => {
     it('should output text', () => {
       const result = commands.echo(['hello', 'world'], filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('hello world');
+      expect(result.output).toBe('hello world\n');
     });
 
     it('should handle empty arguments', () => {
       const result = commands.echo([], filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('');
+      expect(result.output).toBe('\n');
     });
   });
 

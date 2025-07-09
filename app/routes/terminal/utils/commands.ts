@@ -312,7 +312,7 @@ export const commands: Record<string, CommandHandler> = {
 
   echo: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const output = args.join(' ');
-    return { success: true, output };
+    return { success: true, output: output + '\n' };
   },
 
   wc: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
@@ -552,7 +552,9 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
       outputContent = result.output.map((segment) => segment.text || '').join('');
     }
 
-    const content = redirectOutput.type === '>>' ? getExistingFileContent(filesystem, redirectOutput.filename) + outputContent : outputContent;
+    const existingContent = redirectOutput.type === '>>' ? getExistingFileContent(filesystem, redirectOutput.filename) : '';
+    const content =
+      redirectOutput.type === '>>' ? existingContent + (existingContent && !existingContent.endsWith('\n') ? '\n' : '') + outputContent : outputContent;
 
     const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content);
 

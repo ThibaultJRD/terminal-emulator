@@ -21,13 +21,13 @@ describe('Command Execution Integration Tests', () => {
     it('should execute commands with arguments', () => {
       const result = executeCommand('echo hello world', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('hello world');
+      expect(result.output).toBe('hello world\n');
     });
 
     it('should handle quoted arguments', () => {
       const result = executeCommand('echo "Hello les amis comment allez vous ?"', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('Hello les amis comment allez vous ?');
+      expect(result.output).toBe('Hello les amis comment allez vous ?\n');
     });
 
     it('should fail for unknown commands', () => {
@@ -46,7 +46,7 @@ describe('Command Execution Integration Tests', () => {
       // Verify file was created with correct content
       const catResult = executeCommand('cat testfile.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('test content');
+      expect(catResult.output).toBe('test content\n');
     });
 
     it('should append output to existing file with >>', () => {
@@ -60,7 +60,7 @@ describe('Command Execution Integration Tests', () => {
       // Verify content was appended
       const catResult = executeCommand('cat testfile.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('first linesecond line');
+      expect(catResult.output).toBe('first line\nsecond line\n');
     });
 
     it('should overwrite existing file with >', () => {
@@ -74,7 +74,7 @@ describe('Command Execution Integration Tests', () => {
       // Verify content was overwritten
       const catResult = executeCommand('cat testfile.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('new content');
+      expect(catResult.output).toBe('new content\n');
     });
 
     it('should handle complex commands with redirection', () => {
@@ -94,7 +94,7 @@ describe('Command Execution Integration Tests', () => {
 
       const catResult = executeCommand('cat "file with spaces.txt"', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('test');
+      expect(catResult.output).toBe('test\n');
     });
   });
 
@@ -149,7 +149,7 @@ describe('Command Execution Integration Tests', () => {
       // Verify file exists
       const catResult = executeCommand('cat deep.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('deep file');
+      expect(catResult.output).toBe('deep file\n');
     });
 
     it('should handle file removal with options', () => {
