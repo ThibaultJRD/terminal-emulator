@@ -438,30 +438,28 @@ export default api;`,
                 type: 'file',
                 content: `# ~/.bashrc: executed by bash(1) for non-login shells
 
-# If not running interactively, don't do anything
+# If not running interactively, don't do anything (placeholder)
 case $- in
     *i*) ;;
       *) return;;
 esac
 
-# History settings
+# History settings (placeholder)
 HISTCONTROL=ignoreboth
 HISTSIZE=1000
 HISTFILESIZE=2000
 
-# Aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
+# Aliases (Implemented in the terminal emulator)
+alias ll='ls -l'
+alias la='ls -a'
+alias l='ls -la'
 
-# Enable color support
+# Enable color support (placeholder)
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls --color=auto'
-    alias grep='grep --color=auto'
 fi
 
-# Terminal prompt
+# Terminal prompt (placeholder)
 PS1='\${debian_chroot:+(\$debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '`,
                 permissions: '-rw-r--r--',
                 size: 756,
@@ -1341,6 +1339,39 @@ Open to discussing:
                     modifiedAt: new Date(),
                   },
                 },
+              },
+              '.bashrc': {
+                name: '.bashrc',
+                type: 'file',
+                content: `# ~/.bashrc: executed by bash(1) for non-login shells
+
+# If not running interactively, don't do anything (placeholder)
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# History settings (placeholder)
+HISTCONTROL=ignoreboth
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# Aliases (Implemented in the terminal emulator)
+alias ll='ls -l'
+alias la='ls -a'
+alias l='ls -la'
+
+# Enable color support (placeholder)
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+fi
+
+# Terminal prompt (placeholder)
+PS1='\${debian_chroot:+(\$debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '`,
+                permissions: '-rw-r--r--',
+                size: 756,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
               },
               '.easter-egg.md': {
                 name: '.easter-egg.md',

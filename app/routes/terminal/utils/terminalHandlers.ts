@@ -1,9 +1,11 @@
 import type { CommandResult, FileSystemNode, FileSystemState, OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
+import { AliasManager } from '~/routes/terminal/utils/aliasManager';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
 // FilesystemMode removed as both modes now use the same structure
 import { createFile, getNodeAtPath } from '~/routes/terminal/utils/filesystem';
 import { resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
+import { ShellParser } from '~/routes/terminal/utils/shellParser';
 import { createTextEditorState } from '~/routes/terminal/utils/textEditor';
 
 import { unicodeSafeAtob } from './unicodeBase64';
@@ -25,9 +27,13 @@ export interface SpecialCommandResult {
 /**
  * Executes a command and returns the result with error handling
  */
-export function executeCommandSafely(input: string, filesystem: FileSystemState): CommandResult {
+export function executeCommandSafely(
+  input: string,
+  filesystem: FileSystemState,
+  aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
+): CommandResult {
   try {
-    return executeCommand(input, filesystem);
+    return executeCommand(input, filesystem, aliasManager);
   } catch (error) {
     console.error('Error executing command:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -222,10 +228,32 @@ export function addToHistory(history: string[], command: string): string[] {
  * Initializes terminal state (history is loaded from file on demand)
  */
 export function initializeTerminalState(filesystem: FileSystemState): TerminalState {
+  // Initialize alias manager
+  const aliasManager = new AliasManager();
+
+  // Try to auto-source .bashrc if it exists
+  const bashrcPath = ['home', 'user', '.bashrc'];
+  const bashrcFile = getNodeAtPath(filesystem, bashrcPath);
+
+  if (bashrcFile && bashrcFile.type === 'file' && bashrcFile.content) {
+    try {
+      const parseResult = ShellParser.parse(bashrcFile.content);
+      const executeResult = ShellParser.execute(parseResult, aliasManager);
+
+      // Log any errors but don't fail initialization
+      if (!executeResult.success) {
+        console.warn('Failed to source .bashrc:', executeResult.errors);
+      }
+    } catch (error) {
+      console.warn('Error sourcing .bashrc:', error);
+    }
+  }
+
   return {
     currentInput: '',
     output: [],
     filesystem,
+    aliasManager,
   };
 }
 

@@ -54,10 +54,34 @@ export interface TerminalState {
   currentInput: string;
   output: string[];
   filesystem: FileSystemState;
+  aliasManager: import('~/routes/terminal/utils/aliasManager').AliasManager;
 }
 
-export type Command = 'cd' | 'ls' | 'touch' | 'cat' | 'mkdir' | 'rm' | 'rmdir' | 'pwd' | 'echo' | 'wc' | 'clear' | 'help' | 'vi' | 'reset-fs' | 'storage-info';
+export type Command =
+  | 'cd'
+  | 'ls'
+  | 'touch'
+  | 'cat'
+  | 'mkdir'
+  | 'rm'
+  | 'rmdir'
+  | 'pwd'
+  | 'echo'
+  | 'wc'
+  | 'clear'
+  | 'help'
+  | 'vi'
+  | 'reset-fs'
+  | 'storage-info'
+  | 'alias'
+  | 'unalias'
+  | 'source';
 
 export interface CommandHandler {
-  (args: string[], filesystem: FileSystemState, currentMode?: import('~/constants/defaultFilesystems').FilesystemMode): CommandResult;
+  (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+  ): CommandResult;
 }
