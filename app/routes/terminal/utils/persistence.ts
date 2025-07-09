@@ -1,7 +1,6 @@
+import type { FilesystemMode } from '~/constants/defaultFilesystems';
+import { getFilesystemByMode } from '~/constants/defaultFilesystems';
 import type { FileSystemNode } from '~/routes/terminal/types/filesystem';
-
-import type { FilesystemMode } from './defaultFilesystems';
-import { getFilesystemByMode } from './defaultFilesystems';
 
 // Re-export FilesystemMode for external use
 export type { FilesystemMode };

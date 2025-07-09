@@ -1,4 +1,4 @@
-import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState, OutputSegment } from '~/routes/terminal/types/filesystem';
+import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import {
   ERROR_MESSAGES,
@@ -10,11 +10,10 @@ import {
   joinOutputSegments,
   sortDirectoryEntries,
 } from '~/routes/terminal/utils/commandUtils';
-import { FILESYSTEM_MODES, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
-import { createDirectory, createFile, deleteNode, formatPath, getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
+import { createDirectory, createFile, deleteNode, formatPath, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
-import { getStorageInfo, resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
+import { getStorageInfo } from '~/routes/terminal/utils/persistence';
 
 import { unicodeSafeBtoa } from './unicodeBase64';
 

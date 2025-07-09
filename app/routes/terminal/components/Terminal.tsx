@@ -4,8 +4,7 @@ import { TextEditor } from '~/routes/terminal/components/TextEditor';
 import { useFilesystemPersistence } from '~/routes/terminal/hooks/useFilesystemPersistence';
 import type { OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { applyCompletion, applyCompletionNoSpace, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
-import { getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
-import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
+import { createFile } from '~/routes/terminal/utils/filesystem';
 import { formatPath, formatPathWithTilde } from '~/routes/terminal/utils/filesystem';
 import { type FilesystemMode, initializeFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import {

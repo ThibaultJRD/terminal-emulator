@@ -439,7 +439,7 @@ The filesystem automatically saves to browser localStorage:
 
 To create your own filesystem mode:
 
-1. **Define the structure** in `app/routes/terminal/utils/defaultFilesystems.ts`:
+1. **Define the structure** in `app/constants/defaultFilesystems.ts`:
 
 ```typescript
 export function createCustomFilesystem(): FileSystemNode {

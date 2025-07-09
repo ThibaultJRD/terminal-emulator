@@ -1,5 +1,5 @@
+import { type FilesystemMode, getDefaultFilesystem, getFilesystemByMode } from '~/constants/defaultFilesystems';
 import type { FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
-import { type FilesystemMode, getDefaultFilesystem, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { initializeFilesystem } from '~/routes/terminal/utils/persistence';
 
 // Security constants

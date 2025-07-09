@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 
+import type { FilesystemMode } from '~/constants/defaultFilesystems';
 import type { FileSystemState } from '~/routes/terminal/types/filesystem';
-import type { FilesystemMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { saveFilesystemState } from '~/routes/terminal/utils/persistence';
 
 interface UseFilesystemPersistenceOptions {

@@ -1,16 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { createDefaultFilesystem } from '~/constants/defaultFilesystems';
 import type { FileSystemState } from '~/routes/terminal/types/filesystem';
 import { executeCommand } from '~/routes/terminal/utils/commands';
-import { createDefaultFilesystem } from '~/routes/terminal/utils/defaultFilesystems';
 import { createFile, getNodeAtPath } from '~/routes/terminal/utils/filesystem';
 import { createTextEditorState, executeEditorCommand, handleKeyboardInput, insertTextAtCursor, switchMode } from '~/routes/terminal/utils/textEditor';
 import { unicodeSafeAtob } from '~/routes/terminal/utils/unicodeBase64';
-
-// Helper function to safely split command output
-const getOutputAsString = (output: string | any[]): string => {
-  return typeof output === 'string' ? output : output.map((seg) => seg.text).join('');
-};
 
 describe('Text Editor Integration', () => {
   let filesystem: FileSystemState;

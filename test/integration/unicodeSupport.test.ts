@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { createDefaultFilesystem } from '~/constants/defaultFilesystems';
 import type { FileSystemState } from '~/routes/terminal/types/filesystem';
 import { executeCommand } from '~/routes/terminal/utils/commands';
-import { createDefaultFilesystem } from '~/routes/terminal/utils/defaultFilesystems';
 import { createFile } from '~/routes/terminal/utils/filesystem';
 import { createTextEditorState, insertTextAtCursor, switchMode } from '~/routes/terminal/utils/textEditor';
 
