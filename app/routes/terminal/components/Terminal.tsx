@@ -6,7 +6,7 @@ import type { OutputSegment, TerminalState } from '~/routes/terminal/types/files
 import { applyCompletion, applyCompletionNoSpace, getAutocompletions } from '~/routes/terminal/utils/autocompletion';
 import { getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
-import { formatPath } from '~/routes/terminal/utils/filesystem';
+import { formatPath, formatPathWithTilde } from '~/routes/terminal/utils/filesystem';
 import { type FilesystemMode, initializeFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import {
   analyzeSpecialCommand,
@@ -305,7 +305,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           }
         } else {
           // Start completion
-          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem);
+          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem, filesystemMode);
 
           if (result.completions.length === 0) {
             return;
@@ -573,12 +573,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
 
   const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio'): OutputSegment[] => {
     const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+    const formattedPath = formatPathWithTilde(path, currentMode === 'portfolio' ? 'portfolio' : 'default');
     return [
       { type: 'user' as const, text: user },
       { type: 'separator' as const, text: '@' },
       { type: 'host' as const, text: 'terminal' },
       { type: 'separator' as const, text: ':' },
-      { type: 'path' as const, text: formatPath(path) },
+      { type: 'path' as const, text: formattedPath },
       { type: 'prompt-symbol' as const, text: ' ❯ ' },
     ];
   };
@@ -593,7 +594,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   const currentPrompt = {
     user: mode === 'portfolio' ? 'ThibaultJRD' : 'user',
     host: 'terminal',
-    path: formatPath(terminalState.filesystem.currentPath),
+    path: formatPathWithTilde(terminalState.filesystem.currentPath, mode === 'portfolio' ? 'portfolio' : 'default'),
     symbol: '❯',
   };
 

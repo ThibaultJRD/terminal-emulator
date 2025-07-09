@@ -110,15 +110,78 @@ export function getCurrentDirectory(filesystem: FileSystemState): FileSystemNode
   return getNodeAtPath(filesystem, filesystem.currentPath);
 }
 
-export function resolvePath(filesystem: FileSystemState, inputPath: string): string[] {
+/**
+ * Gets the home directory path based on filesystem mode
+ * @param mode - The filesystem mode ('default' or 'portfolio')
+ * @returns string[] representing the home directory path
+ */
+export function getHomeDirectory(mode: FilesystemMode = 'default'): string[] {
+  return mode === 'portfolio' ? ['about'] : ['home', 'user'];
+}
+
+/**
+ * Expands tilde (~) to the home directory path
+ * @param inputPath - The path that may contain tilde
+ * @param mode - The filesystem mode
+ * @returns string with tilde expanded to home directory
+ */
+export function expandTilde(inputPath: string, mode: FilesystemMode = 'default'): string {
+  if (inputPath === '~') {
+    // Just ~ means home directory
+    return formatPath(getHomeDirectory(mode));
+  }
+
+  if (inputPath.startsWith('~/')) {
+    // ~/path means home directory + path
+    const homeDir = formatPath(getHomeDirectory(mode));
+    return homeDir + inputPath.slice(1); // Remove ~ and keep the /
+  }
+
+  // Not a tilde path, return as-is
+  return inputPath;
+}
+
+/**
+ * Converts an absolute path to tilde notation if it's within the home directory
+ * @param path - The absolute path as string array
+ * @param mode - The filesystem mode
+ * @returns string with tilde notation if applicable
+ */
+export function formatPathWithTilde(path: string[], mode: FilesystemMode = 'default'): string {
+  const homeDir = getHomeDirectory(mode);
+
+  // Check if path starts with home directory
+  if (path.length >= homeDir.length) {
+    const isInHome = homeDir.every((segment, index) => path[index] === segment);
+
+    if (isInHome) {
+      if (path.length === homeDir.length) {
+        // Exactly at home directory
+        return '~';
+      } else {
+        // Within home directory
+        const relativePath = path.slice(homeDir.length);
+        return '~/' + relativePath.join('/');
+      }
+    }
+  }
+
+  // Not in home directory, return normal path
+  return formatPath(path);
+}
+
+export function resolvePath(filesystem: FileSystemState, inputPath: string, mode: FilesystemMode = 'default'): string[] {
   // Security: Validate input path length
   if (inputPath.length > 1000) {
     throw new Error('Path too long');
   }
 
-  if (inputPath.startsWith('/')) {
-    // Absolute path
-    const segments = inputPath
+  // Handle tilde expansion first
+  const expandedPath = expandTilde(inputPath, mode);
+
+  if (expandedPath.startsWith('/')) {
+    // Absolute path (including expanded tilde paths)
+    const segments = expandedPath
       .slice(1)
       .split('/')
       .filter((segment) => segment !== '');
@@ -131,15 +194,15 @@ export function resolvePath(filesystem: FileSystemState, inputPath: string): str
     }
 
     return segments;
-  } else if (inputPath === '..') {
+  } else if (expandedPath === '..') {
     // Parent directory
     return filesystem.currentPath.slice(0, -1);
-  } else if (inputPath === '.') {
+  } else if (expandedPath === '.') {
     // Current directory
     return filesystem.currentPath;
   } else {
     // Relative path
-    const segments = inputPath.split('/').filter((segment) => segment !== '');
+    const segments = expandedPath.split('/').filter((segment) => segment !== '');
     let newPath = [...filesystem.currentPath];
 
     for (const segment of segments) {

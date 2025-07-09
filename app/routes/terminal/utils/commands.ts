@@ -80,7 +80,7 @@ export const commands: Record<string, CommandHandler> = {
       return { success: true, output: '' };
     }
 
-    const targetPath = resolvePath(filesystem, args[0]);
+    const targetPath = resolvePath(filesystem, args[0], currentMode);
     const targetNode = getNodeAtPath(filesystem, targetPath);
 
     if (!targetNode) {
@@ -110,7 +110,7 @@ export const commands: Record<string, CommandHandler> = {
     const pathArg = positionalArgs[0];
 
     // Resolve target path and get node
-    const targetPath = pathArg ? resolvePath(filesystem, pathArg) : filesystem.currentPath;
+    const targetPath = pathArg ? resolvePath(filesystem, pathArg, currentMode) : filesystem.currentPath;
     const targetNode = getNodeAtPath(filesystem, targetPath);
 
     if (!targetNode) {
@@ -151,10 +151,17 @@ export const commands: Record<string, CommandHandler> = {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
 
-    const filename = args[0];
+    const filepath = args[0];
 
-    // Security: Enhanced filename validation
-    if (filename.includes('/') || filename.includes('\\') || filename.includes('\0')) {
+    // Resolve the path to handle tilde expansion
+    const targetPath = resolvePath(filesystem, filepath, currentMode);
+
+    // Extract parent directory path and filename
+    const parentPath = targetPath.slice(0, -1);
+    const filename = targetPath[targetPath.length - 1];
+
+    // Security: Enhanced filename validation for the actual filename
+    if (filename.includes('\\') || filename.includes('\0')) {
       return createErrorResult('touch: invalid filename');
     }
 
@@ -162,18 +169,18 @@ export const commands: Record<string, CommandHandler> = {
       return createErrorResult('touch: filename too long');
     }
 
-    const currentDir = getCurrentDirectory(filesystem);
-    if (!currentDir || currentDir.type !== 'directory' || !currentDir.children) {
-      return createErrorResult('touch: cannot access current directory');
+    const parentDir = getNodeAtPath(filesystem, parentPath);
+    if (!parentDir || parentDir.type !== 'directory' || !parentDir.children) {
+      return createErrorResult('touch: cannot access parent directory');
     }
 
     // Security: Check directory file count limit
-    if (Object.keys(currentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
+    if (Object.keys(parentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
       return createErrorResult(`touch: too many files in directory (max ${MAX_FILES_PER_DIRECTORY})`);
     }
 
-    if (currentDir.children[filename]) {
-      currentDir.children[filename].modifiedAt = new Date();
+    if (parentDir.children[filename]) {
+      parentDir.children[filename].modifiedAt = new Date();
       return createSuccessResult('');
     }
 
@@ -183,9 +190,9 @@ export const commands: Record<string, CommandHandler> = {
       return createErrorResult(`touch: ${sizeValidation.error}`);
     }
 
-    const success = createFile(filesystem, filesystem.currentPath, filename, '');
+    const success = createFile(filesystem, parentPath, filename, '');
     if (!success) {
-      return createErrorResult(`touch: cannot create '${filename}'`);
+      return createErrorResult(`touch: cannot create '${filepath}'`);
     }
 
     return createSuccessResult('');
@@ -197,7 +204,7 @@ export const commands: Record<string, CommandHandler> = {
     }
 
     const filename = args[0];
-    const targetPath = resolvePath(filesystem, filename);
+    const targetPath = resolvePath(filesystem, filename, currentMode);
     const file = getNodeAtPath(filesystem, targetPath);
 
     if (!file) {
@@ -228,7 +235,7 @@ export const commands: Record<string, CommandHandler> = {
     const createParents = flags.has('p');
 
     for (const dirpath of positionalArgs) {
-      const result = createDirectoryPath(filesystem, dirpath, createParents);
+      const result = createDirectoryPath(filesystem, dirpath, createParents, currentMode);
       if (!result.success) {
         return result;
       }
@@ -248,7 +255,7 @@ export const commands: Record<string, CommandHandler> = {
     const force = flags.has('f');
 
     for (const filename of positionalArgs) {
-      const result = removeFile(filesystem, filename, recursive, force);
+      const result = removeFile(filesystem, filename, recursive, force, currentMode);
       if (!result.success && !force) {
         return result;
       }
@@ -263,7 +270,7 @@ export const commands: Record<string, CommandHandler> = {
     }
 
     const dirname = args[0];
-    const targetPath = resolvePath(filesystem, dirname);
+    const targetPath = resolvePath(filesystem, dirname, currentMode);
     const dir = getNodeAtPath(filesystem, targetPath);
 
     if (!dir) {
@@ -326,16 +333,9 @@ export const commands: Record<string, CommandHandler> = {
     const results: string[] = [];
 
     for (const filename of args) {
-      const currentDir = getCurrentDirectory(filesystem);
-      if (!currentDir || currentDir.type !== 'directory' || !currentDir.children) {
-        return {
-          success: false,
-          output: '',
-          error: 'wc: cannot access current directory',
-        };
-      }
+      const targetPath = resolvePath(filesystem, filename, currentMode);
+      const file = getNodeAtPath(filesystem, targetPath);
 
-      const file = currentDir.children[filename];
       if (!file) {
         return {
           success: false,
@@ -417,7 +417,7 @@ export const commands: Record<string, CommandHandler> = {
     const filename = args[0];
 
     // Check if file exists and get content
-    const targetPath = resolvePath(filesystem, filename);
+    const targetPath = resolvePath(filesystem, filename, currentMode);
     const existingFile = getNodeAtPath(filesystem, targetPath);
 
     let content = '';
@@ -525,7 +525,7 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
   // Handle input redirection
   let finalArgs = args;
   if (redirectInput) {
-    const inputResult = handleInputRedirection(redirectInput, filesystem);
+    const inputResult = handleInputRedirection(redirectInput, filesystem, currentMode);
     if (!inputResult.success) {
       return inputResult;
     }
@@ -539,8 +539,8 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
       finalArgs = [...args];
     } else {
       // File input - validate the file exists and is readable
-      const fileContent = getExistingFileContent(filesystem, redirectInput.source);
-      if (fileContent === '' && !fileExists(filesystem, redirectInput.source)) {
+      const fileContent = getExistingFileContent(filesystem, redirectInput.source, currentMode);
+      if (fileContent === '' && !fileExists(filesystem, redirectInput.source, currentMode)) {
         return {
           success: false,
           output: '',
@@ -576,11 +576,11 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
       outputContent = result.output.map((segment) => segment.text || '').join('');
     }
 
-    const existingContent = redirectOutput.type === '>>' ? getExistingFileContent(filesystem, redirectOutput.filename) : '';
+    const existingContent = redirectOutput.type === '>>' ? getExistingFileContent(filesystem, redirectOutput.filename, currentMode) : '';
     const content =
       redirectOutput.type === '>>' ? existingContent + (existingContent && !existingContent.endsWith('\n') ? '\n' : '') + outputContent : outputContent;
 
-    const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content);
+    const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content, currentMode);
 
     if (writeSuccess) {
       return { success: true, output: '' }; // No output to terminal when redirecting
@@ -596,14 +596,14 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
   return result;
 }
 
-function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: string }, filesystem: FileSystemState): CommandResult {
+function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: string }, filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult {
   if (redirectInput.type === '<<') {
     // Heredoc - simplified implementation that accepts any delimiter
     // In a real implementation, this would start interactive input until the delimiter is found
     return { success: true, output: '' };
   } else {
     // File input - check if file exists
-    if (!fileExists(filesystem, redirectInput.source)) {
+    if (!fileExists(filesystem, redirectInput.source, currentMode)) {
       return {
         success: false,
         output: '',
@@ -614,14 +614,14 @@ function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: strin
   }
 }
 
-function fileExists(filesystem: FileSystemState, filename: string): boolean {
-  const targetPath = resolvePath(filesystem, filename);
+function fileExists(filesystem: FileSystemState, filename: string, currentMode?: FilesystemMode): boolean {
+  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
   const file = getNodeAtPath(filesystem, targetPath);
   return file !== null && file.type === 'file';
 }
 
-function getExistingFileContent(filesystem: FileSystemState, filename: string): string {
-  const targetPath = resolvePath(filesystem, filename);
+function getExistingFileContent(filesystem: FileSystemState, filename: string, currentMode?: FilesystemMode): string {
+  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
   const file = getNodeAtPath(filesystem, targetPath);
   if (file && file.type === 'file') {
     return file.content || '';
@@ -629,20 +629,29 @@ function getExistingFileContent(filesystem: FileSystemState, filename: string): 
   return '';
 }
 
-function createDirectoryPath(filesystem: FileSystemState, dirpath: string, createParents: boolean): CommandResult {
-  // Handle simple case (no path separators)
-  if (!dirpath.includes('/')) {
-    const currentDir = getCurrentDirectory(filesystem);
-    if (!currentDir || currentDir.type !== 'directory' || !currentDir.children) {
+function createDirectoryPath(filesystem: FileSystemState, dirpath: string, createParents: boolean, currentMode?: FilesystemMode): CommandResult {
+  // Resolve the path first to handle tilde expansion
+  const targetPath = resolvePath(filesystem, dirpath, currentMode || 'default');
+
+  // Check if this is a simple directory creation (only one directory to create)
+  const parentPath = targetPath.slice(0, -1);
+  const dirname = targetPath[targetPath.length - 1];
+
+  // Check if parent directory exists
+  const parentDir = getNodeAtPath(filesystem, parentPath);
+  if (!parentDir || parentDir.type !== 'directory' || !parentDir.children) {
+    if (!createParents) {
       return {
         success: false,
         output: '',
-        error: 'mkdir: cannot access current directory',
+        error: 'mkdir: cannot create directory with path separators (use -p for recursive creation)',
       };
     }
-
-    if (currentDir.children[dirpath]) {
-      if (createParents && currentDir.children[dirpath].type === 'directory') {
+    // Continue to recursive creation logic
+  } else {
+    // Parent directory exists, this is a simple creation
+    if (parentDir.children[dirname]) {
+      if (createParents && parentDir.children[dirname].type === 'directory') {
         return { success: true, output: '' }; // -p ignores existing directories
       }
       return {
@@ -652,7 +661,7 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
       };
     }
 
-    const success = createDirectory(filesystem, filesystem.currentPath, dirpath);
+    const success = createDirectory(filesystem, parentPath, dirname);
     if (!success) {
       return {
         success: false,
@@ -664,7 +673,7 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
     return { success: true, output: '' };
   }
 
-  // Handle path with separators
+  // Handle recursive creation when parent directories don't exist
   if (!createParents) {
     return {
       success: false,
@@ -674,10 +683,10 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
   }
 
   // Create directories recursively
-  const targetPath = resolvePath(filesystem, dirpath);
-  let currentPath = filesystem.currentPath.slice(); // Copy current path
+  // Start from root and work our way down to the target path
+  let currentPath: string[] = [];
 
-  for (let i = filesystem.currentPath.length; i < targetPath.length; i++) {
+  for (let i = 0; i < targetPath.length; i++) {
     const segment = targetPath[i];
     const parentNode = getNodeAtPath(filesystem, currentPath);
 
@@ -712,8 +721,8 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
   return { success: true, output: '' };
 }
 
-function removeFile(filesystem: FileSystemState, filename: string, recursive: boolean, force: boolean): CommandResult {
-  const targetPath = resolvePath(filesystem, filename);
+function removeFile(filesystem: FileSystemState, filename: string, recursive: boolean, force: boolean, currentMode?: FilesystemMode): CommandResult {
+  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
   const file = getNodeAtPath(filesystem, targetPath);
 
   if (!file) {
@@ -743,7 +752,7 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
       filesystem.currentPath = targetPath;
 
       for (const childName of Object.keys(file.children)) {
-        const childResult = removeFile(filesystem, childName, true, force);
+        const childResult = removeFile(filesystem, childName, true, force, currentMode);
         if (!childResult.success && !force) {
           filesystem.currentPath = originalPath;
           return childResult;
@@ -771,9 +780,9 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
   return { success: true, output: '' };
 }
 
-function writeToFile(filesystem: FileSystemState, filename: string, content: string): boolean {
+function writeToFile(filesystem: FileSystemState, filename: string, content: string, currentMode?: FilesystemMode): boolean {
   // Handle path resolution for the file
-  const targetPath = resolvePath(filesystem, filename);
+  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
   const existingFile = getNodeAtPath(filesystem, targetPath);
 
   if (existingFile) {
@@ -795,7 +804,7 @@ function writeToFile(filesystem: FileSystemState, filename: string, content: str
     // Path with directory, create in the specified directory
     const dirPath = filename.substring(0, lastSlashIndex);
     const fileName = filename.substring(lastSlashIndex + 1);
-    const targetDirPath = resolvePath(filesystem, dirPath);
+    const targetDirPath = resolvePath(filesystem, dirPath, currentMode || 'default');
     return createFile(filesystem, targetDirPath, fileName, content);
   }
 }
