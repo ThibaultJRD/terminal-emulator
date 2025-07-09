@@ -68,7 +68,11 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
     }
   }
 
-  if (command && ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'wc', 'vi'].includes(command)) {
+  if (command === 'cd' || command === 'mkdir' || command === 'rmdir') {
+    return getDirectoryCompletions(pathArg, filesystem);
+  }
+
+  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
   }
 
@@ -100,7 +104,13 @@ function getPathCompletions(partialPath: string, filesystem: FileSystemState): A
   }
 
   const matchingNames = Object.keys(targetNode.children)
-    .filter((name) => name.startsWith(prefix))
+    .filter((name) => {
+      // Filter out hidden files unless user explicitly types a dot prefix
+      const isHidden = name.startsWith('.');
+      const userWantsHidden = prefix.startsWith('.');
+
+      return name.startsWith(prefix) && (!isHidden || userWantsHidden);
+    })
     .sort();
 
   const completions = matchingNames.map((name) => {
@@ -141,11 +151,57 @@ function getFileCompletions(partialPath: string, filesystem: FileSystemState): A
   const matchingNames = Object.keys(targetNode.children)
     .filter((name) => {
       const node = targetNode.children![name];
-      return node.type === 'file' && name.startsWith(prefix);
+      // Filter out hidden files unless user explicitly types a dot prefix
+      const isHidden = name.startsWith('.');
+      const userWantsHidden = prefix.startsWith('.');
+
+      return node.type === 'file' && name.startsWith(prefix) && (!isHidden || userWantsHidden);
     })
     .sort();
 
   const completions = matchingNames.map((name) => basePath + name);
+
+  return {
+    completions,
+    commonPrefix: basePath + getCommonPrefix(matchingNames),
+  };
+}
+
+function getDirectoryCompletions(partialPath: string, filesystem: FileSystemState): AutocompletionResult {
+  const lastSlashIndex = partialPath.lastIndexOf('/');
+  let basePath: string;
+  let prefix: string;
+
+  if (lastSlashIndex === -1) {
+    // No slash, completing in current directory
+    basePath = '';
+    prefix = partialPath;
+  } else {
+    // Has slash, completing in specified directory
+    basePath = partialPath.substring(0, lastSlashIndex + 1);
+    prefix = partialPath.substring(lastSlashIndex + 1);
+  }
+
+  const targetPath = basePath ? resolvePath(filesystem, basePath) : filesystem.currentPath;
+  const targetNode = getNodeAtPath(filesystem, targetPath);
+
+  if (!targetNode || targetNode.type !== 'directory' || !targetNode.children) {
+    return { completions: [], commonPrefix: '' };
+  }
+
+  // Only complete directories (not files) for cd command
+  const matchingNames = Object.keys(targetNode.children)
+    .filter((name) => {
+      const node = targetNode.children![name];
+      // Filter out hidden files unless user explicitly types a dot prefix
+      const isHidden = name.startsWith('.');
+      const userWantsHidden = prefix.startsWith('.');
+
+      return node.type === 'directory' && name.startsWith(prefix) && (!isHidden || userWantsHidden);
+    })
+    .sort();
+
+  const completions = matchingNames.map((name) => basePath + name + '/');
 
   return {
     completions,

@@ -62,6 +62,94 @@ describe('Autocompletion', () => {
       expect(result.completions).toContain('documents/');
     });
 
+    it('should complete only directories for cd command', () => {
+      const result = getAutocompletions('cd test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+    });
+
+    it('should complete only directories for cd command with empty path', () => {
+      const result = getAutocompletions('cd ', filesystem);
+      expect(result.completions).toContain('documents/');
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+      expect(result.completions).not.toContain('readme.md');
+    });
+
+    it('should complete hidden directories for cd command with dot prefix', () => {
+      const result = getAutocompletions('cd .', filesystem);
+      expect(result.completions).not.toContain('.secret'); // This is a file
+      expect(result.completions).not.toContain('.bashrc'); // This is a file
+      // Add a hidden directory for testing
+      createDirectory(filesystem, ['home', 'user'], '.config');
+      const result2 = getAutocompletions('cd .', filesystem);
+      expect(result2.completions).toContain('.config/');
+      expect(result2.completions).not.toContain('.secret');
+      expect(result2.completions).not.toContain('.bashrc');
+    });
+
+    it('should complete both files and directories for non-cd commands', () => {
+      const result = getAutocompletions('ls test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).toContain('test1.txt');
+      expect(result.completions).toContain('test2.txt');
+    });
+
+    it('should complete only directories for mkdir command', () => {
+      const result = getAutocompletions('mkdir test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+    });
+
+    it('should complete only directories for rmdir command', () => {
+      const result = getAutocompletions('rmdir test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+    });
+
+    it('should complete only directories for mkdir with empty path', () => {
+      const result = getAutocompletions('mkdir ', filesystem);
+      expect(result.completions).toContain('documents/');
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+      expect(result.completions).not.toContain('readme.md');
+    });
+
+    it('should complete only directories for rmdir with empty path', () => {
+      const result = getAutocompletions('rmdir ', filesystem);
+      expect(result.completions).toContain('documents/');
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+      expect(result.completions).not.toContain('readme.md');
+    });
+
+    it('should complete both files and directories for rm command', () => {
+      const result = getAutocompletions('rm test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).toContain('test1.txt');
+      expect(result.completions).toContain('test2.txt');
+    });
+
+    it('should complete both files and directories for touch command', () => {
+      const result = getAutocompletions('touch test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).toContain('test1.txt');
+      expect(result.completions).toContain('test2.txt');
+    });
+
+    it('should complete both files and directories for vi command', () => {
+      const result = getAutocompletions('vi test', filesystem);
+      expect(result.completions).toContain('testdir/');
+      expect(result.completions).toContain('test1.txt');
+      expect(result.completions).toContain('test2.txt');
+    });
+
     it('should complete files in subdirectories', () => {
       const result = getAutocompletions('cat documents/no', filesystem);
       expect(result.completions).toContain('documents/notes.md');
@@ -75,6 +163,32 @@ describe('Autocompletion', () => {
     it('should complete hidden files with dot prefix', () => {
       const result = getAutocompletions('cat .', filesystem);
       expect(result.completions).toContain('.secret');
+    });
+
+    it('should NOT show hidden files without dot prefix', () => {
+      const result = getAutocompletions('ls ', filesystem);
+      expect(result.completions).not.toContain('.secret');
+      expect(result.completions).not.toContain('.bashrc');
+      // Should still show regular files
+      expect(result.completions).toContain('test1.txt');
+      expect(result.completions).toContain('test2.txt');
+      expect(result.completions).toContain('testdir/');
+    });
+
+    it('should show hidden files when prefix starts with dot', () => {
+      const result = getAutocompletions('ls .', filesystem);
+      expect(result.completions).toContain('.secret');
+      expect(result.completions).toContain('.bashrc');
+      // Should NOT show regular files when prefix is dot
+      expect(result.completions).not.toContain('test1.txt');
+      expect(result.completions).not.toContain('test2.txt');
+    });
+
+    it('should filter hidden files by dot prefix', () => {
+      const result = getAutocompletions('ls .s', filesystem);
+      expect(result.completions).toContain('.secret');
+      expect(result.completions).not.toContain('.bashrc');
+      expect(result.completions).not.toContain('test1.txt');
     });
   });
 
@@ -107,6 +221,34 @@ describe('Autocompletion', () => {
     it('should handle complex redirection with spaces', () => {
       const result = getAutocompletions('echo "hello world" > test', filesystem);
       expect(result.completions).toContain('test1.txt');
+    });
+
+    it('should NOT show hidden files in redirection without dot prefix', () => {
+      const result = getAutocompletions('echo test > ', filesystem);
+      expect(result.completions).not.toContain('.secret');
+      expect(result.completions).not.toContain('.bashrc');
+      expect(result.completions).toContain('test1.txt');
+    });
+
+    it('should show hidden files in redirection with dot prefix', () => {
+      const result = getAutocompletions('echo test > .', filesystem);
+      expect(result.completions).toContain('.secret');
+      expect(result.completions).toContain('.bashrc');
+      expect(result.completions).not.toContain('test1.txt');
+    });
+
+    it('should show all hidden files in input redirection with dot prefix', () => {
+      const result = getAutocompletions('wc < .', filesystem);
+      expect(result.completions).toContain('.secret');
+      expect(result.completions).toContain('.bashrc');
+      expect(result.completions).not.toContain('test1.txt');
+    });
+
+    it('should filter hidden files in input redirection by specific dot prefix', () => {
+      const result = getAutocompletions('wc < .s', filesystem);
+      expect(result.completions).toContain('.secret');
+      expect(result.completions).not.toContain('.bashrc'); // .bashrc doesn't match .s prefix
+      expect(result.completions).not.toContain('test1.txt');
     });
   });
 

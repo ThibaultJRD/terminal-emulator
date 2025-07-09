@@ -5,7 +5,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-285%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-310%20passing-green?logo=vitest)
 
 ## 🚀 Live Demo
 
@@ -52,7 +52,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 
 ### 🧪 Testing
 
-- **285 tests** with comprehensive coverage
+- **310 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
@@ -560,13 +560,13 @@ Shows:
 
 ### Test Structure
 
-- **Unit Tests** (203 tests)
+- **Unit Tests** (225 tests)
   - File system operations and persistence
   - Command implementations (including text editor commands)
   - Command and option parsers with advanced features
   - Text editor functionality (69 comprehensive tests)
-  - Autocompletion system with Unicode support
-- **Integration Tests** (91 tests)
+  - Autocompletion system with Unicode support (47 tests)
+- **Integration Tests** (85 tests)
   - Complete command execution workflows
   - Text editor integration with filesystem
   - I/O redirection scenarios with Unicode content
