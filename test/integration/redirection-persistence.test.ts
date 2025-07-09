@@ -51,7 +51,7 @@ describe('Redirection Persistence Integration', () => {
       expect(saveResult.success).toBe(true);
 
       // Load the filesystem (simulating page refresh)
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState('default');
       expect(loadResult.success).toBe(true);
       expect(loadResult.data).toBeDefined();
 
@@ -92,7 +92,7 @@ describe('Redirection Persistence Integration', () => {
       const saveResult = saveFilesystemState(filesystem.root, 'default', filesystem.currentPath);
       expect(saveResult.success).toBe(true);
 
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState('default');
       expect(loadResult.success).toBe(true);
 
       if (loadResult.data) {
@@ -124,7 +124,7 @@ describe('Redirection Persistence Integration', () => {
       const saveResult = saveFilesystemState(filesystem.root, 'default', filesystem.currentPath);
       expect(saveResult.success).toBe(true);
 
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState('default');
       expect(loadResult.success).toBe(true);
 
       if (loadResult.data) {

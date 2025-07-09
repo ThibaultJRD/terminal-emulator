@@ -42,7 +42,7 @@ describe('Persistence utilities', () => {
       expect(saveResult.success).toBe(true);
 
       // Load the filesystem
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState(mode);
       expect(loadResult.success).toBe(true);
       expect(loadResult.data).toBeDefined();
 
@@ -91,10 +91,10 @@ describe('Persistence utilities', () => {
       };
 
       // Save corrupted data directly to localStorage
-      localStorage.setItem('terminal-emulator-filesystem', JSON.stringify(corruptedData));
+      localStorage.setItem('terminal-emulator-filesystem-default', JSON.stringify(corruptedData));
 
       // Load should still work and create new dates
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState('default');
       expect(loadResult.success).toBe(true);
       expect(loadResult.data?.filesystem.createdAt).toBeInstanceOf(Date);
       expect(loadResult.data?.filesystem.modifiedAt).toBeInstanceOf(Date);
@@ -109,7 +109,7 @@ describe('Persistence utilities', () => {
       saveFilesystemState(filesystem.root, mode, currentPath);
 
       // Get the stored data as string and parse it (simulating localStorage behavior)
-      const storedString = localStorage.getItem('terminal-emulator-filesystem');
+      const storedString = localStorage.getItem('terminal-emulator-filesystem-default');
       expect(storedString).toBeTruthy();
 
       if (storedString) {
@@ -120,7 +120,7 @@ describe('Persistence utilities', () => {
         expect(typeof parsedData.filesystem.modifiedAt).toBe('string');
 
         // Now load and verify dates are restored as Date objects
-        const loadResult = loadFilesystemState();
+        const loadResult = loadFilesystemState('default');
         expect(loadResult.success).toBe(true);
         expect(loadResult.data?.filesystem.createdAt).toBeInstanceOf(Date);
         expect(loadResult.data?.filesystem.modifiedAt).toBeInstanceOf(Date);
@@ -136,12 +136,12 @@ describe('Persistence utilities', () => {
 
       // Save first
       saveFilesystemState(filesystem.root, mode, currentPath);
-      expect(localStorage.getItem('terminal-emulator-filesystem')).toBeTruthy();
+      expect(localStorage.getItem('terminal-emulator-filesystem-default')).toBeTruthy();
 
       // Clear
-      const clearResult = clearFilesystemState();
+      const clearResult = clearFilesystemState('default');
       expect(clearResult.success).toBe(true);
-      expect(localStorage.getItem('terminal-emulator-filesystem')).toBeNull();
+      expect(localStorage.getItem('terminal-emulator-filesystem-default')).toBeNull();
     });
   });
 
@@ -160,7 +160,7 @@ describe('Persistence utilities', () => {
       expect(saveResult.success).toBe(true);
 
       // Load the filesystem (simulating page refresh)
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState(mode);
       expect(loadResult.success).toBe(true);
       expect(loadResult.data).toBeDefined();
 
@@ -197,7 +197,7 @@ describe('Persistence utilities', () => {
 
       // Save and reload
       saveFilesystemState(filesystem.root, mode, currentPath);
-      const loadResult = loadFilesystemState();
+      const loadResult = loadFilesystemState(mode);
       expect(loadResult.success).toBe(true);
 
       if (loadResult.data) {

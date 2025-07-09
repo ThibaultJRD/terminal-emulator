@@ -11,11 +11,22 @@ export type { FilesystemMode };
  * These constants define the localStorage keys and versioning.
  */
 const STORAGE_CONFIG = {
-  FILESYSTEM_KEY: 'terminal-emulator-filesystem',
+  FILESYSTEM_KEY_BASE: 'terminal-emulator-filesystem',
   MODE_KEY: 'terminal-emulator-mode',
   VERSION_KEY: 'terminal-emulator-version',
   CURRENT_VERSION: '1.0.0',
 } as const;
+
+/**
+ * Gets the storage key for a specific filesystem mode.
+ * Each mode has its own localStorage key to maintain separate persistence.
+ *
+ * @param mode - The filesystem mode
+ * @returns The localStorage key for the specified mode
+ */
+function getStorageKey(mode: FilesystemMode): string {
+  return `${STORAGE_CONFIG.FILESYSTEM_KEY_BASE}-${mode}`;
+}
 
 /**
  * Checks if localStorage is available in the current environment.
@@ -133,7 +144,8 @@ export function saveFilesystemState(filesystem: FileSystemNode, mode: Filesystem
       currentPath,
     };
 
-    localStorage.setItem(STORAGE_CONFIG.FILESYSTEM_KEY, JSON.stringify(data));
+    const storageKey = getStorageKey(mode);
+    localStorage.setItem(storageKey, JSON.stringify(data));
 
     return { success: true, data };
   } catch (error) {
@@ -148,9 +160,10 @@ export function saveFilesystemState(filesystem: FileSystemNode, mode: Filesystem
 /**
  * Loads the filesystem state from localStorage.
  *
+ * @param mode - The filesystem mode to load
  * @returns PersistenceResult with the loaded filesystem data or error
  */
-export function loadFilesystemState(): PersistenceResult {
+export function loadFilesystemState(mode: FilesystemMode): PersistenceResult {
   try {
     if (!isLocalStorageAvailable()) {
       return {
@@ -159,7 +172,8 @@ export function loadFilesystemState(): PersistenceResult {
       };
     }
 
-    const stored = localStorage.getItem(STORAGE_CONFIG.FILESYSTEM_KEY);
+    const storageKey = getStorageKey(mode);
+    const stored = localStorage.getItem(storageKey);
 
     if (!stored) {
       return {
@@ -225,9 +239,10 @@ export function loadFilesystemState(): PersistenceResult {
  * Clears the saved filesystem state from localStorage.
  * This is used when resetting to default filesystem.
  *
+ * @param mode - The filesystem mode to clear
  * @returns PersistenceResult indicating success or failure
  */
-export function clearFilesystemState(): PersistenceResult {
+export function clearFilesystemState(mode: FilesystemMode): PersistenceResult {
   try {
     if (!isLocalStorageAvailable()) {
       return {
@@ -236,7 +251,8 @@ export function clearFilesystemState(): PersistenceResult {
       };
     }
 
-    localStorage.removeItem(STORAGE_CONFIG.FILESYSTEM_KEY);
+    const storageKey = getStorageKey(mode);
+    localStorage.removeItem(storageKey);
     return { success: true };
   } catch (error) {
     console.error('Failed to clear filesystem state:', error);
@@ -250,15 +266,17 @@ export function clearFilesystemState(): PersistenceResult {
 /**
  * Checks if there is a saved filesystem state in localStorage.
  *
+ * @param mode - The filesystem mode to check
  * @returns boolean indicating if saved state exists
  */
-export function hasSavedFilesystemState(): boolean {
+export function hasSavedFilesystemState(mode: FilesystemMode): boolean {
   try {
     if (!isLocalStorageAvailable()) {
       return false;
     }
 
-    const stored = localStorage.getItem(STORAGE_CONFIG.FILESYSTEM_KEY);
+    const storageKey = getStorageKey(mode);
+    const stored = localStorage.getItem(storageKey);
     return stored !== null;
   } catch (error) {
     console.error('Failed to check for saved filesystem state:', error);
@@ -299,21 +317,18 @@ export function initializeFilesystem(preferredMode: FilesystemMode = 'default'):
   mode: FilesystemMode;
   currentPath: string[];
 } {
-  const loadResult = loadFilesystemState();
+  const loadResult = loadFilesystemState(preferredMode);
 
   if (loadResult.success && loadResult.data) {
-    // Only use saved state if the mode matches the preferred mode
-    if (loadResult.data.mode === preferredMode) {
-      return {
-        filesystem: loadResult.data.filesystem,
-        mode: loadResult.data.mode,
-        currentPath: loadResult.data.currentPath,
-      };
-    }
-    // Mode mismatch: saved data is for a different route, ignore it
+    // Use saved state for the specific mode
+    return {
+      filesystem: loadResult.data.filesystem,
+      mode: loadResult.data.mode,
+      currentPath: loadResult.data.currentPath,
+    };
   }
 
-  // Use default state with the preferred mode (no saved data or mode mismatch)
+  // Use default state with the preferred mode (no saved data)
   const mode = preferredMode;
   // Both modes now use the same default path structure for consistency
   const defaultPath = ['home', 'user'];
@@ -336,8 +351,8 @@ export function resetToDefaultFilesystem(mode: FilesystemMode): {
   mode: FilesystemMode;
   currentPath: string[];
 } {
-  // Clear saved state
-  clearFilesystemState();
+  // Clear saved state for the specific mode
+  clearFilesystemState(mode);
 
   // Save the new mode
   saveCurrentMode(mode);
@@ -361,6 +376,8 @@ export function resetToDefaultFilesystem(mode: FilesystemMode): {
 export function getStorageInfo(): {
   totalSize: number;
   filesystemSize: number;
+  defaultModeSize: number;
+  portfolioModeSize: number;
   hasBackups: boolean;
   lastSaved?: string;
 } {
@@ -369,14 +386,21 @@ export function getStorageInfo(): {
       return {
         totalSize: 0,
         filesystemSize: 0,
+        defaultModeSize: 0,
+        portfolioModeSize: 0,
         hasBackups: false,
       };
     }
 
     let totalSize = 0;
     let filesystemSize = 0;
+    let defaultModeSize = 0;
+    let portfolioModeSize = 0;
     let hasBackups = false;
     let lastSaved: string | undefined;
+
+    const defaultKey = getStorageKey('default');
+    const portfolioKey = getStorageKey('portfolio');
 
     // Check all localStorage keys for terminal emulator data
     for (let i = 0; i < localStorage.length; i++) {
@@ -387,11 +411,25 @@ export function getStorageInfo(): {
           const size = value.length;
           totalSize += size;
 
-          if (key === STORAGE_CONFIG.FILESYSTEM_KEY) {
-            filesystemSize = size;
+          if (key === defaultKey) {
+            defaultModeSize = size;
+            filesystemSize += size;
             try {
               const data = JSON.parse(value);
-              lastSaved = data.savedAt;
+              if (!lastSaved || data.savedAt > lastSaved) {
+                lastSaved = data.savedAt;
+              }
+            } catch (error) {
+              // Ignore parsing errors for metadata
+            }
+          } else if (key === portfolioKey) {
+            portfolioModeSize = size;
+            filesystemSize += size;
+            try {
+              const data = JSON.parse(value);
+              if (!lastSaved || data.savedAt > lastSaved) {
+                lastSaved = data.savedAt;
+              }
             } catch (error) {
               // Ignore parsing errors for metadata
             }
@@ -405,6 +443,8 @@ export function getStorageInfo(): {
     return {
       totalSize,
       filesystemSize,
+      defaultModeSize,
+      portfolioModeSize,
       hasBackups,
       lastSaved,
     };
@@ -413,6 +453,8 @@ export function getStorageInfo(): {
     return {
       totalSize: 0,
       filesystemSize: 0,
+      defaultModeSize: 0,
+      portfolioModeSize: 0,
       hasBackups: false,
     };
   }
@@ -563,8 +605,9 @@ export function importFilesystemData(jsonData: string): PersistenceResult {
       };
     }
 
-    // Save the imported data
-    localStorage.setItem(STORAGE_CONFIG.FILESYSTEM_KEY, jsonData);
+    // Save the imported data using the correct storage key for the mode
+    const storageKey = getStorageKey(data.mode);
+    localStorage.setItem(storageKey, jsonData);
 
     return { success: true, data };
   } catch (error) {
