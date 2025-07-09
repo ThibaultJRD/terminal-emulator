@@ -722,6 +722,8 @@ export const commands: Record<string, CommandHandler> = {
       '  vi myfile.txt',
       "  alias ll='ls -l'",
       "  alias work='cd ~/projects && ls'",
+      "  alias hello='echo Hello, $1!'",
+      '  hello World',
       '  source ~/.bashrc',
       '  reset-fs',
     ].join('\n');
