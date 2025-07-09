@@ -73,7 +73,7 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
     return getDirectoryCompletions(pathArg, filesystem);
   }
 
-  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi'].includes(command)) {
+  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi', 'cp', 'mv'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
   }
 

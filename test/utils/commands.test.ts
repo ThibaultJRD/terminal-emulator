@@ -241,6 +241,177 @@ describe('Commands', () => {
     });
   });
 
+  describe('cp command', () => {
+    it('should copy file to new location', () => {
+      // Create test file
+      filesystem.currentPath = ['home', 'user', 'documents'];
+      const createResult = commands.touch(['test.txt'], filesystem);
+      expect(createResult.success).toBe(true);
+
+      // Copy file
+      const result = commands.cp(['test.txt', 'copy.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+
+      // Check both files exist
+      const ls = commands.ls([], filesystem);
+      expect(ls.success).toBe(true);
+      const outputText = Array.isArray(ls.output) ? ls.output.map((s) => s.text).join('') : ls.output;
+      expect(outputText).toMatch(/test\.txt/);
+      expect(outputText).toMatch(/copy\.txt/);
+    });
+
+    it('should copy file to existing directory', () => {
+      filesystem.currentPath = ['home', 'user', 'documents'];
+      const createResult = commands.touch(['test.txt'], filesystem);
+      expect(createResult.success).toBe(true);
+
+      // Go back to user directory and copy into a different directory
+      filesystem.currentPath = ['home', 'user'];
+      const mkdirResult = commands.mkdir(['testdir'], filesystem);
+      expect(mkdirResult.success).toBe(true);
+
+      const result = commands.cp(['documents/test.txt', 'testdir'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+
+      // Check file was copied into directory
+      const ls = commands.ls(['testdir'], filesystem);
+      expect(ls.success).toBe(true);
+      const outputText = Array.isArray(ls.output) ? ls.output.map((s) => s.text).join('') : ls.output;
+      expect(outputText).toMatch(/test\.txt/);
+    });
+
+    it('should copy directory recursively with -r flag', () => {
+      filesystem.currentPath = ['home', 'user'];
+      const mkdirResult = commands.mkdir(['testdir'], filesystem);
+      expect(mkdirResult.success).toBe(true);
+
+      const touchResult = commands.touch(['testdir/file.txt'], filesystem);
+      expect(touchResult.success).toBe(true);
+
+      const result = commands.cp(['-r', 'testdir', 'copydir'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+
+      // Check directory was copied
+      const ls = commands.ls(['copydir'], filesystem);
+      expect(ls.success).toBe(true);
+      const outputText = Array.isArray(ls.output) ? ls.output.map((s) => s.text).join('') : ls.output;
+      expect(outputText).toMatch(/file\.txt/);
+    });
+
+    it('should fail to copy directory without -r flag', () => {
+      filesystem.currentPath = ['home', 'user'];
+      const mkdirResult = commands.mkdir(['testdir'], filesystem);
+      expect(mkdirResult.success).toBe(true);
+
+      const result = commands.cp(['testdir', 'copydir'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("omitting directory 'testdir'");
+    });
+
+    it('should fail when source does not exist', () => {
+      const result = commands.cp(['nonexistent.txt', 'dest.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("cannot stat 'nonexistent.txt'");
+    });
+
+    it('should require destination operand', () => {
+      const result = commands.cp(['file1.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('cp: missing destination file operand');
+    });
+  });
+
+  describe('mv command', () => {
+    it('should move file to new location', () => {
+      filesystem.currentPath = ['home', 'user', 'documents'];
+      const createResult = commands.touch(['test.txt'], filesystem);
+      expect(createResult.success).toBe(true);
+
+      const result = commands.mv(['test.txt', 'moved.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+
+      // Check source no longer exists
+      const catOriginal = commands.cat(['test.txt'], filesystem);
+      expect(catOriginal.success).toBe(false);
+
+      // Check destination exists
+      const ls = commands.ls([], filesystem);
+      expect(ls.success).toBe(true);
+      const outputText = Array.isArray(ls.output) ? ls.output.map((s) => s.text).join('') : ls.output;
+      expect(outputText).toMatch(/moved\.txt/);
+    });
+
+    it('should move file to existing directory', () => {
+      filesystem.currentPath = ['home', 'user', 'documents'];
+      const createResult = commands.touch(['test.txt'], filesystem);
+      expect(createResult.success).toBe(true);
+
+      // Go back to user directory and move to a different directory
+      filesystem.currentPath = ['home', 'user'];
+      const mkdirResult = commands.mkdir(['testdir'], filesystem);
+      expect(mkdirResult.success).toBe(true);
+
+      const result = commands.mv(['documents/test.txt', 'testdir'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+
+      // Check file was moved into directory
+      const ls = commands.ls(['testdir'], filesystem);
+      expect(ls.success).toBe(true);
+      const outputText = Array.isArray(ls.output) ? ls.output.map((s) => s.text).join('') : ls.output;
+      expect(outputText).toMatch(/test\.txt/);
+    });
+
+    it('should move directory', () => {
+      filesystem.currentPath = ['home', 'user'];
+      const mkdirResult = commands.mkdir(['testdir'], filesystem);
+      expect(mkdirResult.success).toBe(true);
+
+      const touchResult = commands.touch(['testdir/file.txt'], filesystem);
+      expect(touchResult.success).toBe(true);
+
+      const result = commands.mv(['testdir', 'moveddir'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+
+      // Check source no longer exists
+      const lsOriginal = commands.ls(['testdir'], filesystem);
+      expect(lsOriginal.success).toBe(false);
+
+      // Check directory was moved
+      const ls = commands.ls(['moveddir'], filesystem);
+      expect(ls.success).toBe(true);
+      const outputText = Array.isArray(ls.output) ? ls.output.map((s) => s.text).join('') : ls.output;
+      expect(outputText).toMatch(/file\.txt/);
+    });
+
+    it('should fail when source does not exist', () => {
+      const result = commands.mv(['nonexistent.txt', 'dest.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("cannot stat 'nonexistent.txt'");
+    });
+
+    it('should fail when source and destination are the same', () => {
+      filesystem.currentPath = ['home', 'user', 'documents'];
+      const createResult = commands.touch(['test.txt'], filesystem);
+      expect(createResult.success).toBe(true);
+
+      const result = commands.mv(['test.txt', 'test.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('are the same file');
+    });
+
+    it('should require destination operand', () => {
+      const result = commands.mv(['file1.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('mv: missing destination file operand');
+    });
+  });
+
   describe('wc command', () => {
     it('should count lines, words, and characters', () => {
       // Change to documents directory first

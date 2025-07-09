@@ -459,6 +459,82 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
+  cp: (args: string[], filesystem: FileSystemState): CommandResult => {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length < 2) {
+      return createErrorResult('cp: missing destination file operand');
+    }
+
+    const recursive = flags.has('r') || flags.has('R');
+    const force = flags.has('f');
+    const interactive = flags.has('i');
+
+    const sources = positionalArgs.slice(0, -1);
+    const destination = positionalArgs[positionalArgs.length - 1];
+
+    // Resolve destination path
+    const destPath = resolvePath(filesystem, destination);
+    const destNode = getNodeAtPath(filesystem, destPath);
+
+    // Handle multiple sources - destination must be a directory
+    if (sources.length > 1) {
+      if (!destNode || destNode.type !== 'directory') {
+        return createErrorResult(`cp: target '${destination}' is not a directory`);
+      }
+
+      for (const source of sources) {
+        const result = copyFileOrDirectory(filesystem, source, destination, recursive, force, interactive);
+        if (!result.success) {
+          return result;
+        }
+      }
+      return createSuccessResult('');
+    }
+
+    // Single source
+    const source = sources[0];
+    return copyFileOrDirectory(filesystem, source, destination, recursive, force, interactive);
+  },
+
+  mv: (args: string[], filesystem: FileSystemState): CommandResult => {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length < 2) {
+      return createErrorResult('mv: missing destination file operand');
+    }
+
+    const force = flags.has('f');
+    const interactive = flags.has('i');
+    const noOverwrite = flags.has('n');
+
+    const sources = positionalArgs.slice(0, -1);
+    const destination = positionalArgs[positionalArgs.length - 1];
+
+    // Resolve destination path
+    const destPath = resolvePath(filesystem, destination);
+    const destNode = getNodeAtPath(filesystem, destPath);
+
+    // Handle multiple sources - destination must be a directory
+    if (sources.length > 1) {
+      if (!destNode || destNode.type !== 'directory') {
+        return createErrorResult(`mv: target '${destination}' is not a directory`);
+      }
+
+      for (const source of sources) {
+        const result = moveFileOrDirectory(filesystem, source, destination, force, interactive, noOverwrite);
+        if (!result.success) {
+          return result;
+        }
+      }
+      return createSuccessResult('');
+    }
+
+    // Single source
+    const source = sources[0];
+    return moveFileOrDirectory(filesystem, source, destination, force, interactive, noOverwrite);
+  },
+
   help: (args: string[], filesystem: FileSystemState): CommandResult => {
     const helpText = [
       'Available commands:',
@@ -472,6 +548,8 @@ export const commands: Record<string, CommandHandler> = {
       '  mkdir [-p] <dir> - Create directory (-p: create parent directories)',
       '  rm [-r] [-f] <file> - Remove file (-r: recursive, -f: force)',
       '  rmdir <dir>      - Remove empty directory',
+      '  cp [-r] [-f] <src> <dst> - Copy files/directories (-r: recursive, -f: force)',
+      '  mv [-f] [-i] <src> <dst> - Move/rename files/directories (-f: force, -i: interactive)',
       '',
       'Text Editor:',
       '  vi <file>        - Open file in vi text editor',
@@ -487,7 +565,7 @@ export const commands: Record<string, CommandHandler> = {
       '  clear            - Clear terminal',
       '  help             - Show this help message',
       '',
-      'Options can be combined (e.g., ls -la, rm -rf)',
+      'Options can be combined (e.g., ls -la, rm -rf, cp -rf)',
       '',
       'Redirection:',
       '  command > file   - Write output to file (overwrite)',
@@ -499,6 +577,8 @@ export const commands: Record<string, CommandHandler> = {
       '  echo "Hello World" > greeting.txt',
       '  mkdir -p deep/nested/directory',
       '  rm -rf unwanted_folder',
+      '  cp -r src_dir dest_dir',
+      '  mv old_file.txt new_file.txt',
       '  ls -la > file_list.txt',
       '  wc < example.md',
       '  cat readme.txt >> log.txt',
@@ -803,4 +883,213 @@ function writeToFile(filesystem: FileSystemState, filename: string, content: str
     const targetDirPath = resolvePath(filesystem, dirPath);
     return createFile(filesystem, targetDirPath, fileName, content);
   }
+}
+
+function copyFileOrDirectory(
+  filesystem: FileSystemState,
+  source: string,
+  destination: string,
+  recursive: boolean,
+  force: boolean,
+  interactive: boolean,
+): CommandResult {
+  const sourcePath = resolvePath(filesystem, source);
+  const sourceNode = getNodeAtPath(filesystem, sourcePath);
+
+  if (!sourceNode) {
+    return createErrorResult(`cp: cannot stat '${source}': No such file or directory`);
+  }
+
+  // Resolve destination path
+  const destPath = resolvePath(filesystem, destination);
+  const destNode = getNodeAtPath(filesystem, destPath);
+
+  let finalDestPath = destPath;
+  let finalDestName = destPath[destPath.length - 1];
+
+  // If destination is an existing directory, copy into it
+  if (destNode && destNode.type === 'directory') {
+    finalDestPath = [...destPath, sourceNode.name];
+    finalDestName = sourceNode.name;
+  }
+
+  // Check if destination already exists
+  const existingDest = getNodeAtPath(filesystem, finalDestPath);
+  if (existingDest && !force) {
+    if (interactive) {
+      // In a real terminal, this would prompt the user
+      // For now, we'll assume "no" for interactive mode
+      return createErrorResult(`cp: overwrite '${formatPath(finalDestPath)}'? (simulated: no)`);
+    } else {
+      return createErrorResult(`cp: cannot create '${formatPath(finalDestPath)}': File exists`);
+    }
+  }
+
+  if (sourceNode.type === 'file') {
+    return copyFile(filesystem, sourceNode, finalDestPath);
+  } else if (sourceNode.type === 'directory') {
+    if (!recursive) {
+      return createErrorResult(`cp: omitting directory '${source}'`);
+    }
+    return copyDirectory(filesystem, sourceNode, finalDestPath, recursive, force);
+  }
+
+  return createErrorResult(`cp: cannot copy '${source}': Unknown file type`);
+}
+
+function copyFile(filesystem: FileSystemState, sourceNode: FileSystemNode, destPath: string[]): CommandResult {
+  const destParentPath = destPath.slice(0, -1);
+  const destName = destPath[destPath.length - 1];
+
+  // Security: Validate file size
+  const content = sourceNode.content || '';
+  const validation = validateFileSize(content, destName);
+  if (!validation.valid) {
+    return createErrorResult(`cp: ${validation.error}`);
+  }
+
+  // Security: Check filesystem size
+  const sizeValidation = validateFilesystemSize(filesystem);
+  if (!sizeValidation.valid) {
+    return createErrorResult(`cp: ${sizeValidation.error}`);
+  }
+
+  const success = createFile(filesystem, destParentPath, destName, content);
+  if (!success) {
+    return createErrorResult(`cp: cannot create '${formatPath(destPath)}'`);
+  }
+
+  // Copy metadata
+  const newFile = getNodeAtPath(filesystem, destPath);
+  if (newFile && sourceNode.createdAt) {
+    newFile.createdAt = sourceNode.createdAt;
+  }
+
+  return createSuccessResult('');
+}
+
+function copyDirectory(filesystem: FileSystemState, sourceNode: FileSystemNode, destPath: string[], recursive: boolean, force: boolean): CommandResult {
+  const destParentPath = destPath.slice(0, -1);
+  const destName = destPath[destPath.length - 1];
+
+  // Create destination directory
+  const success = createDirectory(filesystem, destParentPath, destName);
+  if (!success) {
+    return createErrorResult(`cp: cannot create directory '${formatPath(destPath)}'`);
+  }
+
+  // Copy metadata
+  const newDir = getNodeAtPath(filesystem, destPath);
+  if (newDir && sourceNode.createdAt) {
+    newDir.createdAt = sourceNode.createdAt;
+  }
+
+  // Copy contents recursively
+  if (sourceNode.children) {
+    for (const childName of Object.keys(sourceNode.children)) {
+      const childNode = sourceNode.children[childName];
+      const childDestPath = [...destPath, childName];
+
+      if (childNode.type === 'file') {
+        const result = copyFile(filesystem, childNode, childDestPath);
+        if (!result.success) {
+          return result;
+        }
+      } else if (childNode.type === 'directory' && recursive) {
+        const result = copyDirectory(filesystem, childNode, childDestPath, recursive, force);
+        if (!result.success) {
+          return result;
+        }
+      }
+    }
+  }
+
+  return createSuccessResult('');
+}
+
+function moveFileOrDirectory(
+  filesystem: FileSystemState,
+  source: string,
+  destination: string,
+  force: boolean,
+  interactive: boolean,
+  noOverwrite: boolean,
+): CommandResult {
+  const sourcePath = resolvePath(filesystem, source);
+  const sourceNode = getNodeAtPath(filesystem, sourcePath);
+
+  if (!sourceNode) {
+    return createErrorResult(`mv: cannot stat '${source}': No such file or directory`);
+  }
+
+  // Resolve destination path
+  const destPath = resolvePath(filesystem, destination);
+  const destNode = getNodeAtPath(filesystem, destPath);
+
+  let finalDestPath = destPath;
+  let finalDestName = destPath[destPath.length - 1];
+
+  // If destination is an existing directory, move into it
+  if (destNode && destNode.type === 'directory') {
+    finalDestPath = [...destPath, sourceNode.name];
+    finalDestName = sourceNode.name;
+  }
+
+  // Check if source and destination are the same
+  if (formatPath(sourcePath) === formatPath(finalDestPath)) {
+    return createErrorResult(`mv: '${source}' and '${destination}' are the same file`);
+  }
+
+  // Check if destination already exists
+  const existingDest = getNodeAtPath(filesystem, finalDestPath);
+  if (existingDest) {
+    if (noOverwrite) {
+      return createSuccessResult(''); // -n flag: do nothing if destination exists
+    }
+    if (!force) {
+      if (interactive) {
+        // In a real terminal, this would prompt the user
+        // For now, we'll assume "no" for interactive mode
+        return createErrorResult(`mv: overwrite '${formatPath(finalDestPath)}'? (simulated: no)`);
+      } else {
+        return createErrorResult(`mv: cannot create '${formatPath(finalDestPath)}': File exists`);
+      }
+    }
+  }
+
+  // Remove existing destination if it exists and we're forcing
+  if (existingDest && force) {
+    const destParentPath = finalDestPath.slice(0, -1);
+    const destName = finalDestPath[finalDestPath.length - 1];
+    if (!deleteNode(filesystem, destParentPath, destName)) {
+      return createErrorResult(`mv: cannot remove '${formatPath(finalDestPath)}'`);
+    }
+  }
+
+  // Move the node
+  const sourceParentPath = sourcePath.slice(0, -1);
+  const sourceName = sourcePath[sourcePath.length - 1];
+  const destParentPath = finalDestPath.slice(0, -1);
+
+  // First, create the node at the destination
+  const destParent = getNodeAtPath(filesystem, destParentPath);
+  if (!destParent || destParent.type !== 'directory' || !destParent.children) {
+    return createErrorResult(`mv: cannot create '${formatPath(finalDestPath)}': No such directory`);
+  }
+
+  // Copy the node to destination
+  destParent.children[finalDestName] = {
+    ...sourceNode,
+    name: finalDestName,
+    modifiedAt: new Date(),
+  };
+
+  // Remove from source
+  if (!deleteNode(filesystem, sourceParentPath, sourceName)) {
+    // If deletion fails, remove the copy we just made
+    delete destParent.children[finalDestName];
+    return createErrorResult(`mv: cannot remove '${source}'`);
+  }
+
+  return createSuccessResult('');
 }
