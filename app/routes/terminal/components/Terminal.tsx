@@ -181,7 +181,8 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         case 'open_editor': {
           const { filename, content } = specialCommand.data as { filename: string; content: string };
           const { newTerminalState, editorState } = handleTextEditorOpen(filename, content, terminalState, input);
-          setTerminalState(newTerminalState);
+          // Update terminal state and add command to history
+          setTerminalState((prev) => updateTerminalStateAfterCommand(newTerminalState, input));
           setTextEditorState(editorState);
           setIsTextEditorOpen(true);
           return;

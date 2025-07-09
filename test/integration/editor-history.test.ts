@@ -46,14 +46,17 @@ describe('Editor History Integration', () => {
     expect(parts[0]).toBe('OPEN_EDITOR');
     expect(parts[1]).toBe('file.txt');
 
-    // Simulate opening the editor
+    // Simulate opening the editor (like Terminal component does)
     const { newTerminalState, editorState } = handleTextEditorOpen('file.txt', '', currentState, 'vi file.txt');
 
-    // Verify that the filesystem preserves the existing history (vi command will be added by main handleCommand)
-    const newHistoryInFile = loadHistoryFromFile(newTerminalState.filesystem);
-    expect(newHistoryInFile).toEqual(commands); // Should only have the original commands
-    expect(newHistoryInFile.length).toBe(5);
-    expect(newTerminalState.currentInput).toBe('');
+    // Simulate the Terminal component's behavior: add command to history after editor opens
+    const finalState = updateTerminalStateAfterCommand(newTerminalState, 'vi file.txt');
+
+    // Verify that the filesystem preserves the history AND adds the vi command
+    const newHistoryInFile = loadHistoryFromFile(finalState.filesystem);
+    expect(newHistoryInFile).toEqual([...commands, 'vi file.txt']);
+    expect(newHistoryInFile.length).toBe(6);
+    expect(finalState.currentInput).toBe('');
 
     // Verify editor state is created properly
     expect(editorState.filename).toBe('file.txt');
@@ -91,13 +94,16 @@ describe('Editor History Integration', () => {
     // Test that history state is preserved when opening editor
     const { newTerminalState } = handleTextEditorOpen('file.txt', '', currentState, 'vi file.txt');
 
-    // The new state should preserve existing history (vi command will be added by main handleCommand)
-    const finalHistoryInFile = loadHistoryFromFile(newTerminalState.filesystem);
-    expect(finalHistoryInFile).toEqual(commands); // Should only have the original commands
-    expect(newTerminalState.currentInput).toBe('');
+    // Simulate the Terminal component's behavior: add command to history after editor opens
+    const finalState = updateTerminalStateAfterCommand(newTerminalState, 'vi file.txt');
+
+    // The new state should have the vi command added to history
+    const finalHistoryInFile = loadHistoryFromFile(finalState.filesystem);
+    expect(finalHistoryInFile).toEqual([...commands, 'vi file.txt']);
+    expect(finalState.currentInput).toBe('');
 
     // This test documents that the terminal handlers work correctly
-    // Only the main handleCommand function should manage history updates
+    // The Terminal component handles history updates for editor commands
   });
 
   it('should persist history to filesystem', () => {
@@ -270,5 +276,33 @@ describe('Editor History Integration', () => {
     // Verify no duplicates exist
     const uniqueCommands = [...new Set(finalHistory)];
     expect(uniqueCommands.length).toBe(finalHistory.length);
+  });
+
+  it('should add vi commands to history correctly', () => {
+    // Test that vi commands are properly recorded in history
+    let currentState = terminalState;
+
+    // Execute some regular commands first
+    currentState = updateTerminalStateAfterCommand(currentState, 'ls');
+    currentState = updateTerminalStateAfterCommand(currentState, 'pwd');
+
+    // Simulate vi command flow (like Terminal component does)
+    const viResult = executeCommand('vi test.txt', currentState.filesystem);
+    expect(viResult.success).toBe(true);
+    expect(viResult.output).toMatch(/^OPEN_EDITOR:/);
+
+    // Simulate the Terminal component's behavior for editor commands
+    const { newTerminalState } = handleTextEditorOpen('test.txt', '', currentState, 'vi test.txt');
+    const finalState = updateTerminalStateAfterCommand(newTerminalState, 'vi test.txt');
+
+    // Verify that vi command is in history
+    const history = loadHistoryFromFile(finalState.filesystem);
+    expect(history).toEqual(['ls', 'pwd', 'vi test.txt']);
+    expect(history).toContain('vi test.txt');
+
+    // Test multiple vi commands
+    const secondViState = updateTerminalStateAfterCommand(finalState, 'vi another.txt');
+    const secondHistory = loadHistoryFromFile(secondViState.filesystem);
+    expect(secondHistory).toEqual(['ls', 'pwd', 'vi test.txt', 'vi another.txt']);
   });
 });
