@@ -134,7 +134,7 @@ describe('Commands', () => {
       const result = commands.cat(['readme.txt'], filesystem);
       expect(result.success).toBe(true);
       expect(typeof result.output === 'string').toBe(true);
-      expect(result.output).toContain('Welcome to the terminal emulator');
+      expect(result.output).toContain('Welcome to the Modern Terminal Emulator');
     });
 
     it('should render markdown files with formatting', () => {
