@@ -27,6 +27,8 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "audit": "yarn audit",
+    "audit:fix": "yarn audit --fix || npm audit fix",
     "prepare": "husky"
   },
   "dependencies": {

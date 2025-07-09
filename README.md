@@ -5,7 +5,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-310%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-373%20passing-green?logo=vitest)
 
 ## 🚀 Live Demo
 
@@ -52,7 +52,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 
 ### 🧪 Testing
 
-- **310 tests** with comprehensive coverage
+- **373 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
@@ -171,6 +171,15 @@ rm file.txt            # Remove file
 rm -r folder           # Remove recursively
 rm -f nonexistent      # Force (no error)
 rmdir empty_folder     # Remove empty directory
+
+# File Operations
+cp file.txt backup.txt    # Copy file
+cp -r folder backup/      # Copy directory recursively
+cp -f file.txt dest/      # Force copy (overwrite)
+mv file.txt newname.txt   # Move/rename file
+mv folder/ newlocation/   # Move directory
+mv -f file.txt dest/      # Force move (overwrite)
+mv -i file.txt dest/      # Interactive (prompt before overwrite)
 
 # Text Editor
 nano file.txt          # Open file in nano text editor
