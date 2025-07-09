@@ -65,6 +65,8 @@ export function TextEditor({ initialState, onSave, onClose, onStateChange }: Tex
   const [state, setState] = useState<TextEditorState>(initialState);
   const [commandInput, setCommandInput] = useState('');
   const [isCommandInputVisible, setIsCommandInputVisible] = useState(false);
+  // Editor command history - stores vi commands like :w, :q, :wq
+  // This is separate from the main terminal history (stored in .history file)
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [commandHistoryIndex, setCommandHistoryIndex] = useState(-1);
   const [isStatusMessageError, setIsStatusMessageError] = useState(false);

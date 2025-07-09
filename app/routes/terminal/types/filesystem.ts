@@ -51,8 +51,6 @@ export interface OutputSegment {
 }
 
 export interface TerminalState {
-  history: string[];
-  historyIndex: number;
   currentInput: string;
   output: string[];
   filesystem: FileSystemState;

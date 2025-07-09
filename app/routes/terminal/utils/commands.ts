@@ -440,6 +440,29 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
+  history: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+    // Determine history file path based on filesystem structure
+    const homeUser = getNodeAtPath(filesystem, ['home', 'user']);
+    const historyPath = homeUser && homeUser.type === 'directory' ? ['home', 'user', '.history'] : ['.history'];
+
+    const historyFile = getNodeAtPath(filesystem, historyPath);
+
+    if (!historyFile || historyFile.type !== 'file' || !historyFile.content) {
+      return {
+        success: true,
+        output: 'No command history available',
+      };
+    }
+
+    const lines = historyFile.content.split('\n').filter((line) => line.trim() !== '');
+    const numberedLines = lines.map((line, index) => `${(index + 1).toString().padStart(4, ' ')}  ${line}`);
+
+    return {
+      success: true,
+      output: numberedLines.join('\n'),
+    };
+  },
+
   help: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
     const helpText = [
       'Available commands:',
@@ -464,6 +487,7 @@ export const commands: Record<string, CommandHandler> = {
       'Utilities:',
       '  echo <text>      - Print text to output',
       '  wc <file>        - Count lines, words, and characters in file',
+      '  history          - Show command history',
       '  clear            - Clear terminal',
       '  help             - Show this help message',
       '',

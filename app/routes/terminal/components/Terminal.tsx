@@ -15,6 +15,8 @@ import {
   handleFilesystemReset,
   handleFilesystemSaveAfterCommand,
   handleTextEditorOpen,
+  initializeTerminalState,
+  navigateHistory,
   updateTerminalStateAfterCommand,
 } from '~/routes/terminal/utils/terminalHandlers';
 import { type TextEditorState } from '~/routes/terminal/utils/textEditor';
@@ -36,16 +38,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     // Initialize filesystem with persistence support
     const { filesystem, mode: initializedMode, currentPath } = initializeFilesystem(filesystemMode);
 
-    return {
-      history: [],
-      historyIndex: -1,
-      currentInput: '',
-      output: [],
-      filesystem: {
-        root: filesystem,
-        currentPath: currentPath,
-      },
+    const filesystemState = {
+      root: filesystem,
+      currentPath: currentPath,
     };
+
+    // Initialize terminal state (history is loaded from file on demand)
+    return initializeTerminalState(filesystemState);
   });
 
   const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>(() => {
@@ -55,6 +54,9 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   });
   const [textEditorState, setTextEditorState] = useState<TextEditorState | null>(null);
   const [isTextEditorOpen, setIsTextEditorOpen] = useState(false);
+
+  // Local state for history navigation (reset when command is executed)
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Autocompletion state
   const [completionState, setCompletionState] = useState<{
@@ -230,42 +232,33 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
 
         // Normal behavior: execute command
         handleCommand(terminalState.currentInput);
+        setHistoryIndex(-1); // Reset history navigation
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        if (terminalState.history.length > 0) {
-          const newIndex = terminalState.historyIndex === -1 ? terminalState.history.length - 1 : Math.max(0, terminalState.historyIndex - 1);
+        const { newInput, newIndex } = navigateHistory(terminalState.filesystem, 'up', historyIndex);
 
+        if (newIndex !== -1) {
           setTerminalState((prev) => ({
             ...prev,
-            historyIndex: newIndex,
-            currentInput: prev.history[newIndex],
+            currentInput: newInput,
           }));
+          setHistoryIndex(newIndex);
         }
         return;
       }
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (terminalState.historyIndex !== -1) {
-          const newIndex = terminalState.historyIndex + 1;
+        const { newInput, newIndex } = navigateHistory(terminalState.filesystem, 'down', historyIndex);
 
-          if (newIndex >= terminalState.history.length) {
-            setTerminalState((prev) => ({
-              ...prev,
-              historyIndex: -1,
-              currentInput: '',
-            }));
-          } else {
-            setTerminalState((prev) => ({
-              ...prev,
-              historyIndex: newIndex,
-              currentInput: prev.history[newIndex],
-            }));
-          }
-        }
+        setTerminalState((prev) => ({
+          ...prev,
+          currentInput: newInput,
+        }));
+        setHistoryIndex(newIndex);
         return;
       }
 
@@ -323,16 +316,16 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
             setTerminalState((prev) => ({
               ...prev,
               currentInput: newInput,
-              historyIndex: -1,
             }));
+            setHistoryIndex(-1);
           } else if (result.commonPrefix && result.commonPrefix.length > terminalState.currentInput.split(/\s+/).pop()?.length!) {
             // Multiple completions with common prefix
             const newInput = applyCompletion(terminalState.currentInput, result.commonPrefix);
             setTerminalState((prev) => ({
               ...prev,
               currentInput: newInput,
-              historyIndex: -1,
             }));
+            setHistoryIndex(-1);
           } else {
             // Multiple completions, show list without selection
             setCompletionState({
@@ -366,7 +359,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         return;
       }
     },
-    [terminalState.currentInput, terminalState.history, terminalState.historyIndex, terminalState.filesystem, handleCommand, completionState],
+    [terminalState.currentInput, terminalState.filesystem, historyIndex, handleCommand, completionState],
   );
 
   const handleInputChange = useCallback(
@@ -384,8 +377,8 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       setTerminalState((prev) => ({
         ...prev,
         currentInput: e.target.value,
-        historyIndex: -1,
       }));
+      setHistoryIndex(-1);
     },
     [completionState.isActive],
   );
@@ -434,6 +427,9 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   const handleTextEditorClose = useCallback((saved: boolean) => {
     setIsTextEditorOpen(false);
     setTextEditorState(null);
+
+    // Reset history navigation
+    setHistoryIndex(-1);
 
     // Return focus to terminal input
     setTimeout(() => {
