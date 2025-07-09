@@ -607,7 +607,8 @@ Maintenance tasks:
 }
 
 /**
- * Creates a clean, simplified portfolio filesystem structure.
+ * Creates a portfolio filesystem structure with Unix-like layout.
+ * Portfolio content is placed in /home/user/ for consistency with default mode.
  */
 export function createPortfolioFilesystem(): FileSystemNode {
   return {
@@ -618,18 +619,34 @@ export function createPortfolioFilesystem(): FileSystemNode {
     createdAt: new Date(),
     modifiedAt: new Date(),
     children: {
-      about: {
-        name: 'about',
+      home: {
+        name: 'home',
         type: 'directory',
         permissions: 'drwxr-xr-x',
         size: 4096,
         createdAt: new Date(),
         modifiedAt: new Date(),
         children: {
-          'README.md': {
-            name: 'README.md',
-            type: 'file',
-            content: `# Thibault Jaillard
+          user: {
+            name: 'user',
+            type: 'directory',
+            permissions: 'drwxr-xr-x',
+            size: 4096,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            children: {
+              about: {
+                name: 'about',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  'README.md': {
+                    name: 'README.md',
+                    type: 'file',
+                    content: `# Thibault Jaillard
 
 **Senior Mobile Developer** • Montréal, QC
 
@@ -660,15 +677,15 @@ Master in Computer Science
 - **User-focused**: Build what people actually need
 - **Team player**: Share knowledge, give feedback
 - **Keep learning**: Stay current with tech`,
-            permissions: '-rw-r--r--',
-            size: 847,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-          'skills.md': {
-            name: 'skills.md',
-            type: 'file',
-            content: `# Technical Skills
+                    permissions: '-rw-r--r--',
+                    size: 847,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                  'skills.md': {
+                    name: 'skills.md',
+                    type: 'file',
+                    content: `# Technical Skills
 
 ## Languages
 
@@ -724,25 +741,25 @@ Master in Computer Science
 - 🍑 **Fruitz app**: 5.6M+ downloads, acquired by Bumble
 - 🏦 **BNC Banking**: 4M+ monthly users
 - ⛓️ **Blockchain**: Cosmos ecosystem projects`,
-            permissions: '-rw-r--r--',
-            size: 1284,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-        },
-      },
-      projects: {
-        name: 'projects',
-        type: 'directory',
-        permissions: 'drwxr-xr-x',
-        size: 4096,
-        createdAt: new Date(),
-        modifiedAt: new Date(),
-        children: {
-          'fruitz.md': {
-            name: 'fruitz.md',
-            type: 'file',
-            content: `# Fruitz Dating App
+                    permissions: '-rw-r--r--',
+                    size: 1284,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                },
+              },
+              projects: {
+                name: 'projects',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  'fruitz.md': {
+                    name: 'fruitz.md',
+                    type: 'file',
+                    content: `# Fruitz Dating App
 
 **Status**: Acquired by Bumble  
 **Downloads**: 5.6M+  
@@ -777,15 +794,15 @@ Dating app with unique fruit-based matching system. Successfully acquired by Bum
 - ⭐ **4.2+ rating** on app stores
 - 💬 **Real-time messaging** system handling thousands of messages daily
 - 🎯 **High engagement** rates with unique matching algorithm`,
-            permissions: '-rw-r--r--',
-            size: 1062,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-          'banking.md': {
-            name: 'banking.md',
-            type: 'file',
-            content: `# BNC Banking App
+                    permissions: '-rw-r--r--',
+                    size: 1062,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                  'banking.md': {
+                    name: 'banking.md',
+                    type: 'file',
+                    content: `# BNC Banking App
 
 **Users**: 4M+ monthly active  
 **Platform**: iOS & Android  
@@ -828,15 +845,15 @@ Mobile banking application for Banque Nationale du Canada serving over 4 million
 - **Security**: Advanced encryption, secure authentication
 - **Performance**: Optimized for millions of concurrent users
 - **Testing**: 95%+ test coverage for critical operations`,
-            permissions: '-rw-r--r--',
-            size: 1443,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-          'blockchain.md': {
-            name: 'blockchain.md',
-            type: 'file',
-            content: `# Blockchain Projects
+                    permissions: '-rw-r--r--',
+                    size: 1443,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                  'blockchain.md': {
+                    name: 'blockchain.md',
+                    type: 'file',
+                    content: `# Blockchain Projects
 
 **Focus**: Cosmos Ecosystem  
 **Role**: Frontend Developer  
@@ -888,15 +905,15 @@ Mobile banking application for Banque Nationale du Canada serving over 4 million
 - **API Integration**: RESTful and GraphQL endpoints
 - **Real-time Data**: WebSocket and polling strategies
 - **Security**: Blockchain security best practices`,
-            permissions: '-rw-r--r--',
-            size: 1494,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-          'terminal.md': {
-            name: 'terminal.md',
-            type: 'file',
-            content: `# Terminal Emulator
+                    permissions: '-rw-r--r--',
+                    size: 1494,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                  'terminal.md': {
+                    name: 'terminal.md',
+                    type: 'file',
+                    content: `# Terminal Emulator
 
 **Type**: Web-based Terminal  
 **Tech**: React Router v7, TypeScript, TailwindCSS  
@@ -946,25 +963,25 @@ Full-featured web terminal emulator with in-memory filesystem, Unix-like command
 - 📝 **TypeScript strict mode** enabled
 - 🎨 **Consistent styling** with Catppuccin theme
 - 📖 **Comprehensive documentation** in README.md`,
-            permissions: '-rw-r--r--',
-            size: 1611,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-        },
-      },
-      contact: {
-        name: 'contact',
-        type: 'directory',
-        permissions: 'drwxr-xr-x',
-        size: 4096,
-        createdAt: new Date(),
-        modifiedAt: new Date(),
-        children: {
-          'README.md': {
-            name: 'README.md',
-            type: 'file',
-            content: `# Contact Information
+                    permissions: '-rw-r--r--',
+                    size: 1611,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                },
+              },
+              contact: {
+                name: 'contact',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  'README.md': {
+                    name: 'README.md',
+                    type: 'file',
+                    content: `# Contact Information
 
 ## Thibault Jaillard
 
@@ -999,17 +1016,17 @@ Open to discussing:
 - React Native projects
 - Technical consulting
 - Remote and Montreal-based positions`,
-            permissions: '-rw-r--r--',
-            size: 1024,
-            createdAt: new Date(),
-            modifiedAt: new Date(),
-          },
-        },
-      },
-      '.easter-egg.md': {
-        name: '.easter-egg.md',
-        type: 'file',
-        content: `# 🐰 Easter Egg - Code Comedy
+                    permissions: '-rw-r--r--',
+                    size: 1024,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                },
+              },
+              '.easter-egg.md': {
+                name: '.easter-egg.md',
+                type: 'file',
+                content: `# 🐰 Easter Egg - Code Comedy
 
 *You found the hidden file! Congratulations!*
 
@@ -1138,10 +1155,102 @@ useEffect(() => {
 *Created with ❤️ and lots of ☕ by a developer who owns their 99 problems.*
 
 **PS**: If you found this file, you know how to use \`ls -a\`. You're already better than 50% of developers! 😄`,
-        permissions: '-rw-r--r--',
-        size: 2720,
+                permissions: '-rw-r--r--',
+                size: 2720,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+              },
+            },
+          },
+        },
+      },
+      etc: {
+        name: 'etc',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
         createdAt: new Date(),
         modifiedAt: new Date(),
+        children: {
+          version: {
+            name: 'version',
+            type: 'file',
+            content: `Terminal Portfolio v1.0.0
+Built with React Router v7 and TypeScript
+Portfolio mode - Professional showcase environment
+
+Features:
+- Unix-like filesystem structure
+- Professional portfolio content
+- Command history and autocompletion
+- Markdown rendering
+- I/O redirection`,
+            permissions: '-r--r--r--',
+            size: 245,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+          },
+        },
+      },
+      var: {
+        name: 'var',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          log: {
+            name: 'log',
+            type: 'directory',
+            permissions: 'drwxr-xr-x',
+            size: 4096,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            children: {
+              'portfolio.log': {
+                name: 'portfolio.log',
+                type: 'file',
+                content: `[2024-01-01 10:00:00] Portfolio mode initialized
+[2024-01-01 10:00:01] Professional content loaded
+[2024-01-01 10:00:02] About, projects, and contact directories ready
+[2024-01-01 10:00:03] Portfolio filesystem ready for exploration`,
+                permissions: '-rw-r--r--',
+                size: 246,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+              },
+            },
+          },
+        },
+      },
+      tmp: {
+        name: 'tmp',
+        type: 'directory',
+        permissions: 'drwxrwxrwx',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {},
+      },
+      usr: {
+        name: 'usr',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          bin: {
+            name: 'bin',
+            type: 'directory',
+            permissions: 'drwxr-xr-x',
+            size: 4096,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            children: {},
+          },
+        },
       },
     },
   };

@@ -1,6 +1,6 @@
 import type { FileSystemState } from '~/routes/terminal/types/filesystem';
 import { commands } from '~/routes/terminal/utils/commands';
-import { type FilesystemMode } from '~/routes/terminal/utils/defaultFilesystems';
+// FilesystemMode removed as both modes now use the same structure
 import { getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
 export interface AutocompletionResult {
@@ -8,7 +8,7 @@ export interface AutocompletionResult {
   commonPrefix: string;
 }
 
-export function getAutocompletions(input: string, filesystem: FileSystemState, mode: FilesystemMode = 'default'): AutocompletionResult {
+export function getAutocompletions(input: string, filesystem: FileSystemState): AutocompletionResult {
   // Check for redirection operators
   const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 
@@ -16,11 +16,11 @@ export function getAutocompletions(input: string, filesystem: FileSystemState, m
     const [, , operator, filename] = redirectMatch;
     // For output redirection, complete filenames
     if (operator === '>' || operator === '>>') {
-      return getPathCompletions(filename.trim(), filesystem, mode);
+      return getPathCompletions(filename.trim(), filesystem);
     }
     // For input redirection, complete existing files only
     if (operator === '<') {
-      return getFileCompletions(filename.trim(), filesystem, mode);
+      return getFileCompletions(filename.trim(), filesystem);
     }
     // For heredoc (<<), no completion needed
     if (operator === '<<') {
@@ -70,11 +70,11 @@ export function getAutocompletions(input: string, filesystem: FileSystemState, m
   }
 
   if (command === 'cd' || command === 'mkdir' || command === 'rmdir') {
-    return getDirectoryCompletions(pathArg, filesystem, mode);
+    return getDirectoryCompletions(pathArg, filesystem);
   }
 
   if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi'].includes(command)) {
-    return getPathCompletions(pathArg, filesystem, mode);
+    return getPathCompletions(pathArg, filesystem);
   }
 
   // No special completions needed for reset-fs as it no longer takes arguments
@@ -82,7 +82,7 @@ export function getAutocompletions(input: string, filesystem: FileSystemState, m
   return { completions: [], commonPrefix: '' };
 }
 
-function getPathCompletions(partialPath: string, filesystem: FileSystemState, mode: FilesystemMode = 'default'): AutocompletionResult {
+function getPathCompletions(partialPath: string, filesystem: FileSystemState): AutocompletionResult {
   const lastSlashIndex = partialPath.lastIndexOf('/');
   let basePath: string;
   let prefix: string;
@@ -97,7 +97,7 @@ function getPathCompletions(partialPath: string, filesystem: FileSystemState, mo
     prefix = partialPath.substring(lastSlashIndex + 1);
   }
 
-  const targetPath = basePath ? resolvePath(filesystem, basePath, mode) : filesystem.currentPath;
+  const targetPath = basePath ? resolvePath(filesystem, basePath) : filesystem.currentPath;
   const targetNode = getNodeAtPath(filesystem, targetPath);
 
   if (!targetNode || targetNode.type !== 'directory' || !targetNode.children) {
@@ -126,7 +126,7 @@ function getPathCompletions(partialPath: string, filesystem: FileSystemState, mo
   };
 }
 
-function getFileCompletions(partialPath: string, filesystem: FileSystemState, mode: FilesystemMode = 'default'): AutocompletionResult {
+function getFileCompletions(partialPath: string, filesystem: FileSystemState): AutocompletionResult {
   const lastSlashIndex = partialPath.lastIndexOf('/');
   let basePath: string;
   let prefix: string;
@@ -141,7 +141,7 @@ function getFileCompletions(partialPath: string, filesystem: FileSystemState, mo
     prefix = partialPath.substring(lastSlashIndex + 1);
   }
 
-  const targetPath = basePath ? resolvePath(filesystem, basePath, mode) : filesystem.currentPath;
+  const targetPath = basePath ? resolvePath(filesystem, basePath) : filesystem.currentPath;
   const targetNode = getNodeAtPath(filesystem, targetPath);
 
   if (!targetNode || targetNode.type !== 'directory' || !targetNode.children) {
@@ -168,7 +168,7 @@ function getFileCompletions(partialPath: string, filesystem: FileSystemState, mo
   };
 }
 
-function getDirectoryCompletions(partialPath: string, filesystem: FileSystemState, mode: FilesystemMode = 'default'): AutocompletionResult {
+function getDirectoryCompletions(partialPath: string, filesystem: FileSystemState): AutocompletionResult {
   const lastSlashIndex = partialPath.lastIndexOf('/');
   let basePath: string;
   let prefix: string;
@@ -183,7 +183,7 @@ function getDirectoryCompletions(partialPath: string, filesystem: FileSystemStat
     prefix = partialPath.substring(lastSlashIndex + 1);
   }
 
-  const targetPath = basePath ? resolvePath(filesystem, basePath, mode) : filesystem.currentPath;
+  const targetPath = basePath ? resolvePath(filesystem, basePath) : filesystem.currentPath;
   const targetNode = getNodeAtPath(filesystem, targetPath);
 
   if (!targetNode || targetNode.type !== 'directory' || !targetNode.children) {

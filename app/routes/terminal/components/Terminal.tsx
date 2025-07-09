@@ -150,7 +150,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       }
 
       // Execute command safely
-      const result = executeCommandSafely(input, terminalState.filesystem, filesystemMode);
+      const result = executeCommandSafely(input, terminalState.filesystem);
 
       // Handle command execution error
       if (!result.success) {
@@ -170,10 +170,10 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           return;
 
         case 'reset_filesystem': {
-          const mode = specialCommand.data?.mode as FilesystemMode;
-          const { newTerminalState, outputLine } = handleFilesystemReset(mode, terminalState, input);
+          // Use the current filesystem mode since both modes now have the same structure
+          const { newTerminalState, outputLine } = handleFilesystemReset(filesystemMode, terminalState, input);
           setTerminalState(newTerminalState);
-          setCurrentFilesystemMode(mode);
+          setCurrentFilesystemMode(filesystemMode);
           setOutputLines((prev) => [...prev, outputLine]);
           return;
         }
@@ -305,7 +305,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           }
         } else {
           // Start completion
-          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem, filesystemMode);
+          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem);
 
           if (result.completions.length === 0) {
             return;
@@ -573,7 +573,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
 
   const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio'): OutputSegment[] => {
     const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
-    const formattedPath = formatPathWithTilde(path, currentMode === 'portfolio' ? 'portfolio' : 'default');
+    const formattedPath = formatPathWithTilde(path);
     return [
       { type: 'user' as const, text: user },
       { type: 'separator' as const, text: '@' },
@@ -594,7 +594,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   const currentPrompt = {
     user: mode === 'portfolio' ? 'ThibaultJRD' : 'user',
     host: 'terminal',
-    path: formatPathWithTilde(terminalState.filesystem.currentPath, mode === 'portfolio' ? 'portfolio' : 'default'),
+    path: formatPathWithTilde(terminalState.filesystem.currentPath),
     symbol: '❯',
   };
 

@@ -24,7 +24,7 @@ describe('Tilde Usage Integration Tests', () => {
       // First navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('cd ~', filesystem, 'default');
+      const result = executeCommand('cd ~', filesystem);
 
       expect(result.success).toBe(true);
       expect(filesystem.currentPath).toEqual(['home', 'user']);
@@ -33,12 +33,12 @@ describe('Tilde Usage Integration Tests', () => {
     it('should navigate to subdirectory with cd ~/documents', () => {
       // First create a documents directory in home
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('mkdir documents', filesystem, 'default');
+      executeCommand('mkdir documents', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('cd ~/documents', filesystem, 'default');
+      const result = executeCommand('cd ~/documents', filesystem);
 
       expect(result.success).toBe(true);
       expect(filesystem.currentPath).toEqual(['home', 'user', 'documents']);
@@ -47,19 +47,19 @@ describe('Tilde Usage Integration Tests', () => {
     it('should work with nested paths using tilde', () => {
       // Create nested directory structure
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('mkdir -p documents/projects/app', filesystem, 'default');
+      executeCommand('mkdir -p documents/projects/app', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('cd ~/documents/projects/app', filesystem, 'default');
+      const result = executeCommand('cd ~/documents/projects/app', filesystem);
 
       expect(result.success).toBe(true);
       expect(filesystem.currentPath).toEqual(['home', 'user', 'documents', 'projects', 'app']);
     });
 
     it('should fail for non-existent tilde paths', () => {
-      const result = executeCommand('cd ~/nonexistent', filesystem, 'default');
+      const result = executeCommand('cd ~/nonexistent', filesystem);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('no such file or directory');
@@ -70,13 +70,13 @@ describe('Tilde Usage Integration Tests', () => {
     it('should list home directory contents with ls ~', () => {
       // Create some files in home directory
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('touch file1.txt', filesystem, 'default');
-      executeCommand('mkdir documents', filesystem, 'default');
+      executeCommand('touch file1.txt', filesystem);
+      executeCommand('mkdir documents', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('ls ~', filesystem, 'default');
+      const result = executeCommand('ls ~', filesystem);
 
       expect(result.success).toBe(true);
       const outputText = getOutputText(result.output);
@@ -87,14 +87,14 @@ describe('Tilde Usage Integration Tests', () => {
     it('should list subdirectory contents with ls ~/documents', () => {
       // Create files in a subdirectory
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('mkdir documents', filesystem, 'default');
+      executeCommand('mkdir documents', filesystem);
       filesystem.currentPath = ['home', 'user', 'documents'];
-      executeCommand('touch readme.txt', filesystem, 'default');
+      executeCommand('touch readme.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('ls ~/documents', filesystem, 'default');
+      const result = executeCommand('ls ~/documents', filesystem);
 
       expect(result.success).toBe(true);
       const outputText = getOutputText(result.output);
@@ -106,13 +106,13 @@ describe('Tilde Usage Integration Tests', () => {
     it('should read file using tilde path', () => {
       // Create a file in home directory
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('touch greeting.txt', filesystem, 'default');
-      executeCommand('echo "Hello from home" > greeting.txt', filesystem, 'default');
+      executeCommand('touch greeting.txt', filesystem);
+      executeCommand('echo "Hello from home" > greeting.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('cat ~/greeting.txt', filesystem, 'default');
+      const result = executeCommand('cat ~/greeting.txt', filesystem);
 
       expect(result.success).toBe(true);
       expect(result.output).toContain('Hello from home');
@@ -121,15 +121,15 @@ describe('Tilde Usage Integration Tests', () => {
     it('should read file from subdirectory using tilde path', () => {
       // Create a file in a subdirectory
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('mkdir documents', filesystem, 'default');
+      executeCommand('mkdir documents', filesystem);
       filesystem.currentPath = ['home', 'user', 'documents'];
-      executeCommand('touch note.txt', filesystem, 'default');
-      executeCommand('echo "Important note" > note.txt', filesystem, 'default');
+      executeCommand('touch note.txt', filesystem);
+      executeCommand('echo "Important note" > note.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('cat ~/documents/note.txt', filesystem, 'default');
+      const result = executeCommand('cat ~/documents/note.txt', filesystem);
 
       expect(result.success).toBe(true);
       expect(result.output).toContain('Important note');
@@ -141,7 +141,7 @@ describe('Tilde Usage Integration Tests', () => {
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('mkdir ~/newdir', filesystem, 'default');
+      const result = executeCommand('mkdir ~/newdir', filesystem);
 
       if (!result.success) {
         console.log('mkdir failed:', result.error);
@@ -149,7 +149,7 @@ describe('Tilde Usage Integration Tests', () => {
       expect(result.success).toBe(true);
 
       // Verify directory was created
-      const lsResult = executeCommand('ls ~', filesystem, 'default');
+      const lsResult = executeCommand('ls ~', filesystem);
       const outputText = getOutputText(lsResult.output);
       expect(outputText).toContain('newdir');
     });
@@ -158,12 +158,12 @@ describe('Tilde Usage Integration Tests', () => {
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('mkdir -p ~/documents/projects/new', filesystem, 'default');
+      const result = executeCommand('mkdir -p ~/documents/projects/new', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify nested directory was created
-      const lsResult = executeCommand('ls ~/documents/projects', filesystem, 'default');
+      const lsResult = executeCommand('ls ~/documents/projects', filesystem);
       const outputText = getOutputText(lsResult.output);
       expect(outputText).toContain('new');
     });
@@ -174,12 +174,12 @@ describe('Tilde Usage Integration Tests', () => {
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('touch ~/newfile.txt', filesystem, 'default');
+      const result = executeCommand('touch ~/newfile.txt', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify file was created
-      const lsResult = executeCommand('ls ~', filesystem, 'default');
+      const lsResult = executeCommand('ls ~', filesystem);
       const outputText = getOutputText(lsResult.output);
       expect(outputText).toContain('newfile.txt');
     });
@@ -187,17 +187,17 @@ describe('Tilde Usage Integration Tests', () => {
     it('should create file in subdirectory using tilde path', () => {
       // Create documents directory first
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('mkdir documents', filesystem, 'default');
+      executeCommand('mkdir documents', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('touch ~/documents/project.txt', filesystem, 'default');
+      const result = executeCommand('touch ~/documents/project.txt', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify file was created
-      const lsResult = executeCommand('ls ~/documents', filesystem, 'default');
+      const lsResult = executeCommand('ls ~/documents', filesystem);
       const outputText = getOutputText(lsResult.output);
       expect(outputText).toContain('project.txt');
     });
@@ -207,17 +207,17 @@ describe('Tilde Usage Integration Tests', () => {
     it('should remove file using tilde path', () => {
       // Create a file in home directory
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('touch removeme.txt', filesystem, 'default');
+      executeCommand('touch removeme.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('rm ~/removeme.txt', filesystem, 'default');
+      const result = executeCommand('rm ~/removeme.txt', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify file was removed
-      const lsResult = executeCommand('ls ~', filesystem, 'default');
+      const lsResult = executeCommand('ls ~', filesystem);
       const outputText = getOutputText(lsResult.output);
       expect(outputText).not.toContain('removeme.txt');
     });
@@ -225,19 +225,19 @@ describe('Tilde Usage Integration Tests', () => {
     it('should remove directory recursively using tilde path', () => {
       // Create a directory with files
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('mkdir -p tempdir/subdir', filesystem, 'default');
+      executeCommand('mkdir -p tempdir/subdir', filesystem);
       filesystem.currentPath = ['home', 'user', 'tempdir'];
-      executeCommand('touch file1.txt file2.txt', filesystem, 'default');
+      executeCommand('touch file1.txt file2.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('rm -rf ~/tempdir', filesystem, 'default');
+      const result = executeCommand('rm -rf ~/tempdir', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify directory was removed
-      const lsResult = executeCommand('ls ~', filesystem, 'default');
+      const lsResult = executeCommand('ls ~', filesystem);
       const outputText = getOutputText(lsResult.output);
       expect(outputText).not.toContain('tempdir');
     });
@@ -248,29 +248,29 @@ describe('Tilde Usage Integration Tests', () => {
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('echo "Hello World" > ~/output.txt', filesystem, 'default');
+      const result = executeCommand('echo "Hello World" > ~/output.txt', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify file was created and contains content
-      const catResult = executeCommand('cat ~/output.txt', filesystem, 'default');
+      const catResult = executeCommand('cat ~/output.txt', filesystem);
       expect(catResult.output).toContain('Hello World');
     });
 
     it('should append output to file using tilde path', () => {
       // Create initial file
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('echo "Line 1" > log.txt', filesystem, 'default');
+      executeCommand('echo "Line 1" > log.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('echo "Line 2" >> ~/log.txt', filesystem, 'default');
+      const result = executeCommand('echo "Line 2" >> ~/log.txt', filesystem);
 
       expect(result.success).toBe(true);
 
       // Verify file contains both lines
-      const catResult = executeCommand('cat ~/log.txt', filesystem, 'default');
+      const catResult = executeCommand('cat ~/log.txt', filesystem);
       expect(catResult.output).toContain('Line 1');
       expect(catResult.output).toContain('Line 2');
     });
@@ -278,12 +278,12 @@ describe('Tilde Usage Integration Tests', () => {
     it('should read input from file using tilde path', () => {
       // Create a file with content
       filesystem.currentPath = ['home', 'user'];
-      executeCommand('echo "test content" > input.txt', filesystem, 'default');
+      executeCommand('echo "test content" > input.txt', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['etc'];
 
-      const result = executeCommand('wc ~/input.txt', filesystem, 'default');
+      const result = executeCommand('wc ~/input.txt', filesystem);
 
       if (!result.success) {
         console.log('wc failed:', result.error);
@@ -303,36 +303,36 @@ describe('Tilde Usage Integration Tests', () => {
       // Navigate away from home
       filesystem.currentPath = ['projects'];
 
-      const result = executeCommand('cd ~', filesystem, 'portfolio');
+      const result = executeCommand('cd ~', filesystem);
 
       expect(result.success).toBe(true);
-      expect(filesystem.currentPath).toEqual(['about']);
+      expect(filesystem.currentPath).toEqual(['home', 'user']);
     });
 
     it('should expand ~/projects to /about/projects in portfolio mode', () => {
       // Create projects directory
       filesystem.currentPath = ['about'];
-      executeCommand('mkdir projects', filesystem, 'portfolio');
+      executeCommand('mkdir projects', filesystem);
 
       // Navigate away from home
       filesystem.currentPath = ['contact'];
 
-      const result = executeCommand('cd ~/projects', filesystem, 'portfolio');
+      const result = executeCommand('cd ~/projects', filesystem);
 
       expect(result.success).toBe(true);
-      expect(filesystem.currentPath).toEqual(['about', 'projects']);
+      expect(filesystem.currentPath).toEqual(['home', 'user', 'projects']);
     });
 
     it('should list home directory contents in portfolio mode', () => {
       // Navigate away from home
       filesystem.currentPath = ['projects'];
 
-      const result = executeCommand('ls ~', filesystem, 'portfolio');
+      const result = executeCommand('ls ~', filesystem);
 
       expect(result.success).toBe(true);
       // Should contain default portfolio content
       const outputText = getOutputText(result.output);
-      expect(outputText).toContain('README.md');
+      expect(outputText).toContain('about');
     });
   });
 });

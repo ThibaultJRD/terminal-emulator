@@ -81,15 +81,15 @@ export function createFreshDefaultFileSystem(): FileSystemState {
 /**
  * Creates a fresh FileSystemState for the specified mode.
  * This bypasses persistence and always returns a clean state.
+ * Both modes now use the same default path structure for consistency.
  *
  * @param mode - The filesystem mode to create
  * @returns FileSystemState with fresh data for the specified mode
  */
 export function createFreshFileSystem(mode: FilesystemMode): FileSystemState {
-  const defaultPath = mode === 'portfolio' ? ['about'] : ['home', 'user'];
   return {
     root: getFilesystemByMode(mode),
-    currentPath: defaultPath,
+    currentPath: ['home', 'user'],
   };
 }
 
@@ -111,29 +111,27 @@ export function getCurrentDirectory(filesystem: FileSystemState): FileSystemNode
 }
 
 /**
- * Gets the home directory path based on filesystem mode
- * @param mode - The filesystem mode ('default' or 'portfolio')
+ * Gets the home directory path.
  * @returns string[] representing the home directory path
  */
-export function getHomeDirectory(mode: FilesystemMode = 'default'): string[] {
-  return mode === 'portfolio' ? ['about'] : ['home', 'user'];
+export function getHomeDirectory(): string[] {
+  return ['home', 'user'];
 }
 
 /**
  * Expands tilde (~) to the home directory path
  * @param inputPath - The path that may contain tilde
- * @param mode - The filesystem mode
  * @returns string with tilde expanded to home directory
  */
-export function expandTilde(inputPath: string, mode: FilesystemMode = 'default'): string {
+export function expandTilde(inputPath: string): string {
   if (inputPath === '~') {
     // Just ~ means home directory
-    return formatPath(getHomeDirectory(mode));
+    return formatPath(getHomeDirectory());
   }
 
   if (inputPath.startsWith('~/')) {
     // ~/path means home directory + path
-    const homeDir = formatPath(getHomeDirectory(mode));
+    const homeDir = formatPath(getHomeDirectory());
     return homeDir + inputPath.slice(1); // Remove ~ and keep the /
   }
 
@@ -144,11 +142,10 @@ export function expandTilde(inputPath: string, mode: FilesystemMode = 'default')
 /**
  * Converts an absolute path to tilde notation if it's within the home directory
  * @param path - The absolute path as string array
- * @param mode - The filesystem mode
  * @returns string with tilde notation if applicable
  */
-export function formatPathWithTilde(path: string[], mode: FilesystemMode = 'default'): string {
-  const homeDir = getHomeDirectory(mode);
+export function formatPathWithTilde(path: string[]): string {
+  const homeDir = getHomeDirectory();
 
   // Check if path starts with home directory
   if (path.length >= homeDir.length) {
@@ -170,14 +167,14 @@ export function formatPathWithTilde(path: string[], mode: FilesystemMode = 'defa
   return formatPath(path);
 }
 
-export function resolvePath(filesystem: FileSystemState, inputPath: string, mode: FilesystemMode = 'default'): string[] {
+export function resolvePath(filesystem: FileSystemState, inputPath: string): string[] {
   // Security: Validate input path length
   if (inputPath.length > 1000) {
     throw new Error('Path too long');
   }
 
   // Handle tilde expansion first
-  const expandedPath = expandTilde(inputPath, mode);
+  const expandedPath = expandTilde(inputPath);
 
   if (expandedPath.startsWith('/')) {
     // Absolute path (including expanded tilde paths)

@@ -1,7 +1,7 @@
 import type { CommandResult, FileSystemNode, FileSystemState, OutputSegment, TerminalState } from '~/routes/terminal/types/filesystem';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
-import type { FilesystemMode } from '~/routes/terminal/utils/defaultFilesystems';
+// FilesystemMode removed as both modes now use the same structure
 import { createFile, getNodeAtPath } from '~/routes/terminal/utils/filesystem';
 import { resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import { createTextEditorState } from '~/routes/terminal/utils/textEditor';
@@ -25,9 +25,9 @@ export interface SpecialCommandResult {
 /**
  * Executes a command and returns the result with error handling
  */
-export function executeCommandSafely(input: string, filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult {
+export function executeCommandSafely(input: string, filesystem: FileSystemState): CommandResult {
   try {
-    return executeCommand(input, filesystem, currentMode);
+    return executeCommand(input, filesystem);
   } catch (error) {
     console.error('Error executing command:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -53,9 +53,8 @@ export function analyzeSpecialCommand(result: CommandResult): SpecialCommandResu
     return { type: 'clear' };
   }
 
-  if (output.startsWith('RESET_FILESYSTEM:')) {
-    const mode = output.split(':')[1] as FilesystemMode;
-    return { type: 'reset_filesystem', data: { mode } };
+  if (output === 'RESET_FILESYSTEM') {
+    return { type: 'reset_filesystem' };
   }
 
   if (output.startsWith('OPEN_EDITOR:')) {
@@ -143,19 +142,11 @@ const MAX_HISTORY_SIZE = 1000;
 const HISTORY_FILE_NAME = '.history';
 
 /**
- * Gets the appropriate path for the history file based on filesystem mode
- * Default mode: /home/user/.history (Unix-like)
- * Portfolio mode: /.history (simpler structure)
+ * Gets the path for the history file.
+ * Both filesystem modes now use the same structure with /home/user/.history
  */
 function getHistoryFilePath(filesystem: FileSystemState): string[] {
-  // Check if we have a /home/user directory (default mode)
-  const homeUser = getNodeAtPath(filesystem, ['home', 'user']);
-  if (homeUser && homeUser.type === 'directory') {
-    return ['home', 'user'];
-  }
-
-  // Fallback to root for portfolio mode or other structures
-  return [];
+  return ['home', 'user'];
 }
 
 /**
@@ -321,14 +312,14 @@ export function updateTerminalStateAfterCommand(prevState: TerminalState, input:
  * Handles filesystem reset special command
  */
 export function handleFilesystemReset(
-  mode: FilesystemMode,
+  mode: string,
   terminalState: TerminalState,
   input: string,
 ): {
   newTerminalState: TerminalState;
   outputLine: TerminalOutputLine;
 } {
-  const resetResult = resetToDefaultFilesystem(mode);
+  const resetResult = resetToDefaultFilesystem(mode as 'default' | 'portfolio');
 
   const newFilesystem = {
     root: resetResult.filesystem,

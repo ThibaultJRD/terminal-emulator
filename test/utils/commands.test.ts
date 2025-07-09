@@ -377,15 +377,15 @@ describe('Commands', () => {
       const result = commands['reset-fs']([], filesystem);
 
       expect(result.success).toBe(true);
-      expect(result.output).toContain('RESET_FILESYSTEM:');
+      expect(result.output).toBe('RESET_FILESYSTEM');
     });
 
-    it('should include filesystem mode in output', () => {
+    it('should return simplified reset signal', () => {
       const result = commands['reset-fs']([], filesystem);
 
       expect(result.success).toBe(true);
-      // Should contain a filesystem mode (default, portfolio, etc.)
-      expect(result.output).toMatch(/RESET_FILESYSTEM:(default|portfolio)/);
+      // Should return simplified signal since both modes use the same structure
+      expect(result.output).toBe('RESET_FILESYSTEM');
     });
 
     it('should not require any arguments', () => {

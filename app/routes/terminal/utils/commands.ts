@@ -10,7 +10,7 @@ import {
   joinOutputSegments,
   sortDirectoryEntries,
 } from '~/routes/terminal/utils/commandUtils';
-import { FILESYSTEM_MODES, type FilesystemMode, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
+import { FILESYSTEM_MODES, getFilesystemByMode } from '~/routes/terminal/utils/defaultFilesystems';
 import { createDirectory, createFile, deleteNode, formatPath, getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
@@ -73,14 +73,14 @@ function validateFilesystemSize(filesystem: FileSystemState): { valid: boolean; 
 }
 
 export const commands: Record<string, CommandHandler> = {
-  cd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  cd: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       // Use appropriate home directory based on filesystem mode
-      filesystem.currentPath = currentMode === 'portfolio' ? [] : ['home', 'user'];
+      filesystem.currentPath = ['home', 'user'];
       return { success: true, output: '' };
     }
 
-    const targetPath = resolvePath(filesystem, args[0], currentMode);
+    const targetPath = resolvePath(filesystem, args[0]);
     const targetNode = getNodeAtPath(filesystem, targetPath);
 
     if (!targetNode) {
@@ -103,14 +103,14 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  ls: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  ls: (args: string[], filesystem: FileSystemState): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
     const showHidden = flags.has('a');
     const showDetails = flags.has('l');
     const pathArg = positionalArgs[0];
 
     // Resolve target path and get node
-    const targetPath = pathArg ? resolvePath(filesystem, pathArg, currentMode) : filesystem.currentPath;
+    const targetPath = pathArg ? resolvePath(filesystem, pathArg) : filesystem.currentPath;
     const targetNode = getNodeAtPath(filesystem, targetPath);
 
     if (!targetNode) {
@@ -142,11 +142,11 @@ export const commands: Record<string, CommandHandler> = {
     }
   },
 
-  pwd: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  pwd: (args: string[], filesystem: FileSystemState): CommandResult => {
     return { success: true, output: formatPath(filesystem.currentPath) };
   },
 
-  touch: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  touch: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
@@ -154,7 +154,7 @@ export const commands: Record<string, CommandHandler> = {
     const filepath = args[0];
 
     // Resolve the path to handle tilde expansion
-    const targetPath = resolvePath(filesystem, filepath, currentMode);
+    const targetPath = resolvePath(filesystem, filepath);
 
     // Extract parent directory path and filename
     const parentPath = targetPath.slice(0, -1);
@@ -198,13 +198,13 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult('');
   },
 
-  cat: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  cat: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('cat', 'file'));
     }
 
     const filename = args[0];
-    const targetPath = resolvePath(filesystem, filename, currentMode);
+    const targetPath = resolvePath(filesystem, filename);
     const file = getNodeAtPath(filesystem, targetPath);
 
     if (!file) {
@@ -225,7 +225,7 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult(content);
   },
 
-  mkdir: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  mkdir: (args: string[], filesystem: FileSystemState): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
@@ -235,7 +235,7 @@ export const commands: Record<string, CommandHandler> = {
     const createParents = flags.has('p');
 
     for (const dirpath of positionalArgs) {
-      const result = createDirectoryPath(filesystem, dirpath, createParents, currentMode);
+      const result = createDirectoryPath(filesystem, dirpath, createParents);
       if (!result.success) {
         return result;
       }
@@ -244,7 +244,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  rm: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  rm: (args: string[], filesystem: FileSystemState): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
@@ -255,7 +255,7 @@ export const commands: Record<string, CommandHandler> = {
     const force = flags.has('f');
 
     for (const filename of positionalArgs) {
-      const result = removeFile(filesystem, filename, recursive, force, currentMode);
+      const result = removeFile(filesystem, filename, recursive, force);
       if (!result.success && !force) {
         return result;
       }
@@ -264,13 +264,13 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  rmdir: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  rmdir: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'rmdir: missing operand' };
     }
 
     const dirname = args[0];
-    const targetPath = resolvePath(filesystem, dirname, currentMode);
+    const targetPath = resolvePath(filesystem, dirname);
     const dir = getNodeAtPath(filesystem, targetPath);
 
     if (!dir) {
@@ -313,16 +313,16 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  clear: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  clear: (args: string[], filesystem: FileSystemState): CommandResult => {
     return { success: true, output: 'CLEAR' };
   },
 
-  echo: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  echo: (args: string[], filesystem: FileSystemState): CommandResult => {
     const output = args.join(' ');
     return { success: true, output: output + '\n' };
   },
 
-  wc: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  wc: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'wc: missing operand' };
     }
@@ -333,7 +333,7 @@ export const commands: Record<string, CommandHandler> = {
     const results: string[] = [];
 
     for (const filename of args) {
-      const targetPath = resolvePath(filesystem, filename, currentMode);
+      const targetPath = resolvePath(filesystem, filename);
       const file = getNodeAtPath(filesystem, targetPath);
 
       if (!file) {
@@ -371,19 +371,16 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: results.join('\n') };
   },
 
-  'reset-fs': (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
-    // Use the current route's filesystem mode
-    const mode = currentMode || 'default';
-
+  'reset-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
     // This command needs special handling in the terminal component
     // It will trigger a filesystem reset to default state
     return {
       success: true,
-      output: `RESET_FILESYSTEM:${mode}`,
+      output: `RESET_FILESYSTEM`,
     };
   },
 
-  'storage-info': (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  'storage-info': (args: string[], filesystem: FileSystemState): CommandResult => {
     const info = getStorageInfo();
     const formatSize = (bytes: number): string => {
       if (bytes < 1024) return `${bytes} B`;
@@ -405,7 +402,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output };
   },
 
-  vi: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  vi: (args: string[], filesystem: FileSystemState): CommandResult => {
     if (args.length === 0) {
       return {
         success: false,
@@ -417,7 +414,7 @@ export const commands: Record<string, CommandHandler> = {
     const filename = args[0];
 
     // Check if file exists and get content
-    const targetPath = resolvePath(filesystem, filename, currentMode);
+    const targetPath = resolvePath(filesystem, filename);
     const existingFile = getNodeAtPath(filesystem, targetPath);
 
     let content = '';
@@ -440,7 +437,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  history: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  history: (args: string[], filesystem: FileSystemState): CommandResult => {
     // Determine history file path based on filesystem structure
     const homeUser = getNodeAtPath(filesystem, ['home', 'user']);
     const historyPath = homeUser && homeUser.type === 'directory' ? ['home', 'user', '.history'] : ['.history'];
@@ -463,7 +460,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  help: (args: string[], filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult => {
+  help: (args: string[], filesystem: FileSystemState): CommandResult => {
     const helpText = [
       'Available commands:',
       '',
@@ -514,7 +511,7 @@ export const commands: Record<string, CommandHandler> = {
   },
 };
 
-export function executeCommand(input: string, filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult {
+export function executeCommand(input: string, filesystem: FileSystemState): CommandResult {
   const parsed = parseCommand(input);
   const { command, args, redirectOutput, redirectInput } = parsed;
 
@@ -525,7 +522,7 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
   // Handle input redirection
   let finalArgs = args;
   if (redirectInput) {
-    const inputResult = handleInputRedirection(redirectInput, filesystem, currentMode);
+    const inputResult = handleInputRedirection(redirectInput, filesystem);
     if (!inputResult.success) {
       return inputResult;
     }
@@ -539,8 +536,8 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
       finalArgs = [...args];
     } else {
       // File input - validate the file exists and is readable
-      const fileContent = getExistingFileContent(filesystem, redirectInput.source, currentMode);
-      if (fileContent === '' && !fileExists(filesystem, redirectInput.source, currentMode)) {
+      const fileContent = getExistingFileContent(filesystem, redirectInput.source);
+      if (fileContent === '' && !fileExists(filesystem, redirectInput.source)) {
         return {
           success: false,
           output: '',
@@ -563,7 +560,7 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
     };
   }
 
-  const result = handler(finalArgs, filesystem, currentMode);
+  const result = handler(finalArgs, filesystem);
 
   // Handle output redirection
   if (result.success && redirectOutput) {
@@ -576,11 +573,11 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
       outputContent = result.output.map((segment) => segment.text || '').join('');
     }
 
-    const existingContent = redirectOutput.type === '>>' ? getExistingFileContent(filesystem, redirectOutput.filename, currentMode) : '';
+    const existingContent = redirectOutput.type === '>>' ? getExistingFileContent(filesystem, redirectOutput.filename) : '';
     const content =
       redirectOutput.type === '>>' ? existingContent + (existingContent && !existingContent.endsWith('\n') ? '\n' : '') + outputContent : outputContent;
 
-    const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content, currentMode);
+    const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content);
 
     if (writeSuccess) {
       return { success: true, output: '' }; // No output to terminal when redirecting
@@ -596,14 +593,14 @@ export function executeCommand(input: string, filesystem: FileSystemState, curre
   return result;
 }
 
-function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: string }, filesystem: FileSystemState, currentMode?: FilesystemMode): CommandResult {
+function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: string }, filesystem: FileSystemState): CommandResult {
   if (redirectInput.type === '<<') {
     // Heredoc - simplified implementation that accepts any delimiter
     // In a real implementation, this would start interactive input until the delimiter is found
     return { success: true, output: '' };
   } else {
     // File input - check if file exists
-    if (!fileExists(filesystem, redirectInput.source, currentMode)) {
+    if (!fileExists(filesystem, redirectInput.source)) {
       return {
         success: false,
         output: '',
@@ -614,14 +611,14 @@ function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: strin
   }
 }
 
-function fileExists(filesystem: FileSystemState, filename: string, currentMode?: FilesystemMode): boolean {
-  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
+function fileExists(filesystem: FileSystemState, filename: string): boolean {
+  const targetPath = resolvePath(filesystem, filename);
   const file = getNodeAtPath(filesystem, targetPath);
   return file !== null && file.type === 'file';
 }
 
-function getExistingFileContent(filesystem: FileSystemState, filename: string, currentMode?: FilesystemMode): string {
-  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
+function getExistingFileContent(filesystem: FileSystemState, filename: string): string {
+  const targetPath = resolvePath(filesystem, filename);
   const file = getNodeAtPath(filesystem, targetPath);
   if (file && file.type === 'file') {
     return file.content || '';
@@ -629,9 +626,9 @@ function getExistingFileContent(filesystem: FileSystemState, filename: string, c
   return '';
 }
 
-function createDirectoryPath(filesystem: FileSystemState, dirpath: string, createParents: boolean, currentMode?: FilesystemMode): CommandResult {
+function createDirectoryPath(filesystem: FileSystemState, dirpath: string, createParents: boolean): CommandResult {
   // Resolve the path first to handle tilde expansion
-  const targetPath = resolvePath(filesystem, dirpath, currentMode || 'default');
+  const targetPath = resolvePath(filesystem, dirpath);
 
   // Check if this is a simple directory creation (only one directory to create)
   const parentPath = targetPath.slice(0, -1);
@@ -721,8 +718,8 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
   return { success: true, output: '' };
 }
 
-function removeFile(filesystem: FileSystemState, filename: string, recursive: boolean, force: boolean, currentMode?: FilesystemMode): CommandResult {
-  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
+function removeFile(filesystem: FileSystemState, filename: string, recursive: boolean, force: boolean): CommandResult {
+  const targetPath = resolvePath(filesystem, filename);
   const file = getNodeAtPath(filesystem, targetPath);
 
   if (!file) {
@@ -752,7 +749,7 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
       filesystem.currentPath = targetPath;
 
       for (const childName of Object.keys(file.children)) {
-        const childResult = removeFile(filesystem, childName, true, force, currentMode);
+        const childResult = removeFile(filesystem, childName, true, force);
         if (!childResult.success && !force) {
           filesystem.currentPath = originalPath;
           return childResult;
@@ -780,9 +777,9 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
   return { success: true, output: '' };
 }
 
-function writeToFile(filesystem: FileSystemState, filename: string, content: string, currentMode?: FilesystemMode): boolean {
+function writeToFile(filesystem: FileSystemState, filename: string, content: string): boolean {
   // Handle path resolution for the file
-  const targetPath = resolvePath(filesystem, filename, currentMode || 'default');
+  const targetPath = resolvePath(filesystem, filename);
   const existingFile = getNodeAtPath(filesystem, targetPath);
 
   if (existingFile) {
@@ -804,7 +801,7 @@ function writeToFile(filesystem: FileSystemState, filename: string, content: str
     // Path with directory, create in the specified directory
     const dirPath = filename.substring(0, lastSlashIndex);
     const fileName = filename.substring(lastSlashIndex + 1);
-    const targetDirPath = resolvePath(filesystem, dirPath, currentMode || 'default');
+    const targetDirPath = resolvePath(filesystem, dirPath);
     return createFile(filesystem, targetDirPath, fileName, content);
   }
 }
