@@ -1,6 +1,6 @@
 import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
 import type { AliasManager } from '~/routes/terminal/utils/aliasManager';
-import { parseCommand } from '~/routes/terminal/utils/commandParser';
+import { type ChainedCommand, type ParsedCommand, parseChainedCommand, parseCommand } from '~/routes/terminal/utils/commandParser';
 import {
   ERROR_MESSAGES,
   createDetailedFileInfo,
@@ -78,7 +78,7 @@ export const commands: Record<string, CommandHandler> = {
     if (args.length === 0) {
       // Use appropriate home directory based on filesystem mode
       filesystem.currentPath = ['home', 'user'];
-      return { success: true, output: '' };
+      return { success: true, output: '', exitCode: 0 };
     }
 
     const targetPath = resolvePath(filesystem, args[0]);
@@ -89,6 +89,7 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: `cd: no such file or directory: ${args[0]}`,
+        exitCode: 1,
       };
     }
 
@@ -97,11 +98,12 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: `cd: not a directory: ${args[0]}`,
+        exitCode: 1,
       };
     }
 
     filesystem.currentPath = targetPath;
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   },
 
   ls: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
@@ -144,7 +146,7 @@ export const commands: Record<string, CommandHandler> = {
   },
 
   pwd: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    return { success: true, output: formatPath(filesystem.currentPath) };
+    return { success: true, output: formatPath(filesystem.currentPath), exitCode: 0 };
   },
 
   touch: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
@@ -242,14 +244,14 @@ export const commands: Record<string, CommandHandler> = {
       }
     }
 
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   },
 
   rm: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
-      return { success: false, output: '', error: 'rm: missing operand' };
+      return { success: false, output: '', error: 'rm: missing operand', exitCode: 1 };
     }
 
     const recursive = flags.has('r') || flags.has('R');
@@ -262,12 +264,12 @@ export const commands: Record<string, CommandHandler> = {
       }
     }
 
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   },
 
   rmdir: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
-      return { success: false, output: '', error: 'rmdir: missing operand' };
+      return { success: false, output: '', error: 'rmdir: missing operand', exitCode: 1 };
     }
 
     const dirname = args[0];
@@ -279,6 +281,7 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: `rmdir: failed to remove '${dirname}': No such file or directory`,
+        exitCode: 1,
       };
     }
 
@@ -287,6 +290,7 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: `rmdir: failed to remove '${dirname}': Not a directory`,
+        exitCode: 1,
       };
     }
 
@@ -295,6 +299,7 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: `rmdir: failed to remove '${dirname}': Directory not empty`,
+        exitCode: 1,
       };
     }
 
@@ -308,24 +313,39 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: `rmdir: failed to remove '${dirname}'`,
+        exitCode: 1,
       };
     }
 
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   },
 
   clear: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    return { success: true, output: 'CLEAR' };
+    return { success: true, output: 'CLEAR', exitCode: 0 };
   },
 
-  echo: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    const output = args.join(' ');
-    return { success: true, output: output + '\n' };
+  echo: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+  ): CommandResult => {
+    // Handle $? substitution
+    const processedArgs = args.map((arg) => {
+      if (arg === '$?') {
+        return String(lastExitCode ?? 0);
+      }
+      return arg.replace(/\$\?/g, String(lastExitCode ?? 0));
+    });
+
+    const output = processedArgs.join(' ');
+    return { success: true, output: output + '\n', exitCode: 0 };
   },
 
   wc: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
-      return { success: false, output: '', error: 'wc: missing operand' };
+      return { success: false, output: '', error: 'wc: missing operand', exitCode: 1 };
     }
 
     let totalLines = 0;
@@ -342,6 +362,7 @@ export const commands: Record<string, CommandHandler> = {
           success: false,
           output: '',
           error: `wc: ${filename}: No such file or directory`,
+          exitCode: 1,
         };
       }
 
@@ -350,6 +371,7 @@ export const commands: Record<string, CommandHandler> = {
           success: false,
           output: '',
           error: `wc: ${filename}: Is a directory`,
+          exitCode: 1,
         };
       }
 
@@ -369,7 +391,7 @@ export const commands: Record<string, CommandHandler> = {
       results.push(`${totalLines.toString().padStart(8)} ${totalWords.toString().padStart(8)} ${totalChars.toString().padStart(8)} total`);
     }
 
-    return { success: true, output: results.join('\n') };
+    return { success: true, output: results.join('\n'), exitCode: 0 };
   },
 
   'reset-fs': (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
@@ -378,6 +400,7 @@ export const commands: Record<string, CommandHandler> = {
     return {
       success: true,
       output: `RESET_FILESYSTEM`,
+      exitCode: 0,
     };
   },
 
@@ -400,7 +423,7 @@ export const commands: Record<string, CommandHandler> = {
       '  reset-fs - Reset filesystem to deployment-configured state',
     ].join('\n');
 
-    return { success: true, output };
+    return { success: true, output, exitCode: 0 };
   },
 
   vi: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
@@ -409,6 +432,7 @@ export const commands: Record<string, CommandHandler> = {
         success: false,
         output: '',
         error: 'vi: missing filename argument',
+        exitCode: 1,
       };
     }
 
@@ -425,6 +449,7 @@ export const commands: Record<string, CommandHandler> = {
           success: false,
           output: '',
           error: `vi: ${filename}: Is a directory`,
+          exitCode: 1,
         };
       }
       content = existingFile.content || '';
@@ -435,6 +460,7 @@ export const commands: Record<string, CommandHandler> = {
     return {
       success: true,
       output: `OPEN_EDITOR:${filename}:${unicodeSafeBtoa(content)}`, // Unicode-safe Base64 encode content
+      exitCode: 0,
     };
   },
 
@@ -449,6 +475,7 @@ export const commands: Record<string, CommandHandler> = {
       return {
         success: true,
         output: 'No command history available',
+        exitCode: 0,
       };
     }
 
@@ -458,6 +485,7 @@ export const commands: Record<string, CommandHandler> = {
     return {
       success: true,
       output: numberedLines.join('\n'),
+      exitCode: 0,
     };
   },
 
@@ -722,12 +750,18 @@ export const commands: Record<string, CommandHandler> = {
       '  source <file>    - Execute shell script and apply aliases',
       '',
       'Utilities:',
-      '  echo <text>      - Print text to output',
+      '  echo <text>      - Print text to output (supports $? for last exit code)',
       '  wc <file>        - Count lines, words, and characters in file',
       '  history          - Show command history',
       '  clear            - Clear terminal',
       '  help             - Show this help message',
       '  man <command>    - Display manual page for command',
+      '',
+      'Command Chaining:',
+      '  cmd1 && cmd2     - Execute cmd2 only if cmd1 succeeds (exit code 0)',
+      '  cmd1 || cmd2     - Execute cmd2 only if cmd1 fails (exit code != 0)',
+      '  cmd1 ; cmd2      - Execute cmd2 unconditionally after cmd1',
+      '  echo $?          - Display exit code of last command',
       '',
       'Options can be combined (e.g., ls -la, rm -rf, cp -rf)',
       '',
@@ -754,18 +788,76 @@ export const commands: Record<string, CommandHandler> = {
       '  source ~/.bashrc',
       '  reset-fs',
       '  man ls',
+      '  mkdir test && echo "Success!" || echo "Failed!"',
+      '  ls nonexistent || echo "File not found"',
+      '  echo "first"; echo "second"; echo "third"',
+      '  echo $?',
     ].join('\n');
 
-    return { success: true, output: helpText };
+    return { success: true, output: helpText, exitCode: 0 };
   },
 };
 
-export function executeCommand(input: string, filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult {
-  const parsed = parseCommand(input);
+export function executeCommand(input: string, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
+  const parsed = parseChainedCommand(input);
+
+  // Handle chained commands
+  if ('commands' in parsed) {
+    return executeChainedCommand(parsed, filesystem, aliasManager, lastExitCode);
+  }
+
+  // Handle single command
+  return executeSingleCommand(parsed, filesystem, aliasManager, lastExitCode);
+}
+
+function executeChainedCommand(chainedCommand: ChainedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
+  const { commands, operators } = chainedCommand;
+  let lastResult: CommandResult = { success: true, output: '', exitCode: 0 };
+  let combinedOutput: string[] = [];
+
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i];
+    const operator = i > 0 ? operators[i - 1] : null;
+
+    // Check if we should execute this command based on the operator
+    if (operator === '&&' && lastResult.exitCode !== 0) {
+      // && operator: only execute if previous command succeeded
+      break;
+    } else if (operator === '||' && lastResult.exitCode === 0) {
+      // || operator: only execute if previous command failed
+      break;
+    }
+    // ; operator: always execute (no condition to check)
+
+    // Execute the command
+    const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode);
+
+    // Add output to combined output
+    if (result.output) {
+      if (typeof result.output === 'string') {
+        combinedOutput.push(result.output);
+      } else if (Array.isArray(result.output)) {
+        combinedOutput.push(result.output.map((segment) => segment.text || '').join(''));
+      }
+    }
+
+    // Update last result for next iteration
+    lastResult = result;
+  }
+
+  return {
+    success: lastResult.success,
+    output: combinedOutput.join(''),
+    error: lastResult.error,
+    exitCode: lastResult.exitCode,
+  };
+}
+
+function executeSingleCommand(parsed: ParsedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
   let { command, args, redirectOutput, redirectInput } = parsed;
 
   if (!command) {
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   }
 
   // Resolve aliases if alias manager is available
@@ -791,14 +883,14 @@ export function executeCommand(input: string, filesystem: FileSystemState, alias
   if (redirectInput) {
     const inputResult = handleInputRedirection(redirectInput, filesystem);
     if (!inputResult.success) {
-      return inputResult;
+      return { ...inputResult, exitCode: 1 };
     }
 
     if (redirectInput.type === '<<') {
       // Heredoc - for now, simulate with empty input for cat, or pass delimiter for other commands
       if (command === 'cat' && args.length === 0) {
         // For cat with heredoc and no files, simulate stdin input
-        return { success: true, output: `Reading input until '${redirectInput.source}'...` };
+        return { success: true, output: `Reading input until '${redirectInput.source}'...`, exitCode: 0 };
       }
       finalArgs = [...args];
     } else {
@@ -809,6 +901,7 @@ export function executeCommand(input: string, filesystem: FileSystemState, alias
           success: false,
           output: '',
           error: `cannot read from '${redirectInput.source}': No such file or directory`,
+          exitCode: 1,
         };
       }
       // For file input, replace the filename argument with the actual file content for certain commands
@@ -824,10 +917,11 @@ export function executeCommand(input: string, filesystem: FileSystemState, alias
       success: false,
       output: '',
       error: `${command}: command not found`,
+      exitCode: 127,
     };
   }
 
-  const result = handler(finalArgs, filesystem, aliasManager);
+  const result = handler(finalArgs, filesystem, aliasManager, undefined, lastExitCode);
 
   // Handle output redirection
   if (result.success && redirectOutput) {
@@ -847,12 +941,13 @@ export function executeCommand(input: string, filesystem: FileSystemState, alias
     const writeSuccess = writeToFile(filesystem, redirectOutput.filename, content);
 
     if (writeSuccess) {
-      return { success: true, output: '' }; // No output to terminal when redirecting
+      return { success: true, output: '', exitCode: 0 }; // No output to terminal when redirecting
     } else {
       return {
         success: false,
         output: '',
         error: `cannot write to '${redirectOutput.filename}': Permission denied or invalid path`,
+        exitCode: 1,
       };
     }
   }
@@ -864,7 +959,7 @@ function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: strin
   if (redirectInput.type === '<<') {
     // Heredoc - simplified implementation that accepts any delimiter
     // In a real implementation, this would start interactive input until the delimiter is found
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   } else {
     // File input - check if file exists
     if (!fileExists(filesystem, redirectInput.source)) {
@@ -872,9 +967,10 @@ function handleInputRedirection(redirectInput: { type: '<<' | '<'; source: strin
         success: false,
         output: '',
         error: `cannot read from '${redirectInput.source}': No such file or directory`,
+        exitCode: 1,
       };
     }
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   }
 }
 
@@ -909,6 +1005,7 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
         success: false,
         output: '',
         error: 'mkdir: cannot create directory with path separators (use -p for recursive creation)',
+        exitCode: 1,
       };
     }
     // Continue to recursive creation logic
@@ -916,12 +1013,13 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
     // Parent directory exists, this is a simple creation
     if (parentDir.children[dirname]) {
       if (createParents && parentDir.children[dirname].type === 'directory') {
-        return { success: true, output: '' }; // -p ignores existing directories
+        return { success: true, output: '', exitCode: 0 }; // -p ignores existing directories
       }
       return {
         success: false,
         output: '',
         error: `mkdir: cannot create directory '${dirpath}': File exists`,
+        exitCode: 1,
       };
     }
 
@@ -931,10 +1029,11 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
         success: false,
         output: '',
         error: `mkdir: cannot create directory '${dirpath}'`,
+        exitCode: 1,
       };
     }
 
-    return { success: true, output: '' };
+    return { success: true, output: '', exitCode: 0 };
   }
 
   // Handle recursive creation when parent directories don't exist
@@ -943,6 +1042,7 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
       success: false,
       output: '',
       error: 'mkdir: cannot create directory with path separators (use -p for recursive creation)',
+      exitCode: 1,
     };
   }
 
@@ -959,6 +1059,7 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
         success: false,
         output: '',
         error: `mkdir: cannot create directory '${dirpath}': Invalid parent directory`,
+        exitCode: 1,
       };
     }
 
@@ -969,6 +1070,7 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
           success: false,
           output: '',
           error: `mkdir: cannot create directory '${dirpath}'`,
+          exitCode: 1,
         };
       }
     } else if (parentNode.children[segment].type !== 'directory') {
@@ -976,13 +1078,14 @@ function createDirectoryPath(filesystem: FileSystemState, dirpath: string, creat
         success: false,
         output: '',
         error: `mkdir: cannot create directory '${dirpath}': File exists`,
+        exitCode: 1,
       };
     }
 
     currentPath.push(segment);
   }
 
-  return { success: true, output: '' };
+  return { success: true, output: '', exitCode: 0 };
 }
 
 function removeFile(filesystem: FileSystemState, filename: string, recursive: boolean, force: boolean): CommandResult {
@@ -991,12 +1094,13 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
 
   if (!file) {
     if (force) {
-      return { success: true, output: '' }; // Force mode ignores missing files
+      return { success: true, output: '', exitCode: 0 }; // Force mode ignores missing files
     }
     return {
       success: false,
       output: '',
       error: `rm: cannot remove '${filename}': No such file or directory`,
+      exitCode: 1,
     };
   }
 
@@ -1006,6 +1110,7 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
         success: false,
         output: '',
         error: `rm: cannot remove '${filename}': Is a directory`,
+        exitCode: 1,
       };
     }
 
@@ -1038,10 +1143,11 @@ function removeFile(filesystem: FileSystemState, filename: string, recursive: bo
       success: false,
       output: '',
       error: `rm: cannot remove '${filename}'`,
+      exitCode: 1,
     };
   }
 
-  return { success: true, output: '' };
+  return { success: true, output: '', exitCode: 0 };
 }
 
 function writeToFile(filesystem: FileSystemState, filename: string, content: string): boolean {

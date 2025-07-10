@@ -1,3 +1,5 @@
+import { CHAIN_REGEX } from './constants';
+
 export interface ParsedCommand {
   command: string;
   args: string[];
@@ -9,6 +11,11 @@ export interface ParsedCommand {
     type: '<<' | '<';
     source: string;
   };
+}
+
+export interface ChainedCommand {
+  commands: ParsedCommand[];
+  operators: ('&&' | '||' | ';')[];
 }
 
 // Security constants
@@ -122,4 +129,51 @@ function parseArguments(input: string): string[] {
   }
 
   return args.filter((arg) => arg.length > 0);
+}
+
+export function parseChainedCommand(input: string): ChainedCommand | ParsedCommand {
+  const trimmed = input.trim();
+
+  // Security: Limit command length to prevent ReDoS attacks
+  if (trimmed.length > MAX_COMMAND_LENGTH) {
+    throw new Error(`Command too long (max ${MAX_COMMAND_LENGTH} characters)`);
+  }
+
+  // Check for command chaining operators
+  const matches = [...trimmed.matchAll(CHAIN_REGEX)];
+
+  if (matches.length === 0) {
+    // No chaining operators, return single command
+    return parseCommand(trimmed);
+  }
+
+  // Parse chained commands
+  const commands: ParsedCommand[] = [];
+  const operators: ('&&' | '||' | ';')[] = [];
+
+  let lastIndex = 0;
+  for (const match of matches) {
+    const commandStr = trimmed.slice(lastIndex, match.index).trim();
+    if (commandStr) {
+      commands.push(parseCommand(commandStr));
+    }
+    operators.push(match[1] as '&&' | '||' | ';');
+    lastIndex = match.index! + match[0].length;
+  }
+
+  // Add the last command
+  const lastCommandStr = trimmed.slice(lastIndex).trim();
+  if (lastCommandStr) {
+    commands.push(parseCommand(lastCommandStr));
+  }
+
+  // Validate we have the right number of operators
+  if (operators.length !== commands.length - 1) {
+    throw new Error('Invalid command chain syntax');
+  }
+
+  return {
+    commands,
+    operators,
+  };
 }

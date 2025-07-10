@@ -100,27 +100,37 @@ export const ERROR_MESSAGES = {
 /**
  * Creates a standardized error result
  */
-export function createErrorResult(errorMessage: string): {
+export function createErrorResult(
+  errorMessage: string,
+  exitCode: number = 1,
+): {
   success: false;
   output: '';
   error: string;
+  exitCode: number;
 } {
   return {
     success: false,
     output: '',
     error: errorMessage,
+    exitCode,
   };
 }
 
 /**
  * Creates a standardized success result
  */
-export function createSuccessResult(output: string | OutputSegment[]): {
+export function createSuccessResult(
+  output: string | OutputSegment[],
+  exitCode: number = 0,
+): {
   success: true;
   output: string | OutputSegment[];
+  exitCode: number;
 } {
   return {
     success: true,
     output,
+    exitCode,
   };
 }

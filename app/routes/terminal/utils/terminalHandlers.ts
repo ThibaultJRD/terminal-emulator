@@ -31,9 +31,10 @@ export function executeCommandSafely(
   input: string,
   filesystem: FileSystemState,
   aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
+  lastExitCode?: number,
 ): CommandResult {
   try {
-    return executeCommand(input, filesystem, aliasManager);
+    return executeCommand(input, filesystem, aliasManager, lastExitCode);
   } catch (error) {
     console.error('Error executing command:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -41,6 +42,7 @@ export function executeCommandSafely(
       success: false,
       output: '',
       error: `Error: ${errorMessage}`,
+      exitCode: 1,
     };
   }
 }
@@ -254,6 +256,7 @@ export function initializeTerminalState(filesystem: FileSystemState): TerminalSt
     output: [],
     filesystem,
     aliasManager,
+    lastExitCode: 0,
   };
 }
 
@@ -299,7 +302,7 @@ export function navigateHistory(filesystem: FileSystemState, direction: 'up' | '
  * Updates terminal state after command execution with persistent history
  * History is stored only in the filesystem (single source of truth)
  */
-export function updateTerminalStateAfterCommand(prevState: TerminalState, input: string): TerminalState {
+export function updateTerminalStateAfterCommand(prevState: TerminalState, input: string, exitCode?: number): TerminalState {
   // Load current history from filesystem, add new command, save back
   const currentHistory = loadHistoryFromFile(prevState.filesystem);
   const newHistory = addToHistory(currentHistory, input);
@@ -333,6 +336,7 @@ export function updateTerminalStateAfterCommand(prevState: TerminalState, input:
     filesystem: newFilesystem,
     currentInput: '',
     output: prevState.output, // Preserve existing output
+    lastExitCode: exitCode ?? prevState.lastExitCode,
   };
 }
 
@@ -364,6 +368,7 @@ export function handleFilesystemReset(
     filesystem: newFilesystem,
     currentInput: '',
     output: terminalState.output, // Preserve existing output
+    lastExitCode: 0, // Reset command always succeeds
   };
 
   const outputLine = createOutputLine('output', `Reset to default ${mode} filesystem`);
@@ -390,6 +395,7 @@ export function handleTextEditorOpen(
     ...terminalState,
     currentInput: '',
     output: terminalState.output, // Preserve existing output
+    lastExitCode: 0, // vi command always succeeds to open
   };
 
   return { newTerminalState, editorState };

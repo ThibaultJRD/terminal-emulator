@@ -3,9 +3,59 @@ import { commands } from '~/routes/terminal/utils/commands';
 // FilesystemMode removed as both modes now use the same structure
 import { getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
+import { CHAIN_REGEX } from './constants';
+
 export interface AutocompletionResult {
   completions: string[];
   commonPrefix: string;
+}
+
+interface CommandContext {
+  isChainedContext: boolean;
+  currentInput: string;
+  isNewCommand: boolean;
+}
+
+/**
+ * Determines if we're at the beginning of a new command context
+ * @param afterLastOperator - The input string after the last chaining operator
+ * @returns true if we're starting a new command, false otherwise
+ */
+function isNewCommandContext(afterLastOperator: string): boolean {
+  return afterLastOperator === '' || !afterLastOperator.includes(' ');
+}
+
+/**
+ * Analyzes the input to determine if we're in a command chaining context
+ * and extracts the relevant part for completion
+ */
+function parseCommandContext(input: string): CommandContext {
+  // Check for command chaining operators (&&, ||, ;)
+  const matches = [...input.matchAll(CHAIN_REGEX)];
+
+  if (matches.length === 0) {
+    return {
+      isChainedContext: false,
+      currentInput: input,
+      isNewCommand: false,
+    };
+  }
+
+  // Find the last operator
+  const lastMatch = matches[matches.length - 1];
+  const lastOperatorIndex = lastMatch.index! + lastMatch[0].length;
+
+  // Extract the part after the last operator
+  const afterLastOperator = input.slice(lastOperatorIndex).trimStart();
+
+  // Check if we're at the beginning of a new command
+  const isNewCommand = isNewCommandContext(afterLastOperator);
+
+  return {
+    isChainedContext: true,
+    currentInput: afterLastOperator,
+    isNewCommand,
+  };
 }
 
 export function getAutocompletions(
@@ -13,8 +63,27 @@ export function getAutocompletions(
   filesystem: FileSystemState,
   aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
 ): AutocompletionResult {
-  // Check for redirection operators
-  const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
+  // Parse command context to handle chaining
+  const context = parseCommandContext(input);
+  const workingInput = context.currentInput.trim();
+
+  // If we're in a chained context and at the beginning of a new command,
+  // force command completion
+  if (context.isChainedContext && context.isNewCommand) {
+    const commandName = workingInput;
+    const commandNames = Object.keys(commands);
+    const aliasNames = aliasManager ? aliasManager.getAliasNames() : [];
+    const allCommands = [...commandNames, ...aliasNames];
+    const matchingCommands = allCommands.filter((cmd) => cmd.startsWith(commandName));
+
+    return {
+      completions: matchingCommands,
+      commonPrefix: getCommonPrefix(matchingCommands),
+    };
+  }
+
+  // Check for redirection operators in the working input
+  const redirectMatch = workingInput.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 
   if (redirectMatch) {
     const [, , operator, filename] = redirectMatch;
@@ -32,10 +101,9 @@ export function getAutocompletions(
     }
   }
 
-  const trimmedInput = input.trim();
-  const parts = trimmedInput.split(/\s+/);
+  const parts = workingInput.split(/\s+/);
 
-  if (parts.length === 0 || trimmedInput === '' || (parts.length === 1 && !input.endsWith(' '))) {
+  if (parts.length === 0 || workingInput === '' || (parts.length === 1 && !context.currentInput.endsWith(' '))) {
     // Command completion
     const commandName = parts[0] || '';
     const commandNames = Object.keys(commands);
@@ -54,7 +122,7 @@ export function getAutocompletions(
 
   // Determine what to complete based on the input structure
   let pathArg: string;
-  if (input.endsWith(' ')) {
+  if (context.currentInput.endsWith(' ')) {
     // Input ends with space - we're starting a new argument
     if (parts.length === 1) {
       // Just typed "cat " - complete all files
@@ -301,22 +369,27 @@ function getManPageCompletions(partialName: string, filesystem: FileSystemState)
 }
 
 export function applyCompletion(input: string, completion: string, aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager): string {
-  // Check for redirection operators
-  const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
+  // Parse command context to handle chaining
+  const context = parseCommandContext(input);
+  const workingInput = context.currentInput;
+
+  // Check for redirection operators in the working input
+  const redirectMatch = workingInput.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 
   if (redirectMatch) {
     const [, commandPart, operator] = redirectMatch;
-    return `${commandPart} ${operator} ${completion}`;
+    const newWorkingInput = `${commandPart} ${operator} ${completion}`;
+    return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
   }
 
-  const trimmedInput = input.trim();
+  const trimmedInput = workingInput.trim();
   const parts = trimmedInput.split(/\s+/);
 
-  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(' '))) {
+  if (parts.length === 0 || (parts.length === 1 && !workingInput.endsWith(' '))) {
     // Command completion - only add space if completion is a valid complete command/alias
     const currentCommand = parts[0] || '';
     if (completion === currentCommand) {
-      return completion;
+      return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + completion : completion;
     }
 
     // Check if completion is a valid command or alias
@@ -324,59 +397,71 @@ export function applyCompletion(input: string, completion: string, aliasManager?
     const aliasNames = aliasManager ? aliasManager.getAliasNames() : [];
     const isValidCommand = commandNames.includes(completion) || aliasNames.includes(completion);
 
-    return isValidCommand ? completion + ' ' : completion;
+    const newCompletion = isValidCommand ? completion + ' ' : completion;
+    return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newCompletion : newCompletion;
   }
 
   // Path completion - handle the case where input ends with space
-  if (input.endsWith(' ')) {
+  if (workingInput.endsWith(' ')) {
     // Input ends with space - append the completion
-    return `${trimmedInput} ${completion}`;
+    const newWorkingInput = `${trimmedInput} ${completion}`;
+    return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
   } else {
     // Input doesn't end with space - replace the last non-option argument
     const lastArg = parts[parts.length - 1];
     if (isOption(lastArg)) {
       // Last argument is an option - this shouldn't happen in normal flow
-      return `${trimmedInput} ${completion}`;
+      const newWorkingInput = `${trimmedInput} ${completion}`;
+      return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
     } else {
       // Replace the last argument (which should be a path)
       parts[parts.length - 1] = completion;
-      return parts.join(' ');
+      const newWorkingInput = parts.join(' ');
+      return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
     }
   }
 }
 
 // Apply completion without adding trailing space (for cycling)
 export function applyCompletionNoSpace(input: string, completion: string, aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager): string {
-  // Check for redirection operators
-  const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
+  // Parse command context to handle chaining
+  const context = parseCommandContext(input);
+  const workingInput = context.currentInput;
+
+  // Check for redirection operators in the working input
+  const redirectMatch = workingInput.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 
   if (redirectMatch) {
     const [, commandPart, operator] = redirectMatch;
-    return `${commandPart} ${operator} ${completion}`;
+    const newWorkingInput = `${commandPart} ${operator} ${completion}`;
+    return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
   }
 
-  const trimmedInput = input.trim();
+  const trimmedInput = workingInput.trim();
   const parts = trimmedInput.split(/\s+/);
 
-  if (parts.length === 0 || (parts.length === 1 && !input.endsWith(' '))) {
+  if (parts.length === 0 || (parts.length === 1 && !workingInput.endsWith(' '))) {
     // Command completion without space
-    return completion;
+    return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + completion : completion;
   }
 
   // Path completion - handle the case where input ends with space
-  if (input.endsWith(' ')) {
+  if (workingInput.endsWith(' ')) {
     // Input ends with space - append the completion (no trailing space for cycling)
-    return `${trimmedInput} ${completion}`;
+    const newWorkingInput = `${trimmedInput} ${completion}`;
+    return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
   } else {
     // Input doesn't end with space - replace the last non-option argument
     const lastArg = parts[parts.length - 1];
     if (isOption(lastArg)) {
       // Last argument is an option - this shouldn't happen in normal flow
-      return `${trimmedInput} ${completion}`;
+      const newWorkingInput = `${trimmedInput} ${completion}`;
+      return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
     } else {
       // Replace the last argument (which should be a path)
       parts[parts.length - 1] = completion;
-      return parts.join(' ');
+      const newWorkingInput = parts.join(' ');
+      return context.isChainedContext ? input.slice(0, input.length - workingInput.length) + newWorkingInput : newWorkingInput;
     }
   }
 }

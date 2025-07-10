@@ -8,12 +8,12 @@ This is a web-based terminal emulator built with React Router v7, TypeScript, an
 
 ## Development Commands
 
-- `npm run dev` - Start development server with HMR (usually at <http://localhost:5173>)
-- `npm run build` - Create production build
-- `npm run start` - Start production server (serves from build/server/index.js) - **For Vercel deployment**
-- `npm run start:local` - Start production server locally (serves from build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js) - **For local testing**
-- `npm run typecheck` - Generate React Router types and run TypeScript compiler
-- `npm test` - Run comprehensive test suite (unit and integration tests)
+- `yarn dev` - Start development server with HMR (usually at <http://localhost:5173>)
+- `yarn build` - Create production build
+- `yarn start` - Start production server (serves from build/server/index.js) - **For Vercel deployment**
+- `yarn start:local` - Start production server locally (serves from build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js) - **For local testing**
+- `yarn typecheck` - Generate React Router types and run TypeScript compiler
+- `yarn test` - Run comprehensive test suite (unit and integration tests)
 
 ## Configuration
 
@@ -175,9 +175,9 @@ The project includes a comprehensive test suite using Vitest:
 ### Running Tests
 
 ```bash
-npm test          # Run all tests
-npm test -- --watch  # Run tests in watch mode
-npm test -- --coverage  # Run tests with coverage report
+yarn test          # Run all tests
+yarn test -- --watch  # Run tests in watch mode
+yarn test -- --coverage  # Run tests with coverage report
 ```
 
 ### Test Coverage
@@ -201,7 +201,7 @@ The project is configured for easy deployment on Vercel:
 
 #### Vercel Configuration
 
-- **Build Command**: `npm run build`
+- **Build Command**: `yarn build`
 - **Output Directory**: `build/client`
 - **SPA Routing**: Configured with rewrites to handle client-side routing
 - **Asset Caching**: Static assets cached for 1 year with immutable headers
@@ -223,7 +223,7 @@ The application automatically serves the appropriate filesystem based on the acc
 
 - Always run `yarn typecheck` after making changes to ensure TypeScript compliance
 - Run `yarn test` to ensure all functionality works correctly
-- The filesystem is initialized with a default structure but can be customized in `routes/terminal/utils/filesystem.ts`
+- The filesystem is initialized with a default structure but can be customized in `app/constants/defaultFilesystems.ts`
 - Command implementations follow Unix-like behavior and error messages
 - Tab completion supports single completion, multiple options, aliases, and redirection contexts
 - Markdown rendering supports headers, bold/italic, code blocks, links, lists, blockquotes, and horizontal rules

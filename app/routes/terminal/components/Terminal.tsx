@@ -149,13 +149,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       }
 
       // Execute command safely
-      const result = executeCommandSafely(input, terminalState.filesystem, terminalState.aliasManager);
+      const result = executeCommandSafely(input, terminalState.filesystem, terminalState.aliasManager, terminalState.lastExitCode);
 
       // Handle command execution error
       if (!result.success) {
         const errorContent = result.error || 'Command failed';
         setOutputLines((prev) => [...prev, createOutputLine('error', errorContent)]);
-        setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
+        setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input, result.exitCode));
         return;
       }
 
@@ -165,7 +165,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       switch (specialCommand.type) {
         case 'clear':
           setOutputLines([]);
-          setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
+          setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input, result.exitCode));
           return;
 
         case 'reset_filesystem': {
@@ -197,7 +197,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       }
 
       // Update terminal state
-      setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input));
+      setTerminalState((prev) => updateTerminalStateAfterCommand(prev, input, result.exitCode));
 
       // Save filesystem if needed
       handleFilesystemSaveAfterCommand(input, result, filesystemPersistence.saveImmediately);

@@ -5,7 +5,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-373%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-483%20passing-green?logo=vitest)
 
 ## 🚀 Live Demo
 
@@ -24,7 +24,9 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Text Editor**: `vi` (vim-inspired editor with INSERT/NORMAL modes)
 - **Filesystem Management**: `reset-fs`, `storage-info`
 - **Alias System**: `alias`, `unalias`, `source` (shell script parsing)
-- **Utilities**: `echo`, `wc`, `clear`, `help`
+- **Manual System**: `man` (command manuals and documentation)
+- **Utilities**: `echo` (with `$?` support), `wc`, `clear`, `help`
+- **Exit Codes**: Unix-standard exit codes (0 = success, >0 = error)
 
 ### 🔄 I/O Redirection
 
@@ -32,6 +34,14 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - `command >> file` - Append output to file
 - `command < file` - Read input from file
 - `command << delimiter` - Heredoc (simplified implementation)
+
+### 🔗 Command Chaining
+
+- `cmd1 && cmd2` - Execute cmd2 only if cmd1 succeeds (exit code 0)
+- `cmd1 || cmd2` - Execute cmd2 only if cmd1 fails (exit code ≠ 0)
+- `cmd1 ; cmd2` - Execute cmd2 unconditionally after cmd1
+- `echo $?` - Display exit code of last command
+- **Complex Chains**: Mix operators for sophisticated command sequences
 
 ### 🗂️ File System
 
@@ -46,14 +56,14 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 
 - **Theme**: Catppuccin Mocha with consistent colors
 - **History**: Navigation with ↑/↓ arrow keys
-- **Autocompletion**: Tab completion for commands, files, and filesystem modes
+- **Autocompletion**: Tab completion for commands, files, and smart context-aware completion after chaining operators
 - **Markdown**: Rendering of `.md` files with syntax highlighting
 - **Text Editor**: Full-screen vim-inspired editor with modal editing
 - **Responsive**: Works on desktop and mobile devices
 
 ### 🧪 Testing
 
-- **373 tests** with comprehensive coverage
+- **483 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
@@ -185,7 +195,7 @@ mv -f file.txt dest/      # Force move (overwrite)
 mv -i file.txt dest/      # Interactive (prompt before overwrite)
 
 # Text Editor
-nano file.txt          # Open file in nano text editor
+vi file.txt            # Open file in vi text editor
 vi document.md         # Open file in vi text editor
 
 # Filesystem Management
@@ -203,6 +213,7 @@ source aliases.sh      # Load aliases from shell script
 wc file.txt            # Count lines/words/characters
 clear                  # Clear screen
 help                   # Command help
+man command            # Show manual for command
 ```
 
 ### Advanced Redirection
@@ -217,12 +228,132 @@ wc < document.txt              # Count from file
 cat << EOF                     # Simplified heredoc
 ```
 
+### Command Chaining & Exit Codes
+
+The terminal supports Unix-style command chaining with exit codes for powerful command sequences.
+
+#### Exit Codes
+
+Every command returns an exit code following Unix conventions:
+
+- **`0`** - Success (command completed without errors)
+- **`1-255`** - Error (various error conditions)
+- **`127`** - Command not found
+
+```bash
+# Check exit codes
+ls /home/user
+echo $?        # Shows 0 (success)
+
+ls nonexistent
+echo $?        # Shows 1 (error - file not found)
+
+unknowncommand
+echo $?        # Shows 127 (command not found)
+```
+
+#### Chaining Operators
+
+**Conditional Execution:**
+
+```bash
+# AND operator (&&) - Execute cmd2 only if cmd1 succeeds
+mkdir project && cd project && echo "Setup complete!"
+mkdir project && echo "Created project directory"
+
+# OR operator (||) - Execute cmd2 only if cmd1 fails
+ls nonexistent || echo "File not found, continuing..."
+cat file.txt || echo "Could not read file"
+```
+
+**Sequential Execution:**
+
+```bash
+# Semicolon (;) - Execute cmd2 unconditionally after cmd1
+echo "Starting..."; sleep 1; echo "Done!"
+echo "Task 1"; echo "Task 2"; echo "Task 3"  # All run regardless of success/failure
+ls badfile; echo "This always runs"          # echo runs even if ls fails
+```
+
+#### Complex Command Chains
+
+Mix operators to create sophisticated command sequences:
+
+```bash
+# Complex conditional logic
+mkdir backup && cp *.txt backup/ || echo "Backup failed"
+
+# Multi-step project setup
+mkdir myproject && cd myproject && touch README.md && echo "Project initialized" || echo "Setup failed"
+
+# Conditional cleanup with fallback
+rm temp.txt && echo "Cleaned up" || echo "Nothing to clean" ; echo "Process complete"
+
+# Build and deploy pipeline
+make build && make test && make deploy || echo "Pipeline failed"
+
+# File processing with error handling
+cat input.txt | sort > sorted.txt && echo "Sorted successfully" || echo "Sort failed" ; rm -f temp.*
+```
+
+#### Practical Examples
+
+**Project Setup:**
+
+```bash
+# Create and initialize a new project
+mkdir myapp && cd myapp && touch index.js package.json && echo "Project ready!"
+```
+
+**Backup Operations:**
+
+```bash
+# Backup with verification
+cp important.txt backup/ && echo "Backup successful" || echo "Backup failed!"
+mkdir backup ; cp *.txt backup/ ; echo "Backup attempt completed"
+```
+
+**System Maintenance:**
+
+```bash
+# Clean temporary files
+rm temp.* && echo "Cleaned temp files" || echo "No temp files found" ; echo "Cleanup done"
+```
+
+**Development Workflow:**
+
+```bash
+# Test and deploy sequence
+npm test && npm run build && echo "Ready to deploy" || echo "Build failed"
+```
+
 ### Autocompletion
 
+The terminal features intelligent autocompletion that adapts to different contexts:
+
+**Command Completion:**
+
 - `Tab` after partial command → completes the command
-- `Tab` after partial path → completes file/directory
+- After chaining operators (`&&`, `||`, `;`) → forces command completion
+- Includes both built-in commands and user-defined aliases
+
+**Path Completion:**
+
+- `Tab` after partial path → completes file/directory names
+- Context-aware: `cd` completes directories only, `cat` completes files
+- Supports hidden files when explicitly typed (`.filename`)
+
+**Redirection Completion:**
+
 - `Tab` after `>` or `>>` → completes destination files
 - `Tab` after `<` → completes source files only
+- Smart context detection preserves command chain structure
+
+**Alias Completion:**
+
+- `alias` and `unalias` commands complete with existing alias names
+- `man` command completes with available manual pages
+- Aliases integrate seamlessly with command completion
 
 ### Alias System
 
@@ -678,32 +809,38 @@ Shows:
 
 ### Test Structure
 
-- **Unit Tests** (225+ tests)
+- **Unit Tests** (298+ tests)
   - File system operations and persistence
-  - Command implementations (including text editor commands)
-  - Command and option parsers with advanced features
+  - Command implementations with exit codes
+  - Command and option parsers with chaining support
   - Text editor functionality (69 comprehensive tests)
-  - Autocompletion system with Unicode support (47 tests)
+  - Autocompletion system with chaining context detection (66 tests)
   - Alias system and shell script parsing (comprehensive coverage)
-- **Integration Tests** (85+ tests)
+  - Exit code handling and command chaining logic
+- **Integration Tests** (185+ tests)
   - Complete command execution workflows
+  - Exit code propagation and chaining operators
   - Text editor integration with filesystem
   - I/O redirection scenarios with Unicode content
   - Unicode and emoji support across all features
   - Alias resolution and parameter substitution
   - Shell script parsing and execution
+  - Command chaining in complex scenarios
   - Error handling and edge cases
 
 ### Coverage
 
-- ✅ All commands with comprehensive option testing
-- ✅ Advanced parsing and I/O redirection
-- ✅ Navigation and path resolution with Unicode
+- ✅ All commands with comprehensive option testing and exit codes
+- ✅ Advanced parsing with I/O redirection and command chaining
+- ✅ Navigation and path resolution with Unicode support
 - ✅ Complete text editor functionality (modes, vim commands, file operations)
-- ✅ Autocompletion in all contexts including Unicode filenames
+- ✅ Context-aware autocompletion including chained commands
 - ✅ Unicode and emoji support throughout the system
 - ✅ Alias system with parameter substitution and circular reference detection
 - ✅ Shell script parsing with security validation
+- ✅ Exit code handling and command chaining logic (`&&`, `||`, `;`)
+- ✅ `$?` variable substitution and last exit code tracking
+- ✅ Complex command chain scenarios and edge cases
 - ✅ Error scenarios, edge cases, and performance testing
 - ✅ Browser storage and persistence functionality
 
