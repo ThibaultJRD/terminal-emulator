@@ -453,6 +453,9 @@ HISTFILESIZE=2000
 alias ll='ls -l'
 alias la='ls -a'
 alias l='ls -la'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 
 # Enable color support (placeholder)
 if [ -x /usr/bin/dircolors ]; then
@@ -1360,6 +1363,9 @@ HISTFILESIZE=2000
 alias ll='ls -l'
 alias la='ls -a'
 alias l='ls -la'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 
 # Enable color support (placeholder)
 if [ -x /usr/bin/dircolors ]; then
