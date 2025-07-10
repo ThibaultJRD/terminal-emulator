@@ -195,7 +195,7 @@ mv -f file.txt dest/      # Force move (overwrite)
 mv -i file.txt dest/      # Interactive (prompt before overwrite)
 
 # Text Editor
-nano file.txt          # Open file in nano text editor
+vi file.txt            # Open file in vi text editor
 vi document.md         # Open file in vi text editor
 
 # Filesystem Management
