@@ -273,7 +273,7 @@ function getCommonPrefix(strings: string[]): string {
   return prefix;
 }
 
-export function applyCompletion(input: string, completion: string): string {
+export function applyCompletion(input: string, completion: string, aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager): string {
   // Check for redirection operators
   const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 
@@ -286,8 +286,18 @@ export function applyCompletion(input: string, completion: string): string {
   const parts = trimmedInput.split(/\s+/);
 
   if (parts.length === 0 || (parts.length === 1 && !input.endsWith(' '))) {
-    // Command completion
-    return completion + ' ';
+    // Command completion - only add space if completion is a valid complete command/alias
+    const currentCommand = parts[0] || '';
+    if (completion === currentCommand) {
+      return completion;
+    }
+
+    // Check if completion is a valid command or alias
+    const commandNames = Object.keys(commands);
+    const aliasNames = aliasManager ? aliasManager.getAliasNames() : [];
+    const isValidCommand = commandNames.includes(completion) || aliasNames.includes(completion);
+
+    return isValidCommand ? completion + ' ' : completion;
   }
 
   // Path completion - handle the case where input ends with space
@@ -309,7 +319,7 @@ export function applyCompletion(input: string, completion: string): string {
 }
 
 // Apply completion without adding trailing space (for cycling)
-export function applyCompletionNoSpace(input: string, completion: string): string {
+export function applyCompletionNoSpace(input: string, completion: string, aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager): string {
   // Check for redirection operators
   const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 

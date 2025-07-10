@@ -271,8 +271,8 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
             const selectedCompletion = completionState.completions[0];
             const isCmd = isCommandCompletion(completionState.originalInput);
             const newInput = isCmd
-              ? applyCompletionNoSpace(completionState.originalInput, selectedCompletion)
-              : applyCompletion(completionState.originalInput, selectedCompletion);
+              ? applyCompletionNoSpace(completionState.originalInput, selectedCompletion, terminalState.aliasManager)
+              : applyCompletion(completionState.originalInput, selectedCompletion, terminalState.aliasManager);
 
             setCompletionState((prev) => ({
               ...prev,
@@ -289,8 +289,8 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
             const selectedCompletion = completionState.completions[nextIndex];
             const isCmd = isCommandCompletion(completionState.originalInput);
             const newInput = isCmd
-              ? applyCompletionNoSpace(completionState.originalInput, selectedCompletion)
-              : applyCompletion(completionState.originalInput, selectedCompletion);
+              ? applyCompletionNoSpace(completionState.originalInput, selectedCompletion, terminalState.aliasManager)
+              : applyCompletion(completionState.originalInput, selectedCompletion, terminalState.aliasManager);
 
             setCompletionState((prev) => ({
               ...prev,
@@ -312,15 +312,15 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
 
           if (result.completions.length === 1) {
             // Single completion, apply it directly
-            const newInput = applyCompletion(terminalState.currentInput, result.completions[0]);
+            const newInput = applyCompletion(terminalState.currentInput, result.completions[0], terminalState.aliasManager);
             setTerminalState((prev) => ({
               ...prev,
               currentInput: newInput,
             }));
             setHistoryIndex(-1);
           } else if (result.commonPrefix && result.commonPrefix.length > terminalState.currentInput.split(/\s+/).pop()?.length!) {
-            // Multiple completions with common prefix
-            const newInput = applyCompletion(terminalState.currentInput, result.commonPrefix);
+            // Multiple completions with common prefix that extends current input
+            const newInput = applyCompletion(terminalState.currentInput, result.commonPrefix, terminalState.aliasManager);
             setTerminalState((prev) => ({
               ...prev,
               currentInput: newInput,
