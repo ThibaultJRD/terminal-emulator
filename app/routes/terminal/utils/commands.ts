@@ -667,6 +667,32 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult(messages.length > 0 ? messages.join(', ') : '');
   },
 
+  man: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    if (args.length === 0) {
+      return createErrorResult('What manual page do you want?');
+    }
+
+    let commandName = args[0];
+    let section = '1'; // Default to section 1 (user commands)
+
+    // Handle section specification (e.g., man 1 ls)
+    if (args.length > 1 && /^\d+$/.test(args[0])) {
+      section = args[0];
+      commandName = args[1];
+    }
+
+    // Construct the manual page path
+    const manPagePath = ['usr', 'share', 'man', `man${section}`, `${commandName}.${section}`];
+    const manPage = getNodeAtPath(filesystem, manPagePath);
+
+    if (!manPage || manPage.type !== 'file') {
+      return createErrorResult(`No manual entry for ${commandName}`);
+    }
+
+    const content = manPage.content || '';
+    return createSuccessResult(content);
+  },
+
   help: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const helpText = [
       'Available commands:',
@@ -701,6 +727,7 @@ export const commands: Record<string, CommandHandler> = {
       '  history          - Show command history',
       '  clear            - Clear terminal',
       '  help             - Show this help message',
+      '  man <command>    - Display manual page for command',
       '',
       'Options can be combined (e.g., ls -la, rm -rf, cp -rf)',
       '',
@@ -726,6 +753,7 @@ export const commands: Record<string, CommandHandler> = {
       '  hello World',
       '  source ~/.bashrc',
       '  reset-fs',
+      '  man ls',
     ].join('\n');
 
     return { success: true, output: helpText };

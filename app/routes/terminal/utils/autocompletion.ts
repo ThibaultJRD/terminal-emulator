@@ -105,6 +105,11 @@ export function getAutocompletions(
     };
   }
 
+  // Special handling for man command - complete with available manual pages
+  if (command === 'man') {
+    return getManPageCompletions(pathArg, filesystem);
+  }
+
   // No special completions needed for reset-fs as it no longer takes arguments
 
   return { completions: [], commonPrefix: '' };
@@ -271,6 +276,28 @@ function getCommonPrefix(strings: string[]): string {
   }
 
   return prefix;
+}
+
+function getManPageCompletions(partialName: string, filesystem: FileSystemState): AutocompletionResult {
+  // Get the man1 directory
+  const manPath = ['usr', 'share', 'man', 'man1'];
+  const manDir = getNodeAtPath(filesystem, manPath);
+
+  if (!manDir || manDir.type !== 'directory' || !manDir.children) {
+    return { completions: [], commonPrefix: '' };
+  }
+
+  // Extract command names from manual pages (remove .1 extension)
+  const manPages = Object.keys(manDir.children)
+    .filter((name) => name.endsWith('.1'))
+    .map((name) => name.slice(0, -2)) // Remove .1 extension
+    .filter((command) => command.startsWith(partialName))
+    .sort();
+
+  return {
+    completions: manPages,
+    commonPrefix: getCommonPrefix(manPages),
+  };
 }
 
 export function applyCompletion(input: string, completion: string, aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager): string {

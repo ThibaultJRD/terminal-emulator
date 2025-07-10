@@ -1,6 +1,393 @@
 import type { FileSystemNode } from '~/routes/terminal/types/filesystem';
 
 /**
+ * Creates a standardized manual page with optional customization for different filesystem modes.
+ * @param command - The command name
+ * @param synopsis - Command syntax
+ * @param description - Command description
+ * @param options - Available options (optional)
+ * @param examples - Usage examples
+ * @param seeAlso - Related commands (optional)
+ * @param mode - Filesystem mode for customized headers ('default' or 'portfolio')
+ */
+function createManualPage(
+  command: string,
+  synopsis: string,
+  description: string,
+  examples: string[],
+  options?: string[],
+  seeAlso?: string[],
+  mode: 'default' | 'portfolio' = 'default',
+): FileSystemNode {
+  const header = mode === 'portfolio' ? 'Portfolio Terminal Manual' : 'User Commands';
+  const upperCommand = command.toUpperCase();
+
+  let content = `${upperCommand}(1)                    ${header}                    ${upperCommand}(1)
+
+NAME
+       ${command} - ${synopsis}
+
+SYNOPSIS
+       ${synopsis}
+
+DESCRIPTION
+       ${description}`;
+
+  if (options && options.length > 0) {
+    content += '\n\nOPTIONS';
+    options.forEach((option) => {
+      content += `\n       ${option}`;
+    });
+  }
+
+  content += '\n\nEXAMPLES';
+  examples.forEach((example) => {
+    content += `\n       ${example}`;
+  });
+
+  if (seeAlso && seeAlso.length > 0) {
+    content += `\n\nSEE ALSO\n       ${seeAlso.join(', ')}`;
+  }
+
+  if (mode === 'portfolio') {
+    content += '\n\nAUTHOR\n       Part of the Portfolio Terminal Emulator';
+  }
+
+  return {
+    name: `${command}.1`,
+    type: 'file',
+    content,
+    permissions: '-rw-r--r--',
+    size: content.length,
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+  };
+}
+
+/**
+ * Creates all manual pages for the man1 directory.
+ * @param mode - Filesystem mode for customized content
+ */
+function createManualPages(mode: 'default' | 'portfolio' = 'default'): Record<string, FileSystemNode> {
+  const manPages: Record<string, FileSystemNode> = {};
+
+  // File Operations
+  manPages['ls.1'] = createManualPage(
+    'ls',
+    'list directory contents',
+    'List information about the FILEs (the current directory by default).\n       Sort entries alphabetically unless otherwise specified.',
+    [
+      'ls\n              List files in current directory',
+      'ls -la\n              List all files in long format, including hidden files',
+      mode === 'portfolio'
+        ? 'ls /home/user/projects\n              List files in specific directory'
+        : 'ls /home/user/documents\n              List files in specific directory',
+    ],
+    ['-a, --all\n              do not ignore entries starting with .', '-l     use a long listing format', '-la    combination of -l and -a'],
+    ['cat(1)', 'mkdir(1)', 'rm(1)'],
+    mode,
+  );
+
+  manPages['cd.1'] = createManualPage(
+    'cd',
+    'change directory',
+    'Change the current working directory to DIRECTORY.\n       If no DIRECTORY is given, change to the home directory.',
+    [
+      'cd\n              Change to home directory',
+      mode === 'portfolio'
+        ? 'cd /home/user/projects\n              Change to projects directory'
+        : 'cd /home/user/documents\n              Change to specific directory',
+      'cd ..\n              Change to parent directory',
+      mode === 'portfolio' ? 'cd about\n              Change to about directory' : 'cd ../..\n              Change to grandparent directory',
+    ],
+    undefined,
+    ['pwd(1)', 'ls(1)'],
+    mode,
+  );
+
+  manPages['pwd.1'] = createManualPage(
+    'pwd',
+    'print working directory',
+    'Print the full pathname of the current working directory.',
+    ['pwd\n              Print current directory path'],
+    undefined,
+    ['cd(1)', 'ls(1)'],
+    mode,
+  );
+
+  manPages['touch.1'] = createManualPage(
+    'touch',
+    'create empty file or update timestamp',
+    'Create empty files or update the timestamp of existing files.\n       If the file does not exist, it will be created as an empty file.\n       If the file exists, its modification time will be updated.',
+    ['touch newfile.txt\n              Create empty file or update timestamp', 'touch file1.txt file2.txt\n              Create or update multiple files'],
+    undefined,
+    ['ls(1)', 'cat(1)', 'rm(1)'],
+    mode,
+  );
+
+  manPages['cat.1'] = createManualPage(
+    'cat',
+    'display file contents',
+    'Display the contents of files. For markdown files (.md), content is\n       rendered with syntax highlighting using the Catppuccin theme.',
+    mode === 'portfolio'
+      ? [
+          'cat about/README.md\n              Display portfolio about information',
+          'cat projects/fruitz.md\n              Display project information with highlighting',
+          'cat file1.txt file2.txt\n              Display multiple files',
+        ]
+      : [
+          'cat file.txt\n              Display file contents',
+          'cat notes.md\n              Display markdown file with syntax highlighting',
+          'cat file1.txt file2.txt\n              Display multiple files',
+        ],
+    undefined,
+    ['touch(1)', 'ls(1)', 'vi(1)'],
+    mode,
+  );
+
+  manPages['mkdir.1'] = createManualPage(
+    'mkdir',
+    'create directories',
+    'Create directories with the specified names.',
+    [
+      'mkdir newdir\n              Create a directory',
+      'mkdir -p deep/nested/directory\n              Create nested directories',
+      'mkdir dir1 dir2 dir3\n              Create multiple directories',
+    ],
+    ['-p, --parents\n              Create parent directories as needed'],
+    ['rmdir(1)', 'ls(1)', 'cd(1)'],
+    mode,
+  );
+
+  manPages['rm.1'] = createManualPage(
+    'rm',
+    'remove files and directories',
+    'Remove files and directories. By default, rm does not remove directories.',
+    [
+      'rm file.txt\n              Remove a file',
+      'rm -r directory\n              Remove directory and contents',
+      'rm -rf unwanted_folder\n              Force remove directory and contents',
+    ],
+    [
+      '-f, --force\n              Ignore nonexistent files and arguments',
+      '-r, -R, --recursive\n              Remove directories and their contents recursively',
+      '-rf    Combination of -r and -f',
+    ],
+    ['rmdir(1)', 'mkdir(1)', 'ls(1)'],
+    mode,
+  );
+
+  manPages['rmdir.1'] = createManualPage(
+    'rmdir',
+    'remove empty directories',
+    'Remove empty directories. The directory must be empty before it can\n       be removed.',
+    ['rmdir emptydir\n              Remove empty directory', 'rmdir dir1 dir2\n              Remove multiple empty directories'],
+    undefined,
+    ['rm(1)', 'mkdir(1)', 'ls(1)'],
+    mode,
+  );
+
+  manPages['cp.1'] = createManualPage(
+    'cp',
+    'copy files and directories',
+    'Copy files and directories from SOURCE to DEST.',
+    mode === 'portfolio'
+      ? [
+          'cp file.txt backup.txt\n              Copy file to new name',
+          'cp -r srcdir destdir\n              Copy directory recursively',
+          'cp projects/fruitz.md backup/\n              Copy project file to backup directory',
+        ]
+      : [
+          'cp file.txt backup.txt\n              Copy file to new name',
+          'cp -r srcdir destdir\n              Copy directory recursively',
+          'cp *.txt backup/\n              Copy all .txt files to backup directory',
+        ],
+    [
+      '-r, -R, --recursive\n              Copy directories recursively',
+      '-f, --force\n              Overwrite existing files without prompting',
+      '-i, --interactive\n              Prompt before overwriting files',
+    ],
+    ['mv(1)', 'rm(1)', 'ls(1)'],
+    mode,
+  );
+
+  manPages['mv.1'] = createManualPage(
+    'mv',
+    'move/rename files and directories',
+    'Move or rename files and directories from SOURCE to DEST.',
+    mode === 'portfolio'
+      ? [
+          'mv oldname.txt newname.txt\n              Rename file',
+          'mv file.txt projects/\n              Move file to projects directory',
+          'mv -i file.txt existing.txt\n              Move with interactive prompting',
+        ]
+      : [
+          'mv oldname.txt newname.txt\n              Rename file',
+          'mv file.txt directory/\n              Move file to directory',
+          'mv -i file.txt existing.txt\n              Move with interactive prompting',
+        ],
+    [
+      '-f, --force\n              Overwrite existing files without prompting',
+      '-i, --interactive\n              Prompt before overwriting files',
+      '-n, --no-clobber\n              Do not overwrite existing files',
+    ],
+    ['cp(1)', 'rm(1)', 'ls(1)'],
+    mode,
+  );
+
+  // Text Editor
+  manPages['vi.1'] = createManualPage(
+    'vi',
+    'modal text editor',
+    "A modal text editor inspired by vim. Supports NORMAL and INSERT modes.\n\nMODES\n       NORMAL mode\n              Navigate and execute commands\n              Press 'i' to enter INSERT mode\n              Press ':q' to quit\n              Press ':w' to save\n              Press ':wq' to save and quit\n\n       INSERT mode\n              Edit text content\n              Press ESC to return to NORMAL mode\n\nKEY BINDINGS\n       h, j, k, l    Move cursor (NORMAL mode)\n       i            Enter INSERT mode\n       ESC          Return to NORMAL mode\n       :w           Save file\n       :q           Quit editor\n       :wq          Save and quit",
+    mode === 'portfolio'
+      ? ['vi README.md\n              Edit README.md file', 'vi projects/new-project.md\n              Create and edit new project file']
+      : ['vi README.md\n              Edit README.md file', 'vi new-file.txt\n              Create and edit new file'],
+    undefined,
+    ['cat(1)', 'touch(1)'],
+    mode,
+  );
+
+  // Utilities
+  manPages['echo.1'] = createManualPage(
+    'echo',
+    'display text',
+    'Display text to output. Arguments are separated by spaces and followed\n       by a newline.',
+    [
+      'echo "Hello World"\n              Display text',
+      'echo Hello World\n              Display text without quotes',
+      'echo "Line 1" > file.txt\n              Write text to file',
+    ],
+    undefined,
+    ['cat(1)', 'printf(1)'],
+    mode,
+  );
+
+  manPages['wc.1'] = createManualPage(
+    'wc',
+    'count lines, words, and characters',
+    'Count lines, words, and characters in files.\n\nOUTPUT FORMAT\n       Lines  Words  Characters  Filename',
+    mode === 'portfolio'
+      ? [
+          'wc about/README.md\n              Count lines, words, and characters',
+          'wc projects/*.md\n              Count for all project files',
+          'wc < contact/README.md\n              Count using input redirection',
+        ]
+      : [
+          'wc file.txt\n              Count lines, words, and characters',
+          'wc *.txt\n              Count for all .txt files',
+          'wc < file.txt\n              Count using input redirection',
+        ],
+    undefined,
+    ['cat(1)', 'grep(1)'],
+    mode,
+  );
+
+  manPages['clear.1'] = createManualPage(
+    'clear',
+    'clear terminal screen',
+    'Clear the terminal screen and move cursor to top-left corner.',
+    ['clear\n              Clear terminal screen'],
+    undefined,
+    ['reset(1)'],
+    mode,
+  );
+
+  manPages['history.1'] = createManualPage(
+    'history',
+    'show command history',
+    "Display the command history with line numbers. Commands are stored\n       in the .history file in the user's home directory.",
+    ['history\n              Show command history'],
+    undefined,
+    ['bash(1)'],
+    mode,
+  );
+
+  // Aliases and Shell
+  manPages['alias.1'] = createManualPage(
+    'alias',
+    'create or list command aliases',
+    'Create command aliases or list existing aliases.\n       Aliases provide shortcuts for longer commands.',
+    [
+      'alias\n              List all aliases',
+      "alias ll='ls -l'\n              Create alias for ls -l",
+      "alias work='cd ~/projects && ls'\n              Create multi-command alias",
+      "alias hello='echo Hello, $1!'\n              Create alias with parameter substitution",
+    ],
+    undefined,
+    ['unalias(1)', 'source(1)'],
+    mode,
+  );
+
+  manPages['unalias.1'] = createManualPage(
+    'unalias',
+    'remove command aliases',
+    'Remove command aliases created with the alias command.',
+    ['unalias ll\n              Remove specific alias', 'unalias -a\n              Remove all aliases'],
+    ['-a     Remove all aliases'],
+    ['alias(1)', 'source(1)'],
+    mode,
+  );
+
+  manPages['source.1'] = createManualPage(
+    'source',
+    'execute shell script and apply aliases',
+    'Execute a shell script file and apply alias definitions.\n       Comments and export statements are parsed but not executed.',
+    ['source ~/.bashrc\n              Load aliases from bashrc', 'source myaliases.sh\n              Load aliases from script file'],
+    undefined,
+    ['alias(1)', 'unalias(1)'],
+    mode,
+  );
+
+  // System
+  manPages['help.1'] = createManualPage(
+    'help',
+    'display help information',
+    'Display comprehensive help information about available commands,\n       their options, and usage examples.',
+    ['help\n              Show help information'],
+    undefined,
+    ['man(1)'],
+    mode,
+  );
+
+  manPages['man.1'] = createManualPage(
+    'man',
+    'display manual pages',
+    'Display manual pages for commands. Manual pages are stored in\n       /usr/share/man/man1/ and provide detailed documentation for each command.',
+    [
+      'man ls\n              Display manual page for ls command',
+      'man 1 cat\n              Display manual page for cat from section 1',
+      'man man\n              Display this manual page',
+    ],
+    undefined,
+    ['help(1)', 'info(1)'],
+    mode,
+  );
+
+  manPages['reset-fs.1'] = createManualPage(
+    'reset-fs',
+    'reset filesystem to default state',
+    'Reset the filesystem to its default state based on the current route.\n       This will restore the original file structure and remove any user\n       modifications.',
+    ['reset-fs\n              Reset filesystem to default state'],
+    undefined,
+    ['storage-info(1)'],
+    mode,
+  );
+
+  manPages['storage-info.1'] = createManualPage(
+    'storage-info',
+    'display browser storage information',
+    'Display information about browser storage usage, including filesystem\n       data size, backup status, and last save time.',
+    ['storage-info\n              Show storage information'],
+    undefined,
+    ['reset-fs(1)'],
+    mode,
+  );
+
+  return manPages;
+}
+
+/**
  * Creates a comprehensive default Unix-like filesystem structure for testing and demos.
  * This structure includes typical Unix directories and realistic sample content.
  */
@@ -837,36 +1224,7 @@ Feel free to create more temporary files here.`,
                     size: 4096,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
-                    children: {
-                      'ls.1': {
-                        name: 'ls.1',
-                        type: 'file',
-                        content: `LS(1)                           User Commands                          LS(1)
-
-NAME
-       ls - list directory contents
-
-SYNOPSIS
-       ls [OPTION]... [FILE]...
-
-DESCRIPTION
-       List information about the FILEs (the current directory by default).
-
-OPTIONS
-       -a, --all
-              do not ignore entries starting with .
-
-       -l     use a long listing format
-
-EXAMPLES
-       ls -la
-              List all files in long format, including hidden files.`,
-                        permissions: '-rw-r--r--',
-                        size: 476,
-                        createdAt: new Date(),
-                        modifiedAt: new Date(),
-                      },
-                    },
+                    children: createManualPages('default'),
                   },
                 },
               },
@@ -1808,98 +2166,7 @@ web-clipboard:// /dev/clipboard clipboard defaults 0 0`,
                     size: 4096,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
-                    children: {
-                      'ls.1': {
-                        name: 'ls.1',
-                        type: 'file',
-                        content: `LS(1)                    Portfolio Terminal Manual                    LS(1)
-
-NAME
-       ls - list directory contents
-
-SYNOPSIS
-       ls [OPTION]... [FILE]...
-
-DESCRIPTION
-       List information about the FILEs (the current directory by default).
-       Sort entries alphabetically unless otherwise specified.
-
-OPTIONS
-       -a, --all
-              do not ignore entries starting with .
-
-       -l     use a long listing format
-
-       -la    combination of -l and -a
-
-EXAMPLES
-       ls
-              List files in current directory
-
-       ls -la
-              List all files in long format, including hidden files
-
-       ls /home/user/projects
-              List files in specific directory
-
-AUTHOR
-       Part of the Portfolio Terminal Emulator
-       Built with React Router v7 and TypeScript`,
-                        permissions: '-rw-r--r--',
-                        size: 768,
-                        createdAt: new Date(),
-                        modifiedAt: new Date(),
-                      },
-                      'vi.1': {
-                        name: 'vi.1',
-                        type: 'file',
-                        content: `VI(1)                    Portfolio Terminal Manual                    VI(1)
-
-NAME
-       vi - modal text editor
-
-SYNOPSIS
-       vi [FILE]
-
-DESCRIPTION
-       A modal text editor inspired by vim. Supports NORMAL and INSERT modes.
-
-MODES
-       NORMAL mode
-              Navigate and execute commands
-              Press 'i' to enter INSERT mode
-              Press ':q' to quit
-              Press ':w' to save
-              Press ':wq' to save and quit
-
-       INSERT mode
-              Edit text content
-              Press ESC to return to NORMAL mode
-
-KEY BINDINGS
-       h, j, k, l    Move cursor (NORMAL mode)
-       i            Enter INSERT mode
-       ESC          Return to NORMAL mode
-       :w           Save file
-       :q           Quit editor
-       :wq          Save and quit
-
-EXAMPLES
-       vi README.md
-              Edit README.md file
-
-       vi new-file.txt
-              Create and edit new file
-
-AUTHOR
-       Part of the Portfolio Terminal Emulator
-       Modal editing implementation in TypeScript`,
-                        permissions: '-rw-r--r--',
-                        size: 1024,
-                        createdAt: new Date(),
-                        modifiedAt: new Date(),
-                      },
-                    },
+                    children: createManualPages('portfolio'),
                   },
                 },
               },
