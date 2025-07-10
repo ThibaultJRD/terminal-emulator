@@ -760,6 +760,7 @@ export const commands: Record<string, CommandHandler> = {
       'Command Chaining:',
       '  cmd1 && cmd2     - Execute cmd2 only if cmd1 succeeds (exit code 0)',
       '  cmd1 || cmd2     - Execute cmd2 only if cmd1 fails (exit code != 0)',
+      '  cmd1 ; cmd2      - Execute cmd2 unconditionally after cmd1',
       '  echo $?          - Display exit code of last command',
       '',
       'Options can be combined (e.g., ls -la, rm -rf, cp -rf)',
@@ -789,6 +790,7 @@ export const commands: Record<string, CommandHandler> = {
       '  man ls',
       '  mkdir test && echo "Success!" || echo "Failed!"',
       '  ls nonexistent || echo "File not found"',
+      '  echo "first"; echo "second"; echo "third"',
       '  echo $?',
     ].join('\n');
 
@@ -825,6 +827,7 @@ function executeChainedCommand(chainedCommand: ChainedCommand, filesystem: FileS
       // || operator: only execute if previous command failed
       break;
     }
+    // ; operator: always execute (no condition to check)
 
     // Execute the command
     const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode);

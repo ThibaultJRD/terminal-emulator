@@ -13,7 +13,7 @@ export interface ParsedCommand {
 
 export interface ChainedCommand {
   commands: ParsedCommand[];
-  operators: ('&&' | '||')[];
+  operators: ('&&' | '||' | ';')[];
 }
 
 // Security constants
@@ -138,7 +138,7 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
   }
 
   // Check for command chaining operators
-  const chainRegex = /(\|\||&&)/g;
+  const chainRegex = /(\|\||&&|;)/g;
   const matches = [...trimmed.matchAll(chainRegex)];
 
   if (matches.length === 0) {
@@ -148,7 +148,7 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
 
   // Parse chained commands
   const commands: ParsedCommand[] = [];
-  const operators: ('&&' | '||')[] = [];
+  const operators: ('&&' | '||' | ';')[] = [];
 
   let lastIndex = 0;
   for (const match of matches) {
@@ -156,7 +156,7 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
     if (commandStr) {
       commands.push(parseCommand(commandStr));
     }
-    operators.push(match[1] as '&&' | '||');
+    operators.push(match[1] as '&&' | '||' | ';');
     lastIndex = match.index! + match[0].length;
   }
 

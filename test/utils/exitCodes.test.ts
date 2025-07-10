@@ -78,12 +78,34 @@ describe('Exit Codes and Command Chaining', () => {
       }
     });
 
+    it('should parse ; operator', () => {
+      const result = parseChainedCommand('echo first ; echo second');
+      expect('commands' in result).toBe(true);
+      if ('commands' in result) {
+        expect(result.commands).toHaveLength(2);
+        expect(result.operators).toEqual([';']);
+        expect(result.commands[0].command).toBe('echo');
+        expect(result.commands[0].args).toEqual(['first']);
+        expect(result.commands[1].command).toBe('echo');
+        expect(result.commands[1].args).toEqual(['second']);
+      }
+    });
+
     it('should parse multiple chained commands', () => {
       const result = parseChainedCommand('echo a && echo b || echo c');
       expect('commands' in result).toBe(true);
       if ('commands' in result) {
         expect(result.commands).toHaveLength(3);
         expect(result.operators).toEqual(['&&', '||']);
+      }
+    });
+
+    it('should parse mixed operators including ;', () => {
+      const result = parseChainedCommand('echo a ; echo b && echo c');
+      expect('commands' in result).toBe(true);
+      if ('commands' in result) {
+        expect(result.commands).toHaveLength(3);
+        expect(result.operators).toEqual([';', '&&']);
       }
     });
   });
@@ -130,6 +152,29 @@ describe('Exit Codes and Command Chaining', () => {
       // First command fails, second succeeds
       const result = executeCommand('ls nonexistent || echo "recovered"', filesystem);
       expect(result.success).toBe(true);
+      expect(result.exitCode).toBe(0); // exit code of echo
+    });
+
+    it('should execute all commands with ; operator regardless of exit codes', () => {
+      const result = executeCommand('echo "first"; ls nonexistent; echo "third"', filesystem);
+      expect(result.success).toBe(true); // Last command succeeds
+      expect(result.output).toContain('first');
+      expect(result.output).toContain('third');
+      expect(result.exitCode).toBe(0); // exit code of last command (echo)
+    });
+
+    it('should execute commands sequentially with ; operator', () => {
+      const result = executeCommand('echo "1"; echo "2"; echo "3"', filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('1\n2\n3\n');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should not stop on failure with ; operator', () => {
+      // mkdir will fail because directory already exists, but echo should still run
+      const result = executeCommand('mkdir home; echo "still runs"', filesystem);
+      expect(result.success).toBe(true); // Last command succeeds
+      expect(result.output).toContain('still runs');
       expect(result.exitCode).toBe(0); // exit code of echo
     });
   });
