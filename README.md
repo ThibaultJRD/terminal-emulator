@@ -23,6 +23,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Directories**: `mkdir` (with `-p` to create parents)
 - **Text Editor**: `vi` (vim-inspired editor with INSERT/NORMAL modes)
 - **Filesystem Management**: `reset-fs`, `storage-info`
+- **Alias System**: `alias`, `unalias`, `source` (shell script parsing)
 - **Utilities**: `echo`, `wc`, `clear`, `help`
 
 ### 🔄 I/O Redirection
@@ -132,6 +133,8 @@ app/
 │       ├── commandParser.ts # Parsing with redirection
 │       ├── optionParser.ts  # Unix option parsing
 │       ├── autocompletion.ts # Autocompletion system + new commands
+│       ├── aliasManager.ts  # Alias system management
+│       ├── shellParser.ts   # Shell script parsing
 │       ├── markdown.ts      # Markdown rendering
 │       ├── defaultFilesystems.ts # Default and portfolio filesystems
 │       ├── persistence.ts   # Browser localStorage management
@@ -189,6 +192,13 @@ vi document.md         # Open file in vi text editor
 reset-fs               # Reset to deployment-configured filesystem
 storage-info           # Show storage information
 
+# Alias System
+alias ll='ls -la'      # Create alias
+alias backup='cp $1 $1.backup'  # Alias with parameters
+alias                  # List all aliases
+unalias ll             # Remove alias
+source aliases.sh      # Load aliases from shell script
+
 # Utilities
 wc file.txt            # Count lines/words/characters
 clear                  # Clear screen
@@ -213,6 +223,105 @@ cat << EOF                     # Simplified heredoc
 - `Tab` after partial path → completes file/directory
 - `Tab` after `>` or `>>` → completes destination files
 - `Tab` after `<` → completes source files only
+
+### Alias System
+
+The terminal includes a powerful alias system for creating command shortcuts and automating common tasks.
+
+#### Creating and Managing Aliases
+
+```bash
+# Create simple aliases
+alias ll='ls -la'
+alias la='ls -a'
+alias '..'='cd ..'
+
+# Create aliases with parameters
+alias backup='cp $1 $1.backup'        # $1 = first argument
+alias search='find . -name "*$1*"'     # Parameter substitution
+alias mygrep='grep --color=auto $*'    # $* = all arguments
+
+# List all aliases
+alias
+
+# Show specific alias
+alias ll
+
+# Remove aliases
+unalias ll          # Remove specific alias
+unalias -a          # Remove all aliases
+```
+
+#### Parameter Substitution
+
+Aliases support advanced parameter substitution:
+
+- `$1`, `$2`, `$3`, ... - Individual arguments
+- `$*` - All arguments as a single string
+- `$@` - All arguments as separate quoted strings
+
+```bash
+# Example with multiple parameters
+alias copy2='cp $1 $2 && echo "Copied $1 to $2"'
+copy2 file.txt backup.txt
+
+# Using all arguments
+alias search-all='find . -name "*$1*" -exec grep -l "$*" {} \;'
+search-all config database settings
+```
+
+### Shell Script Parsing
+
+The terminal can parse and execute shell script files containing alias definitions.
+
+#### Using the Source Command
+
+```bash
+# Create a shell script with aliases
+cat > aliases.sh << 'EOF'
+# Common development aliases
+alias ll='ls -la'
+alias la='ls -a'
+alias grep='grep --color=auto'
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# Git aliases
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+EOF
+
+# Load aliases from the script
+source aliases.sh
+
+# Now all aliases are available
+ll
+gs
+```
+
+#### Shell Script Features
+
+- **Comment Support**: Lines starting with `#` are ignored
+- **Alias Definitions**: Both quoted and unquoted syntax supported
+- **Export Statements**: Recognized but not executed for security
+- **Error Reporting**: Detailed error messages with line numbers
+
+```bash
+# Supported shell script syntax
+alias name='command'     # Quoted form
+alias name=command       # Unquoted form
+export VAR=value        # Recognized but not executed
+# This is a comment      # Comments are ignored
+```
+
+#### Security Features
+
+- **Input Validation**: Alias names must follow strict naming rules
+- **Dangerous Command Detection**: Blocks potentially harmful commands
+- **Circular Reference Protection**: Prevents infinite alias loops
+- **Size Limits**: Aliases are limited to reasonable sizes
+- **Safe Parsing**: Shell scripts are parsed safely without execution
 
 ## 📝 Text Editor
 
@@ -569,17 +678,20 @@ Shows:
 
 ### Test Structure
 
-- **Unit Tests** (225 tests)
+- **Unit Tests** (225+ tests)
   - File system operations and persistence
   - Command implementations (including text editor commands)
   - Command and option parsers with advanced features
   - Text editor functionality (69 comprehensive tests)
   - Autocompletion system with Unicode support (47 tests)
-- **Integration Tests** (85 tests)
+  - Alias system and shell script parsing (comprehensive coverage)
+- **Integration Tests** (85+ tests)
   - Complete command execution workflows
   - Text editor integration with filesystem
   - I/O redirection scenarios with Unicode content
   - Unicode and emoji support across all features
+  - Alias resolution and parameter substitution
+  - Shell script parsing and execution
   - Error handling and edge cases
 
 ### Coverage
@@ -590,6 +702,8 @@ Shows:
 - ✅ Complete text editor functionality (modes, vim commands, file operations)
 - ✅ Autocompletion in all contexts including Unicode filenames
 - ✅ Unicode and emoji support throughout the system
+- ✅ Alias system with parameter substitution and circular reference detection
+- ✅ Shell script parsing with security validation
 - ✅ Error scenarios, edge cases, and performance testing
 - ✅ Browser storage and persistence functionality
 
