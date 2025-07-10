@@ -110,9 +110,9 @@ yarn run start:local
 yarn run typecheck
 
 # Testing
-yarn test
-yarn test -- --watch     # Watch mode
-yarn test -- --coverage  # With coverage
+yarn test:run
+yarn test          # Watch mode
+yarn test:coverage # With coverage
 ```
 
 ### Important: Local Development vs Production
@@ -492,7 +492,7 @@ vi newfile.txt
 - **0** - Beginning of line
 - **$** - End of line
 - **G** - Go to end of file
-- **gg** - Go to beginning of file
+- **gg** - Go to beginning of file (Not working)
 - **Page Up/Down** - Navigate by pages
 - **Home/End** - Move to line start/end
 
@@ -500,6 +500,8 @@ vi newfile.txt
 
 - **i** - Enter INSERT mode at cursor
 - **a** - Append after cursor (INSERT mode)
+- **I** - Insert before line (INSERT mode)
+- **A** - Append after line (INSERT mode)
 - **o** - Open new line below cursor (INSERT mode)
 - **O** - Open new line above cursor (INSERT mode)
 - **x** - Delete character under cursor
@@ -521,7 +523,6 @@ vi newfile.txt
 - **:q** - Quit (fails if unsaved changes)
 - **:q!** - Force quit without saving
 - **:wq** - Save and quit
-- **:help** - Show help
 
 ### Keyboard Shortcuts
 
@@ -634,14 +635,13 @@ A comprehensive Unix-like filesystem with:
 
 An interactive portfolio showcasing real professional experience:
 
-- `/about/` - Professional bio, skills, CV, and development philosophy
-- `/projects/` - Real projects including:
+- `~/about/` - Professional bio, skills, CV, and development philosophy
+- `~/projects/` - Real projects including:
   - **Fruitz App**: Dating app with 50k+ downloads, acquired by Bumble
   - **BNC Banking App**: Mobile banking serving 4M+ monthly users
   - **Blockchain Projects**: Lum Network Explorer, Chain-Bridge, Cosmos Millions
   - **Other Projects**: Bonjour Menu (COVID-19 solution), Terminal Emulator
-- `/contact/` - Contact information and professional social links
-- `/blog/` - Technical articles and development insights
+- `~/contact/` - Contact information and professional social links
 
 ### Accessing Different Modes
 
@@ -653,16 +653,6 @@ https://your-domain.com/
 
 # Access interactive portfolio
 https://your-domain.com/portfolio
-```
-
-### Legacy Environment Variable Configuration
-
-The `VITE_FILESYSTEM_MODE` environment variable is still used for the `reset-fs` command:
-
-```bash
-# Configure which filesystem the reset-fs command uses
-VITE_FILESYSTEM_MODE=default npm run build   # Reset to Unix filesystem
-VITE_FILESYSTEM_MODE=portfolio npm run build # Reset to portfolio filesystem
 ```
 
 ### Filesystem Management Commands
@@ -859,7 +849,7 @@ The project uses the Catppuccin Mocha theme with consistent colors:
 
 ### Frameworks and Tools
 
-- **React Router v7**: CSR mode for better state management
+- **React Router v7**: Prerendering mode
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`
 - **TailwindCSS v4**: Custom Catppuccin theme
 - **Vite**: Build tool and dev server
