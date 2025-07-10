@@ -24,6 +24,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Text Editor**: `vi` (vim-inspired editor with INSERT/NORMAL modes)
 - **Filesystem Management**: `reset-fs`, `storage-info`
 - **Alias System**: `alias`, `unalias`, `source` (shell script parsing)
+- **Manual System**: `man` (command manuals and documentation)
 - **Utilities**: `echo`, `wc`, `clear`, `help`
 
 ### 🔄 I/O Redirection
@@ -203,6 +204,7 @@ source aliases.sh      # Load aliases from shell script
 wc file.txt            # Count lines/words/characters
 clear                  # Clear screen
 help                   # Command help
+man command            # Show manual for command
 ```
 
 ### Advanced Redirection

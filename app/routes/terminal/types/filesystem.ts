@@ -18,6 +18,7 @@ export interface CommandResult {
   success: boolean;
   output: string | OutputSegment[];
   error?: string;
+  exitCode: number;
 }
 
 export interface OutputSegment {
@@ -55,6 +56,7 @@ export interface TerminalState {
   output: string[];
   filesystem: FileSystemState;
   aliasManager: import('~/routes/terminal/utils/aliasManager').AliasManager;
+  lastExitCode: number;
 }
 
 export type Command =
@@ -83,5 +85,6 @@ export interface CommandHandler {
     filesystem: FileSystemState,
     aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
   ): CommandResult;
 }
