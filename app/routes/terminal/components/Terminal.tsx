@@ -149,7 +149,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       }
 
       // Execute command safely
-      const result = executeCommandSafely(input, terminalState.filesystem);
+      const result = executeCommandSafely(input, terminalState.filesystem, terminalState.aliasManager);
 
       // Handle command execution error
       if (!result.success) {
@@ -304,7 +304,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           }
         } else {
           // Start completion
-          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem);
+          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem, terminalState.aliasManager);
 
           if (result.completions.length === 0) {
             return;

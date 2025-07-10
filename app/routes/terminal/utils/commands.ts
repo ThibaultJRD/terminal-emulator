@@ -1,4 +1,5 @@
 import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
+import type { AliasManager } from '~/routes/terminal/utils/aliasManager';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import {
   ERROR_MESSAGES,
@@ -14,6 +15,7 @@ import { createDirectory, createFile, deleteNode, formatPath, getNodeAtPath, res
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
 import { getStorageInfo } from '~/routes/terminal/utils/persistence';
+import { ALIAS_NAME_REGEX, ShellParser } from '~/routes/terminal/utils/shellParser';
 
 import { unicodeSafeBtoa } from './unicodeBase64';
 
@@ -72,7 +74,7 @@ function validateFilesystemSize(filesystem: FileSystemState): { valid: boolean; 
 }
 
 export const commands: Record<string, CommandHandler> = {
-  cd: (args: string[], filesystem: FileSystemState): CommandResult => {
+  cd: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       // Use appropriate home directory based on filesystem mode
       filesystem.currentPath = ['home', 'user'];
@@ -102,7 +104,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  ls: (args: string[], filesystem: FileSystemState): CommandResult => {
+  ls: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
     const showHidden = flags.has('a');
     const showDetails = flags.has('l');
@@ -141,11 +143,11 @@ export const commands: Record<string, CommandHandler> = {
     }
   },
 
-  pwd: (args: string[], filesystem: FileSystemState): CommandResult => {
+  pwd: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     return { success: true, output: formatPath(filesystem.currentPath) };
   },
 
-  touch: (args: string[], filesystem: FileSystemState): CommandResult => {
+  touch: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
@@ -197,7 +199,7 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult('');
   },
 
-  cat: (args: string[], filesystem: FileSystemState): CommandResult => {
+  cat: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('cat', 'file'));
     }
@@ -224,7 +226,7 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult(content);
   },
 
-  mkdir: (args: string[], filesystem: FileSystemState): CommandResult => {
+  mkdir: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
@@ -243,7 +245,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  rm: (args: string[], filesystem: FileSystemState): CommandResult => {
+  rm: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length === 0) {
@@ -263,7 +265,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  rmdir: (args: string[], filesystem: FileSystemState): CommandResult => {
+  rmdir: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'rmdir: missing operand' };
     }
@@ -312,16 +314,16 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: '' };
   },
 
-  clear: (args: string[], filesystem: FileSystemState): CommandResult => {
+  clear: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     return { success: true, output: 'CLEAR' };
   },
 
-  echo: (args: string[], filesystem: FileSystemState): CommandResult => {
+  echo: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const output = args.join(' ');
     return { success: true, output: output + '\n' };
   },
 
-  wc: (args: string[], filesystem: FileSystemState): CommandResult => {
+  wc: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'wc: missing operand' };
     }
@@ -370,7 +372,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: results.join('\n') };
   },
 
-  'reset-fs': (args: string[], filesystem: FileSystemState): CommandResult => {
+  'reset-fs': (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     // This command needs special handling in the terminal component
     // It will trigger a filesystem reset to default state
     return {
@@ -379,7 +381,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  'storage-info': (args: string[], filesystem: FileSystemState): CommandResult => {
+  'storage-info': (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const info = getStorageInfo();
     const formatSize = (bytes: number): string => {
       if (bytes < 1024) return `${bytes} B`;
@@ -401,7 +403,7 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output };
   },
 
-  vi: (args: string[], filesystem: FileSystemState): CommandResult => {
+  vi: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       return {
         success: false,
@@ -436,7 +438,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  history: (args: string[], filesystem: FileSystemState): CommandResult => {
+  history: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     // Determine history file path based on filesystem structure
     const homeUser = getNodeAtPath(filesystem, ['home', 'user']);
     const historyPath = homeUser && homeUser.type === 'directory' ? ['home', 'user', '.history'] : ['.history'];
@@ -459,7 +461,7 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
-  cp: (args: string[], filesystem: FileSystemState): CommandResult => {
+  cp: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length < 2) {
@@ -497,7 +499,7 @@ export const commands: Record<string, CommandHandler> = {
     return copyFileOrDirectory(filesystem, source, destination, recursive, force, interactive);
   },
 
-  mv: (args: string[], filesystem: FileSystemState): CommandResult => {
+  mv: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const { flags, positionalArgs } = parseOptions(args);
 
     if (positionalArgs.length < 2) {
@@ -535,7 +537,137 @@ export const commands: Record<string, CommandHandler> = {
     return moveFileOrDirectory(filesystem, source, destination, force, interactive, noOverwrite);
   },
 
-  help: (args: string[], filesystem: FileSystemState): CommandResult => {
+  alias: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    if (!aliasManager) {
+      return createErrorResult('alias: alias manager not available');
+    }
+
+    // If no arguments, list all aliases
+    if (args.length === 0) {
+      const aliases = aliasManager.getAllAliases();
+      if (aliases.length === 0) {
+        return createSuccessResult('');
+      }
+
+      const output = aliases.map((alias) => ShellParser.formatAlias(alias.name, alias.command)).join('\n');
+      return createSuccessResult(output);
+    }
+
+    // Parse alias definition
+    const input = args.join(' ');
+    const aliasMatch = input.match(/^([a-zA-Z_.][a-zA-Z0-9_.]*)\s*=\s*(.+)$/);
+
+    if (!aliasMatch) {
+      // Show specific alias if just name is provided
+      const aliasName = args[0];
+      const alias = aliasManager.getAlias(aliasName);
+      if (alias) {
+        return createSuccessResult(ShellParser.formatAlias(alias.name, alias.command));
+      } else {
+        return createErrorResult(`alias: ${aliasName}: not found`);
+      }
+    }
+
+    const [, name, command] = aliasMatch;
+
+    // Remove quotes from command if present
+    let cleanCommand = command.trim();
+    if ((cleanCommand.startsWith('"') && cleanCommand.endsWith('"')) || (cleanCommand.startsWith("'") && cleanCommand.endsWith("'"))) {
+      cleanCommand = cleanCommand.slice(1, -1);
+    }
+
+    // Validate alias
+    const validation = ShellParser.validateAlias(name, cleanCommand);
+    if (!validation.valid) {
+      return createErrorResult(`alias: ${validation.error}`);
+    }
+
+    // Set alias
+    const success = aliasManager.setAlias(name, cleanCommand);
+    if (!success) {
+      return createErrorResult(`alias: failed to set alias '${name}'`);
+    }
+
+    return createSuccessResult('');
+  },
+
+  unalias: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    if (!aliasManager) {
+      return createErrorResult('unalias: alias manager not available');
+    }
+
+    if (args.length === 0) {
+      return createErrorResult('unalias: missing operand');
+    }
+
+    const { flags, positionalArgs } = parseOptions(args);
+    const removeAll = flags.has('a');
+
+    if (removeAll) {
+      aliasManager.clearAliases();
+      return createSuccessResult('');
+    }
+
+    for (const aliasName of positionalArgs) {
+      const success = aliasManager.removeAlias(aliasName);
+      if (!success) {
+        return createErrorResult(`unalias: ${aliasName}: not found`);
+      }
+    }
+
+    return createSuccessResult('');
+  },
+
+  source: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    if (!aliasManager) {
+      return createErrorResult('source: alias manager not available');
+    }
+
+    if (args.length === 0) {
+      return createErrorResult('source: missing operand');
+    }
+
+    const filename = args[0];
+    const targetPath = resolvePath(filesystem, filename);
+    const file = getNodeAtPath(filesystem, targetPath);
+
+    if (!file) {
+      return createErrorResult(`source: ${filename}: No such file or directory`);
+    }
+
+    if (file.type === 'directory') {
+      return createErrorResult(`source: ${filename}: Is a directory`);
+    }
+
+    const content = file.content || '';
+
+    // Parse the shell script
+    const parseResult = ShellParser.parse(content);
+
+    if (parseResult.errors.length > 0) {
+      return createErrorResult(`source: ${filename}: ${parseResult.errors.join(', ')}`);
+    }
+
+    // Execute the parsed script
+    const executeResult = ShellParser.execute(parseResult, aliasManager);
+
+    if (!executeResult.success) {
+      return createErrorResult(`source: ${filename}: ${executeResult.errors.join(', ')}`);
+    }
+
+    // Generate success message
+    const messages: string[] = [];
+    if (executeResult.appliedAliases.length > 0) {
+      messages.push(`Applied ${executeResult.appliedAliases.length} alias${executeResult.appliedAliases.length === 1 ? '' : 'es'}`);
+    }
+    if (parseResult.commandCount > 0) {
+      messages.push(`Ignored ${parseResult.commandCount} command${parseResult.commandCount === 1 ? '' : 's'} (commands not executed for security)`);
+    }
+
+    return createSuccessResult(messages.length > 0 ? messages.join(', ') : '');
+  },
+
+  help: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const helpText = [
       'Available commands:',
       '',
@@ -557,6 +689,11 @@ export const commands: Record<string, CommandHandler> = {
       'Filesystem Management:',
       '  reset-fs         - Reset filesystem to deployment-configured state',
       '  storage-info     - Show browser storage information',
+      '',
+      'Aliases and Shell:',
+      '  alias [name=cmd] - Create or list command aliases',
+      '  unalias [-a] <name> - Remove alias (-a: remove all)',
+      '  source <file>    - Execute shell script and apply aliases',
       '',
       'Utilities:',
       '  echo <text>      - Print text to output',
@@ -583,6 +720,11 @@ export const commands: Record<string, CommandHandler> = {
       '  wc < example.md',
       '  cat readme.txt >> log.txt',
       '  vi myfile.txt',
+      "  alias ll='ls -l'",
+      "  alias work='cd ~/projects && ls'",
+      "  alias hello='echo Hello, $1!'",
+      '  hello World',
+      '  source ~/.bashrc',
       '  reset-fs',
     ].join('\n');
 
@@ -590,12 +732,30 @@ export const commands: Record<string, CommandHandler> = {
   },
 };
 
-export function executeCommand(input: string, filesystem: FileSystemState): CommandResult {
+export function executeCommand(input: string, filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult {
   const parsed = parseCommand(input);
-  const { command, args, redirectOutput, redirectInput } = parsed;
+  let { command, args, redirectOutput, redirectInput } = parsed;
 
   if (!command) {
     return { success: true, output: '' };
+  }
+
+  // Resolve aliases if alias manager is available
+  if (aliasManager && aliasManager.hasAlias(command)) {
+    const resolvedCommand = aliasManager.resolveAlias(command, args);
+    if (resolvedCommand) {
+      // Parse the resolved command
+      const resolvedParsed = parseCommand(resolvedCommand);
+      command = resolvedParsed.command;
+      args = resolvedParsed.args;
+      // Note: We don't override redirections from the original command
+      if (!redirectOutput && resolvedParsed.redirectOutput) {
+        redirectOutput = resolvedParsed.redirectOutput;
+      }
+      if (!redirectInput && resolvedParsed.redirectInput) {
+        redirectInput = resolvedParsed.redirectInput;
+      }
+    }
   }
 
   // Handle input redirection
@@ -639,7 +799,7 @@ export function executeCommand(input: string, filesystem: FileSystemState): Comm
     };
   }
 
-  const result = handler(finalArgs, filesystem);
+  const result = handler(finalArgs, filesystem, aliasManager);
 
   // Handle output redirection
   if (result.success && redirectOutput) {

@@ -8,7 +8,11 @@ export interface AutocompletionResult {
   commonPrefix: string;
 }
 
-export function getAutocompletions(input: string, filesystem: FileSystemState): AutocompletionResult {
+export function getAutocompletions(
+  input: string,
+  filesystem: FileSystemState,
+  aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
+): AutocompletionResult {
   // Check for redirection operators
   const redirectMatch = input.match(/^(.+?)\s*(>>|>|<<|<)\s*(.*)$/);
 
@@ -35,7 +39,9 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
     // Command completion
     const commandName = parts[0] || '';
     const commandNames = Object.keys(commands);
-    const matchingCommands = commandNames.filter((cmd) => cmd.startsWith(commandName));
+    const aliasNames = aliasManager ? aliasManager.getAliasNames() : [];
+    const allCommands = [...commandNames, ...aliasNames];
+    const matchingCommands = allCommands.filter((cmd) => cmd.startsWith(commandName));
 
     return {
       completions: matchingCommands,
@@ -73,8 +79,30 @@ export function getAutocompletions(input: string, filesystem: FileSystemState): 
     return getDirectoryCompletions(pathArg, filesystem);
   }
 
-  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi', 'cp', 'mv'].includes(command)) {
+  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi', 'cp', 'mv', 'source'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
+  }
+
+  // Special handling for unalias command - complete with existing alias names
+  if (command === 'unalias' && aliasManager) {
+    const aliasNames = aliasManager.getAliasNames();
+    const matchingAliases = aliasNames.filter((alias) => alias.startsWith(pathArg));
+
+    return {
+      completions: matchingAliases,
+      commonPrefix: getCommonPrefix(matchingAliases),
+    };
+  }
+
+  // Special handling for alias command - complete with existing alias names
+  if (command === 'alias' && aliasManager) {
+    const aliasNames = aliasManager.getAliasNames();
+    const matchingAliases = aliasNames.filter((alias) => alias.startsWith(pathArg));
+
+    return {
+      completions: matchingAliases,
+      commonPrefix: getCommonPrefix(matchingAliases),
+    };
   }
 
   // No special completions needed for reset-fs as it no longer takes arguments

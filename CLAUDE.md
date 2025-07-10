@@ -59,6 +59,8 @@ app/
 │   │       ├── commands.ts          # Terminal command implementations
 │   │       ├── commandParser.ts     # Command parsing with redirection support
 │   │       ├── optionParser.ts      # Unix-style option parsing (e.g., -la, -rf)
+│   │       ├── aliasManager.ts      # Alias system management and resolution
+│   │       ├── shellParser.ts       # Shell script parsing with security validation
 │   │       ├── autocompletion.ts    # Tab completion system
 │   │       ├── defaultFilesystems.ts # Default and portfolio filesystem definitions
 │   │       └── markdown.ts          # Markdown rendering with Catppuccin
@@ -72,7 +74,7 @@ app/
 
 ### Terminal Features
 
-- **Commands**: cd, ls, pwd, touch, cat, mkdir, rm, rmdir, clear, help, echo, wc, reset-fs
+- **Commands**: cd, ls, pwd, touch, cat, mkdir, rm, rmdir, clear, help, echo, wc, reset-fs, alias, unalias, source
 - **Command Options**: Advanced option parsing supporting combined flags
   - `ls -a` (show hidden), `-l` (long format), `-la` (combined)
   - `mkdir -p` (create parent directories)
@@ -85,8 +87,19 @@ app/
   - `command >> file` - Append output to file
   - `command < file` - Read input from file
   - `command << delimiter` - Heredoc input (simplified)
+- **Alias System**: Comprehensive alias management with security features
+  - `alias name='command'` - Create command shortcuts
+  - `alias name='command $1 $2'` - Parameter substitution support
+  - `unalias name` - Remove aliases, `unalias -a` for all
+  - `source file.sh` - Load aliases from shell script files
+  - Circular reference detection and dangerous command blocking
+- **Shell Script Parsing**: Safe parsing of shell script files
+  - Comment handling (`# comments`)
+  - Alias definition parsing (quoted and unquoted syntax)
+  - Export statement recognition (parsed but not executed)
+  - Comprehensive error reporting with line numbers
 - **History**: Arrow key navigation through command history
-- **Autocompletion**: Tab completion for commands, file paths, and redirection
+- **Autocompletion**: Tab completion for commands, file paths, aliases, and redirection
 - **Markdown Rendering**: cat command renders .md files with Catppuccin-styled formatting
 - **Theme**: Catppuccin Mocha colorscheme with monospace font
 
@@ -98,10 +111,12 @@ app/
 - Filesystem state is managed in React component state
 - Commands return structured output (string or OutputSegment[]) for rich formatting
 - Markdown files are parsed and rendered with Catppuccin theme colors
-- Autocompletion handles command names, file paths, and redirection operators
-- Modular command system with separate parsers for commands, options, and redirection
+- Autocompletion handles command names, file paths, aliases, and redirection operators
+- Modular command system with separate parsers for commands, options, redirection, and aliases
 - Path resolution supports both relative and absolute paths throughout the system
 - Option parsing follows Unix conventions (short flags, combined flags, long options)
+- Alias system with parameter substitution, circular reference detection, and security validation
+- Shell script parsing with safe syntax recognition and comprehensive error handling
 
 ### Catppuccin Theme
 
@@ -149,10 +164,13 @@ The project includes a comprehensive test suite using Vitest:
   - `test/utils/optionParser.test.ts` - Unix-style option parsing
   - `test/utils/commands.test.ts` - Individual command implementations
   - `test/utils/autocompletion.test.ts` - Tab completion functionality
+  - `test/utils/aliasManager.test.ts` - Alias system management and resolution
+  - `test/utils/shellParser.test.ts` - Shell script parsing validation
 
 - **Integration Tests**: Test complete command workflows
   - `test/integration/commandExecution.test.ts` - End-to-end command execution
-  - Tests redirection, complex scenarios, and error handling
+  - `test/integration/aliasIntegration.test.ts` - Alias resolution and parameter substitution
+  - Tests redirection, complex scenarios, alias functionality, and error handling
 
 ### Running Tests
 
@@ -165,10 +183,12 @@ npm test -- --coverage  # Run tests with coverage report
 ### Test Coverage
 
 - Commands: All commands tested with various options and edge cases
-- Parsing: Command parsing, option parsing, and redirection operators
+- Parsing: Command parsing, option parsing, redirection operators, and shell script parsing
 - Filesystem: File operations, path resolution, and directory navigation
-- Autocompletion: Command completion, path completion, and redirection completion
-- Integration: Complex workflows, error scenarios, and real-world usage patterns
+- Autocompletion: Command completion, path completion, alias completion, and redirection completion
+- Alias System: Alias creation, deletion, resolution, parameter substitution, and circular reference detection
+- Shell Script Parsing: Syntax validation, comment handling, alias definition parsing, and error reporting
+- Integration: Complex workflows, error scenarios, alias functionality, and real-world usage patterns
 
 ## Deployment
 
@@ -205,12 +225,16 @@ The application automatically serves the appropriate filesystem based on the acc
 - Run `yarn test` to ensure all functionality works correctly
 - The filesystem is initialized with a default structure but can be customized in `routes/terminal/utils/filesystem.ts`
 - Command implementations follow Unix-like behavior and error messages
-- Tab completion supports single completion, multiple options, and redirection contexts
+- Tab completion supports single completion, multiple options, aliases, and redirection contexts
 - Markdown rendering supports headers, bold/italic, code blocks, links, lists, blockquotes, and horizontal rules
 - The cat command automatically detects .md files and applies syntax highlighting with Catppuccin colors
 - Redirection operators are parsed before command execution and handle both string and array outputs
 - Option parsing supports both individual flags (-a -l) and combined flags (-al)
 - Path resolution works consistently across all commands and supports nested directory structures
+- Alias system integrates with command resolution and autocompletion
+- Shell script parsing follows safe practices with comprehensive validation and error handling
+- AliasManager provides centralized alias management with persistence support
+- Parameter substitution in aliases supports $1, $2, $\*, $@ patterns with proper escaping
 
 ## Security Features
 
@@ -237,12 +261,21 @@ The application implements several security measures to protect against common v
 - **Error Handling**: Comprehensive error handling prevents information leakage
 - **Regex Security**: Improved regex patterns prevent ReDoS vulnerabilities
 
+### Alias System Security
+
+- **Input Validation**: Alias names validated with strict regex patterns
+- **Command Validation**: Dangerous commands blocked during alias creation
+- **Circular Reference Protection**: Maximum recursion depth prevents infinite loops
+- **Parameter Sanitization**: Safe parameter substitution in alias resolution
+- **Size Limits**: Alias names and commands limited to prevent abuse
+
 ### Safe Defaults
 
 - **No eval()**: The application never uses eval() or similar dangerous functions
 - **Client-side Only**: No server-side processing reduces attack surface
 - **TypeScript**: Strong typing helps prevent many common vulnerabilities
 - **Modular Architecture**: Well-separated concerns make security easier to maintain
+- **Safe Parsing**: Shell scripts parsed without arbitrary command execution
 
 ### Static Files and Well-Known Routes
 
@@ -252,6 +285,57 @@ For `.well-known` routes and other static files, place them in the `public/` dir
 - Example: `public/.well-known/apple-app-site-association` will be accessible at `/.well-known/apple-app-site-association`
 - This approach is more efficient than creating React routes for static content
 - Common use cases: SSL certificates, app associations, security.txt, robots.txt, etc.
+
+## Alias System Usage
+
+### Creating and Managing Aliases
+
+```bash
+# Create simple aliases
+alias ll='ls -la'
+alias la='ls -a'
+alias '..'='cd ..'
+
+# Create aliases with parameter substitution
+alias backup='cp $1 $1.backup'        # Single parameter
+alias search='find . -name "*$1*"'     # Parameter in string
+alias multi='command $1 $2 $3'         # Multiple parameters
+alias all='grep $* file.txt'           # All parameters
+
+# List and remove aliases
+alias                                   # List all aliases
+alias ll                                # Show specific alias
+unalias ll                              # Remove specific alias
+unalias -a                              # Remove all aliases
+```
+
+### Shell Script Integration
+
+```bash
+# Create shell script with aliases
+cat > myaliases.sh << 'EOF'
+# Development aliases
+alias ll='ls -la'
+alias la='ls -a'
+alias grep='grep --color=auto'
+
+# Git shortcuts
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+EOF
+
+# Load aliases from script
+source myaliases.sh
+```
+
+### Security Considerations
+
+- Alias names must follow strict validation rules
+- Dangerous commands are blocked during alias creation
+- Circular reference detection prevents infinite loops
+- Parameter substitution is safely handled
+- Shell script parsing is done without command execution
 
 ### Important: Vercel Preset Build Structure
 
