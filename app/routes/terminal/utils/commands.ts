@@ -15,7 +15,7 @@ import { createDirectory, createFile, deleteNode, formatPath, getNodeAtPath, res
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
 import { getStorageInfo } from '~/routes/terminal/utils/persistence';
-import { ShellParser } from '~/routes/terminal/utils/shellParser';
+import { ALIAS_NAME_REGEX, ShellParser } from '~/routes/terminal/utils/shellParser';
 
 import { unicodeSafeBtoa } from './unicodeBase64';
 
@@ -555,7 +555,7 @@ export const commands: Record<string, CommandHandler> = {
 
     // Parse alias definition
     const input = args.join(' ');
-    const aliasMatch = input.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
+    const aliasMatch = input.match(/^([a-zA-Z_.][a-zA-Z0-9_.]*)\s*=\s*(.+)$/);
 
     if (!aliasMatch) {
       // Show specific alias if just name is provided

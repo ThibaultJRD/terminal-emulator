@@ -10,6 +10,9 @@
  */
 import type { AliasManager } from '~/routes/terminal/utils/aliasManager';
 
+// Regex pattern for valid alias names (allows letters, numbers, underscores, and dots)
+export const ALIAS_NAME_REGEX = /^[a-zA-Z_.][a-zA-Z0-9_.]*$/;
+
 export interface ParsedLine {
   type: 'alias' | 'export' | 'command' | 'comment' | 'empty' | 'error';
   content: string;
@@ -139,7 +142,7 @@ export class ShellParser {
     }
 
     // Handle alias definitions
-    const aliasMatch = line.match(/^alias\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*['"](.*)['"]$/);
+    const aliasMatch = line.match(/^alias\s+([a-zA-Z_.][a-zA-Z0-9_.]*)\s*=\s*['"](.*)['"]$/);
     if (aliasMatch) {
       const [, name, command] = aliasMatch;
       const validation = this.validateAlias(name, command);
@@ -161,7 +164,7 @@ export class ShellParser {
     }
 
     // Handle alias definitions without quotes (less common but valid)
-    const aliasNoQuotesMatch = line.match(/^alias\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
+    const aliasNoQuotesMatch = line.match(/^alias\s+([a-zA-Z_.][a-zA-Z0-9_.]*)\s*=\s*(.+)$/);
     if (aliasNoQuotesMatch) {
       const [, name, command] = aliasNoQuotesMatch;
       const validation = this.validateAlias(name, command);
@@ -238,8 +241,8 @@ export class ShellParser {
       return { valid: false, error: 'Alias name cannot be empty' };
     }
 
-    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-      return { valid: false, error: 'Invalid alias name. Use only letters, numbers, and underscores' };
+    if (!ALIAS_NAME_REGEX.test(name)) {
+      return { valid: false, error: 'Invalid alias name. Use only letters, numbers, underscores, and dots' };
     }
 
     // Check command
