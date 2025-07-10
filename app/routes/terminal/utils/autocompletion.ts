@@ -3,6 +3,8 @@ import { commands } from '~/routes/terminal/utils/commands';
 // FilesystemMode removed as both modes now use the same structure
 import { getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
+import { CHAIN_REGEX } from './constants';
+
 export interface AutocompletionResult {
   completions: string[];
   commonPrefix: string;
@@ -15,13 +17,21 @@ interface CommandContext {
 }
 
 /**
+ * Determines if we're at the beginning of a new command context
+ * @param afterLastOperator - The input string after the last chaining operator
+ * @returns true if we're starting a new command, false otherwise
+ */
+function isNewCommandContext(afterLastOperator: string): boolean {
+  return afterLastOperator === '' || !afterLastOperator.includes(' ');
+}
+
+/**
  * Analyzes the input to determine if we're in a command chaining context
  * and extracts the relevant part for completion
  */
 function parseCommandContext(input: string): CommandContext {
   // Check for command chaining operators (&&, ||, ;)
-  const chainRegex = /(\|\||&&|;)/g;
-  const matches = [...input.matchAll(chainRegex)];
+  const matches = [...input.matchAll(CHAIN_REGEX)];
 
   if (matches.length === 0) {
     return {
@@ -39,7 +49,7 @@ function parseCommandContext(input: string): CommandContext {
   const afterLastOperator = input.slice(lastOperatorIndex).trimStart();
 
   // Check if we're at the beginning of a new command
-  const isNewCommand = afterLastOperator === '' || !afterLastOperator.includes(' ');
+  const isNewCommand = isNewCommandContext(afterLastOperator);
 
   return {
     isChainedContext: true,

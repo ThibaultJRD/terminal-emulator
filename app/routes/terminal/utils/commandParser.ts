@@ -1,3 +1,5 @@
+import { CHAIN_REGEX } from './constants';
+
 export interface ParsedCommand {
   command: string;
   args: string[];
@@ -138,8 +140,7 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
   }
 
   // Check for command chaining operators
-  const chainRegex = /(\|\||&&|;)/g;
-  const matches = [...trimmed.matchAll(chainRegex)];
+  const matches = [...trimmed.matchAll(CHAIN_REGEX)];
 
   if (matches.length === 0) {
     // No chaining operators, return single command
