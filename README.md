@@ -66,9 +66,9 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 ### 🔗 Pipes & Text Processing
 
 - **Pipe Operator**: `cmd1 | cmd2` - Pass output from cmd1 as input to cmd2
-- **Text Processing Commands**: `grep`, `head`, `tail`, `sort`, `uniq`
-- **Pattern Matching**: Regular expressions and flags for powerful text manipulation
-- **Chain Compatibility**: Pipes work with existing commands like `ls`, `cat`, `wc`
+- **Text Processing Commands**: `grep` (files + pipes), `head`, `tail`, `sort`, `uniq` (pipes only)
+- **Pattern Matching**: Regular expressions with security limits
+- **Chain Compatibility**: Pipes work with `ls`, `cat`, `echo`, `wc` and other output commands
 
 ### 🧪 Testing
 
@@ -246,71 +246,75 @@ ls -la | head -10 | tail -5                # Get files 6-10 from detailed listin
 
 #### Text Processing Commands
 
-**grep - Pattern Matching**
+**grep - Pattern Matching** (Works with files AND pipes)
 
 ```bash
-# Basic pattern search
+# File input (direct file access)
 grep "pattern" file.txt           # Find lines containing pattern
 grep -i "hello" file.txt          # Case-insensitive search
 grep -v "exclude" file.txt        # Invert match (show non-matching lines)
 grep -n "pattern" file.txt        # Show line numbers with matches
 grep -c "pattern" file.txt        # Count matching lines
 
-# With pipes
+# Pipe input
 ls | grep .js                     # Filter files by extension
 cat log.txt | grep -i error       # Find error messages (case-insensitive)
-echo -e "line1\nline2\nline3" | grep -n line  # Search with line numbers
+echo "test line" | grep test      # Search piped text
 ```
 
-**head - First Lines**
+**head - First Lines** (Pipe input only)
 
 ```bash
-# Show first lines of files
-head file.txt                     # First 10 lines (default)
-head -5 file.txt                  # First 5 lines
-head -n 3 file.txt                # First 3 lines (explicit syntax)
-
-# With pipes
+# Works only with pipes - NOT direct file access
 ls -la | head -5                  # First 5 files in listing
-cat large-file.txt | head -20     # First 20 lines of file
+cat file.txt | head -10           # First 10 lines from cat output
+echo -e "line1\nline2\nline3" | head -2   # First 2 lines from echo
+
+# Options
+command | head                    # First 10 lines (default)
+command | head -5                 # First 5 lines
+command | head -n 3               # First 3 lines (explicit syntax)
 ```
 
-**tail - Last Lines**
+**tail - Last Lines** (Pipe input only)
 
 ```bash
-# Show last lines of files
-tail file.txt                     # Last 10 lines (default)
-tail -5 file.txt                  # Last 5 lines
-tail -n 3 file.txt                # Last 3 lines (explicit syntax)
-
-# With pipes
+# Works only with pipes - NOT direct file access
 ls -la | tail -5                  # Last 5 files in listing
-cat log.txt | tail -20            # Last 20 lines of log
+cat log.txt | tail -20            # Last 20 lines from cat output
+echo -e "a\nb\nc\nd" | tail -2    # Last 2 lines from echo
+
+# Options
+command | tail                    # Last 10 lines (default)
+command | tail -5                 # Last 5 lines
+command | tail -n 3               # Last 3 lines (explicit syntax)
 ```
 
-**sort - Sort Lines**
+**sort - Sort Lines** (Pipe input only)
 
 ```bash
-# Sort file contents
-sort file.txt                     # Sort lines alphabetically
-sort names.txt                    # Sort list of names
-
-# With pipes
-ls | sort                         # Sort file listing
-cat data.txt | sort | head -10    # Sort data, show top 10
+# Works only with pipes - NOT direct file access
+ls | sort                         # Sort file listing alphabetically
+cat data.txt | sort               # Sort file contents
 echo -e "zebra\napple\nbanana" | sort  # Sort piped input
+
+# Options
+command | sort                    # Sort alphabetically
+command | sort -r                 # Reverse sort
+command | sort -n                 # Numeric sort
 ```
 
-**uniq - Remove Duplicates**
+**uniq - Remove Duplicates** (Pipe input only)
 
 ```bash
-# Remove duplicate lines (requires sorted input)
-uniq file.txt                     # Remove consecutive duplicates
-sort file.txt | uniq              # Sort then remove all duplicates
-
-# With pipes
+# Works only with pipes - NOT direct file access
+# Note: Input should be sorted for best results
 ls | sort | uniq                  # Unique sorted file list
-cat data.txt | sort | uniq | wc   # Count unique lines
+cat data.txt | sort | uniq        # Remove duplicates from file
+echo -e "a\na\nb\nb" | sort | uniq # Remove duplicates from echo
+
+# Common pattern
+command | sort | uniq | wc        # Count unique lines
 ```
 
 #### Complex Pipe Examples
@@ -318,11 +322,14 @@ cat data.txt | sort | uniq | wc   # Count unique lines
 **Data Processing Pipeline:**
 
 ```bash
-# Process a log file: extract errors, sort, count unique occurrences
-cat server.log | grep ERROR | sort | uniq -c | sort -nr
+# Process a log file: extract errors, sort, remove duplicates
+cat server.log | grep ERROR | sort | uniq
 
-# Find most common file extensions
-ls | grep -E '\.' | grep -o '\.[^.]*$' | sort | uniq -c | sort -nr
+# Find and sort file extensions
+ls | grep "\." | sort
+
+# Count lines in sorted unique content
+cat data.txt | sort | uniq | wc
 ```
 
 **Text Analysis:**
@@ -331,22 +338,22 @@ ls | grep -E '\.' | grep -o '\.[^.]*$' | sort | uniq -c | sort -nr
 # Analyze text file: word count of unique lines
 cat document.txt | sort | uniq | wc
 
-# Find long lines in a file
-cat file.txt | grep -E '.{80,}' | head -5
+# Find files and get first few
+ls -la | grep "\.txt" | head -5
 
-# Extract and sort unique words (simplified)
-cat text.txt | tr ' ' '\n' | sort | uniq
+# Search and sort results
+cat log.txt | grep "error" | sort
 ```
 
 **System Information:**
 
 ```bash
 # Process directory listings
-ls -la | grep '^d' | head -5      # First 5 directories
-ls -la | grep -v '^d' | tail -10  # Last 10 files (non-directories)
+ls -la | grep "^d" | head -5      # First 5 directories
+ls -la | grep "^-" | tail -10     # Last 10 regular files
 
 # Filter and format output
-ls -la | grep .txt | head -3      # First 3 text files with details
+ls -la | grep "\.txt" | head -3   # First 3 text files with details
 ```
 
 **Development Workflows:**
@@ -355,16 +362,22 @@ ls -la | grep .txt | head -3      # First 3 text files with details
 # Find configuration files
 ls | grep config | head -5
 
-# Search for specific patterns in files
-cat *.txt | grep -i todo | sort | uniq
+# Search for patterns in files
+cat README.md | grep -i "install" | head -3
 
 # Analyze file structure
-ls -la | grep '^-' | wc           # Count regular files
-ls -la | grep '^d' | wc           # Count directories
+ls -la | grep "^-" | wc           # Count regular files
+ls -la | grep "^d" | wc           # Count directories
+
+# Process file listings
+ls | sort | head -10              # First 10 files alphabetically
+echo -e "apple\nbanana\napple\ncherry" | sort | uniq | wc  # Count unique items
 ```
 
 #### Pipe Limitations and Notes
 
+- **Text Processing Commands**: `head`, `tail`, `sort`, and `uniq` only work with piped input, not direct file arguments
+- **Grep Exception**: `grep` works with both files and pipes: `grep pattern file.txt` OR `command | grep pattern`
 - **No Mixing with Other Operators**: Pipes cannot be mixed with `&&`, `||`, or `;` in the same command chain
 - **Data Flow**: Each command in a pipe receives the complete output of the previous command
 - **Exit Codes**: Pipe chains return the exit code of the last command in the chain
@@ -377,8 +390,9 @@ ls -la | grep '^d' | wc           # Count directories
 ls nonexistent | grep test        # ls fails, but grep still runs (with empty input)
 cat missing.txt | sort | head     # cat fails, sort and head receive empty input
 
-# Check exit codes
-ls | grep test; echo $?           # Check if grep found matches (0 = found, 1 = not found)
+# Check exit codes (note: cannot mix pipes with && in same command)
+ls | grep test                    # Pipe operation
+echo $?                          # Separate command to check exit code
 ```
 
 ### Advanced Redirection
