@@ -1,6 +1,6 @@
 import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
 import type { AliasManager } from '~/routes/terminal/utils/aliasManager';
-import { type ChainedCommand, type ParsedCommand, parseChainedCommand, parseCommand } from '~/routes/terminal/utils/commandParser';
+import { type ChainedCommand, type ParsedCommand, type PipedCommand, parseChainedCommand, parseCommand } from '~/routes/terminal/utils/commandParser';
 import {
   ERROR_MESSAGES,
   createDetailedFileInfo,
@@ -23,6 +23,48 @@ import { unicodeSafeBtoa } from './unicodeBase64';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 const MAX_FILESYSTEM_SIZE = 50 * 1024 * 1024; // 50MB total limit
 const MAX_FILES_PER_DIRECTORY = 1000;
+
+/**
+ * Process input for grep command
+ */
+function processGrepInput(input: string, regex: RegExp, options: { flags: Record<string, boolean>; remaining: string[] }): CommandResult {
+  const lines = input.split('\n');
+  let results: string[] = [];
+  let totalMatches = 0;
+  let lineNumber = 0;
+
+  for (const line of lines) {
+    lineNumber++;
+    const matches = regex.test(line);
+    const shouldInclude = options.flags.v ? !matches : matches;
+
+    if (shouldInclude) {
+      totalMatches++;
+
+      if (options.flags.c) {
+        // Count mode - we'll output the count at the end
+        continue;
+      }
+
+      let resultLine = line;
+      if (options.flags.n) {
+        resultLine = `${lineNumber}:${line}`;
+      }
+
+      results.push(resultLine);
+    }
+  }
+
+  if (options.flags.c) {
+    return createSuccessResult(totalMatches.toString(), totalMatches > 0 ? 0 : 1);
+  }
+
+  if (results.length === 0) {
+    return { success: false, output: '', exitCode: 1 };
+  }
+
+  return createSuccessResult(results.join('\n'), 0);
+}
 
 /**
  * Calculates the total size of a filesystem node
@@ -749,6 +791,13 @@ export const commands: Record<string, CommandHandler> = {
       '  unalias [-a] <name> - Remove alias (-a: remove all)',
       '  source <file>    - Execute shell script and apply aliases',
       '',
+      'Text Processing:',
+      '  grep [-i] [-v] [-n] [-c] <pattern> [file] - Search for pattern in files',
+      '  head [-n] [num] <file> - Show first lines of file (default 10)',
+      '  tail [-n] [num] <file> - Show last lines of file (default 10)',
+      '  sort [-r] [-n] <file> - Sort lines alphabetically or numerically',
+      '  uniq <file>      - Remove consecutive duplicate lines',
+      '',
       'Utilities:',
       '  echo <text>      - Print text to output (supports $? for last exit code)',
       '  wc <file>        - Count lines, words, and characters in file',
@@ -757,7 +806,8 @@ export const commands: Record<string, CommandHandler> = {
       '  help             - Show this help message',
       '  man <command>    - Display manual page for command',
       '',
-      'Command Chaining:',
+      'Pipes & Command Chaining:',
+      '  cmd1 | cmd2      - Pipe output from cmd1 as input to cmd2',
       '  cmd1 && cmd2     - Execute cmd2 only if cmd1 succeeds (exit code 0)',
       '  cmd1 || cmd2     - Execute cmd2 only if cmd1 fails (exit code != 0)',
       '  cmd1 ; cmd2      - Execute cmd2 unconditionally after cmd1',
@@ -792,22 +842,185 @@ export const commands: Record<string, CommandHandler> = {
       '  ls nonexistent || echo "File not found"',
       '  echo "first"; echo "second"; echo "third"',
       '  echo $?',
+      '  ls -la | grep ".txt" | sort',
+      '  cat file.txt | grep "pattern" | head -5',
+      '  cat data.txt | sort | uniq | wc -l',
     ].join('\n');
 
     return { success: true, output: helpText, exitCode: 0 };
+  },
+
+  grep: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+  ): CommandResult => {
+    if (args.length === 0) {
+      return createErrorResult('grep: missing pattern', 2);
+    }
+
+    const { flags, positionalArgs } = parseOptions(args);
+    let pattern = positionalArgs[0];
+    const files = positionalArgs.slice(1);
+
+    if (!pattern) {
+      return createErrorResult('grep: missing pattern', 2);
+    }
+
+    // Security: Validate pattern to prevent ReDoS attacks
+    if (pattern.length > 100) {
+      return createErrorResult('grep: pattern too long', 2);
+    }
+
+    let regexFlags = '';
+    if (flags.has('i')) {
+      regexFlags += 'i';
+    }
+
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern, regexFlags);
+    } catch (error) {
+      return createErrorResult(`grep: invalid pattern: ${pattern}`, 2);
+    }
+
+    let input = '';
+
+    // If no files specified, return an error - input will be handled by executeSingleCommand
+    if (files.length === 0) {
+      return createErrorResult('grep: no input provided (use with pipe or specify file)', 1);
+    }
+
+    // Process specified files
+    for (const filename of files) {
+      const targetPath = resolvePath(filesystem, filename);
+      const node = getNodeAtPath(filesystem, targetPath);
+
+      if (!node) {
+        return createErrorResult(`grep: ${filename}: No such file or directory`, 2);
+      }
+
+      if (node.type !== 'file') {
+        return createErrorResult(`grep: ${filename}: Is a directory`, 2);
+      }
+
+      input += (node.content || '') + '\n';
+    }
+
+    return processGrepInput(input.trim(), regex, { flags: Object.fromEntries([...flags].map((flag) => [flag, true])), remaining: [] });
+  },
+
+  head: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+  ): CommandResult => {
+    return createErrorResult('head: use with pipes or input redirection', 1);
+  },
+
+  tail: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+  ): CommandResult => {
+    return createErrorResult('tail: use with pipes or input redirection', 1);
+  },
+
+  sort: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+  ): CommandResult => {
+    return createErrorResult('sort: use with pipes or input redirection', 1);
+  },
+
+  uniq: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+  ): CommandResult => {
+    return createErrorResult('uniq: use with pipes or input redirection', 1);
   },
 };
 
 export function executeCommand(input: string, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
   const parsed = parseChainedCommand(input);
 
-  // Handle chained commands
+  // Handle chained commands or piped commands
   if ('commands' in parsed) {
-    return executeChainedCommand(parsed, filesystem, aliasManager, lastExitCode);
+    // Check if it's a PipedCommand (has only | operators)
+    if ('operators' in parsed && parsed.operators.length > 0) {
+      const hasOnlyPipes = parsed.operators.every((op) => op === '|');
+      if (hasOnlyPipes) {
+        return executePipedCommand(parsed as PipedCommand, filesystem, aliasManager, lastExitCode);
+      }
+    }
+    // Otherwise it's a ChainedCommand
+    return executeChainedCommand(parsed as ChainedCommand, filesystem, aliasManager, lastExitCode);
   }
 
   // Handle single command
   return executeSingleCommand(parsed, filesystem, aliasManager, lastExitCode);
+}
+
+function executePipedCommand(pipedCommand: PipedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
+  const { commands } = pipedCommand;
+
+  if (commands.length === 0) {
+    return { success: false, output: '', error: 'No commands in pipe', exitCode: 1 };
+  }
+
+  // Start with the first command
+  let currentInput = '';
+  let lastResult: CommandResult = { success: true, output: '', exitCode: 0 };
+
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i];
+
+    // For commands after the first, we need to pass the previous output as input
+    if (i > 0) {
+      // Convert previous output to string for piping
+      const previousOutput =
+        typeof lastResult.output === 'string'
+          ? lastResult.output
+          : Array.isArray(lastResult.output)
+            ? lastResult.output.map((segment) => segment.text || '').join('')
+            : '';
+
+      // Create a modified command that accepts piped input
+      const modifiedCommand = { ...command };
+
+      // If the command doesn't have input redirection, add piped input
+      if (!modifiedCommand.redirectInput) {
+        modifiedCommand.redirectInput = {
+          type: '<<',
+          source: previousOutput,
+        };
+      }
+
+      lastResult = executeSingleCommand(modifiedCommand, filesystem, aliasManager, lastResult.exitCode);
+    } else {
+      // Execute first command normally
+      lastResult = executeSingleCommand(command, filesystem, aliasManager, lastExitCode);
+    }
+
+    // If any command in the pipe fails, stop execution
+    if (!lastResult.success) {
+      break;
+    }
+  }
+
+  return lastResult;
 }
 
 function executeChainedCommand(chainedCommand: ChainedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
@@ -851,6 +1064,145 @@ function executeChainedCommand(chainedCommand: ChainedCommand, filesystem: FileS
     error: lastResult.error,
     exitCode: lastResult.exitCode,
   };
+}
+
+function handleStdinCommand(
+  command: string,
+  args: string[],
+  inputData: string,
+  filesystem: FileSystemState,
+  aliasManager?: AliasManager,
+  lastExitCode?: number,
+): CommandResult {
+  switch (command) {
+    case 'grep': {
+      if (args.length === 0) {
+        return createErrorResult('grep: missing pattern', 2);
+      }
+
+      const { flags, positionalArgs } = parseOptions(args);
+      const pattern = positionalArgs[0];
+
+      if (!pattern) {
+        return createErrorResult('grep: missing pattern', 2);
+      }
+
+      // Security: Validate pattern to prevent ReDoS attacks
+      if (pattern.length > 100) {
+        return createErrorResult('grep: pattern too long', 2);
+      }
+
+      let regexFlags = '';
+      if (flags.has('i')) {
+        regexFlags += 'i';
+      }
+
+      let regex: RegExp;
+      try {
+        regex = new RegExp(pattern, regexFlags);
+      } catch (error) {
+        return createErrorResult(`grep: invalid pattern: ${pattern}`, 2);
+      }
+
+      return processGrepInput(inputData, regex, { flags: Object.fromEntries([...flags].map((flag) => [flag, true])), remaining: [] });
+    }
+
+    case 'head': {
+      const { flags, positionalArgs } = parseOptions(args);
+      let lineCount = 10;
+
+      // Check for -n flag
+      if (flags.has('n') && positionalArgs[0]) {
+        lineCount = parseInt(positionalArgs[0], 10);
+      } else {
+        // Check for shorthand like -5, -10, etc.
+        for (const flag of flags) {
+          const num = parseInt(flag, 10);
+          if (!isNaN(num) && num > 0) {
+            lineCount = num;
+            break;
+          }
+        }
+      }
+
+      if (isNaN(lineCount) || lineCount < 0) {
+        return createErrorResult('head: invalid number of lines', 1);
+      }
+
+      const lines = inputData.split('\n');
+      const result = lines.slice(0, lineCount).join('\n');
+      return createSuccessResult(result, 0);
+    }
+
+    case 'tail': {
+      const { flags, positionalArgs } = parseOptions(args);
+      let lineCount = 10;
+
+      // Check for -n flag
+      if (flags.has('n') && positionalArgs[0]) {
+        lineCount = parseInt(positionalArgs[0], 10);
+      } else {
+        // Check for shorthand like -5, -10, etc.
+        for (const flag of flags) {
+          const num = parseInt(flag, 10);
+          if (!isNaN(num) && num > 0) {
+            lineCount = num;
+            break;
+          }
+        }
+      }
+
+      if (isNaN(lineCount) || lineCount < 0) {
+        return createErrorResult('tail: invalid number of lines', 1);
+      }
+
+      const lines = inputData.split('\n');
+      const result = lines.slice(-lineCount).join('\n');
+      return createSuccessResult(result, 0);
+    }
+
+    case 'sort': {
+      const { flags } = parseOptions(args);
+      const lines = inputData.split('\n');
+
+      let sortedLines: string[];
+      if (flags.has('n')) {
+        // Numeric sort
+        sortedLines = lines.sort((a, b) => {
+          const numA = parseFloat(a) || 0;
+          const numB = parseFloat(b) || 0;
+          return numA - numB;
+        });
+      } else {
+        // Alphabetical sort
+        sortedLines = lines.sort();
+      }
+
+      if (flags.has('r')) {
+        sortedLines.reverse();
+      }
+
+      return createSuccessResult(sortedLines.join('\n'), 0);
+    }
+
+    case 'uniq': {
+      const lines = inputData.split('\n');
+      const uniqueLines: string[] = [];
+      let lastLine = '';
+
+      for (const line of lines) {
+        if (line !== lastLine) {
+          uniqueLines.push(line);
+          lastLine = line;
+        }
+      }
+
+      return createSuccessResult(uniqueLines.join('\n'), 0);
+    }
+
+    default:
+      return createErrorResult(`${command}: command not supported for stdin`, 1);
+  }
 }
 
 function executeSingleCommand(parsed: ParsedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
@@ -921,7 +1273,19 @@ function executeSingleCommand(parsed: ParsedCommand, filesystem: FileSystemState
     };
   }
 
-  const result = handler(finalArgs, filesystem, aliasManager, undefined, lastExitCode);
+  // Special handling for commands that can process stdin input
+  let result: CommandResult;
+  if (
+    redirectInput &&
+    redirectInput.type === '<<' &&
+    (command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq')
+  ) {
+    // Handle commands that can process piped input
+    const inputData = redirectInput.source;
+    result = handleStdinCommand(command, finalArgs, inputData, filesystem, aliasManager, lastExitCode);
+  } else {
+    result = handler(finalArgs, filesystem, aliasManager, undefined, lastExitCode);
+  }
 
   // Handle output redirection
   if (result.success && redirectOutput) {

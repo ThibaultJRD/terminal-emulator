@@ -384,6 +384,85 @@ function createManualPages(mode: 'default' | 'portfolio' = 'default'): Record<st
     mode,
   );
 
+  manPages['grep.1'] = createManualPage(
+    'grep',
+    'search text using patterns',
+    'Search for lines matching a pattern in files or stdin. Supports regular\n       expressions and various options for controlling the output.',
+    [
+      'grep "pattern" file.txt\n              Search for "pattern" in file.txt',
+      'cat file.txt | grep "error"\n              Search for "error" in cat output',
+      'grep -i "hello" file.txt\n              Case-insensitive search for "hello"',
+      'grep -n "TODO" *.txt\n              Show line numbers for matches',
+      'grep -v "debug" log.txt\n              Show lines NOT containing "debug"',
+      'grep -c "error" log.txt\n              Count matching lines',
+    ],
+    [
+      '-i                ignore case distinctions',
+      '-v                invert match (show non-matching lines)',
+      '-n                show line numbers',
+      '-c                count matching lines',
+    ],
+    ['awk(1)', 'sed(1)', 'sort(1)'],
+    mode,
+  );
+
+  manPages['head.1'] = createManualPage(
+    'head',
+    'display first lines of files',
+    'Display the first lines of files or stdin. By default shows the first\n       10 lines.',
+    [
+      'head file.txt\n              Show first 10 lines of file.txt',
+      'head -5 file.txt\n              Show first 5 lines of file.txt',
+      'cat file.txt | head -3\n              Show first 3 lines from cat output',
+    ],
+    ['-n NUM            show NUM lines instead of 10'],
+    ['tail(1)', 'cat(1)', 'more(1)'],
+    mode,
+  );
+
+  manPages['tail.1'] = createManualPage(
+    'tail',
+    'display last lines of files',
+    'Display the last lines of files or stdin. By default shows the last\n       10 lines.',
+    [
+      'tail file.txt\n              Show last 10 lines of file.txt',
+      'tail -5 file.txt\n              Show last 5 lines of file.txt',
+      'cat file.txt | tail -3\n              Show last 3 lines from cat output',
+    ],
+    ['-n NUM            show NUM lines instead of 10'],
+    ['head(1)', 'cat(1)', 'more(1)'],
+    mode,
+  );
+
+  manPages['sort.1'] = createManualPage(
+    'sort',
+    'sort lines of text',
+    'Sort lines of text files or stdin. By default sorts alphabetically.',
+    [
+      'sort file.txt\n              Sort lines in file.txt alphabetically',
+      'cat file.txt | sort\n              Sort lines from cat output',
+      'sort -r file.txt\n              Sort in reverse order',
+      'sort -n numbers.txt\n              Sort numerically',
+    ],
+    ['-r                reverse sort order', '-n                sort numerically'],
+    ['uniq(1)', 'grep(1)', 'awk(1)'],
+    mode,
+  );
+
+  manPages['uniq.1'] = createManualPage(
+    'uniq',
+    'remove duplicate consecutive lines',
+    'Remove consecutive duplicate lines from files or stdin. Input should\n       typically be sorted first.',
+    [
+      'uniq file.txt\n              Remove consecutive duplicate lines',
+      'sort file.txt | uniq\n              Sort then remove all duplicates',
+      'cat file.txt | sort | uniq\n              Full deduplication pipeline',
+    ],
+    [],
+    ['sort(1)', 'grep(1)', 'awk(1)'],
+    mode,
+  );
+
   return manPages;
 }
 

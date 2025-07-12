@@ -18,6 +18,11 @@ export interface ChainedCommand {
   operators: ('&&' | '||' | ';')[];
 }
 
+export interface PipedCommand {
+  commands: ParsedCommand[];
+  operators: '|'[];
+}
+
 // Security constants
 const MAX_COMMAND_LENGTH = 1000;
 const MAX_FILENAME_LENGTH = 255;
@@ -131,7 +136,7 @@ function parseArguments(input: string): string[] {
   return args.filter((arg) => arg.length > 0);
 }
 
-export function parseChainedCommand(input: string): ChainedCommand | ParsedCommand {
+export function parseChainedCommand(input: string): ChainedCommand | PipedCommand | ParsedCommand {
   const trimmed = input.trim();
 
   // Security: Limit command length to prevent ReDoS attacks
@@ -147,9 +152,9 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
     return parseCommand(trimmed);
   }
 
-  // Parse chained commands
+  // Parse chained commands - separate pipes from other operators
   const commands: ParsedCommand[] = [];
-  const operators: ('&&' | '||' | ';')[] = [];
+  const operators: ('&&' | '||' | ';' | '|')[] = [];
 
   let lastIndex = 0;
   for (const match of matches) {
@@ -157,7 +162,7 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
     if (commandStr) {
       commands.push(parseCommand(commandStr));
     }
-    operators.push(match[1] as '&&' | '||' | ';');
+    operators.push(match[1] as '&&' | '||' | ';' | '|');
     lastIndex = match.index! + match[0].length;
   }
 
@@ -172,8 +177,25 @@ export function parseChainedCommand(input: string): ChainedCommand | ParsedComma
     throw new Error('Invalid command chain syntax');
   }
 
+  // Check if this is a pure pipe chain (only | operators)
+  const hasPipeOperators = operators.some((op) => op === '|');
+  const hasNonPipeOperators = operators.some((op) => op !== '|');
+
+  if (hasPipeOperators && hasNonPipeOperators) {
+    throw new Error('Cannot mix pipe operators (|) with other chaining operators (&&, ||, ;)');
+  }
+
+  if (hasPipeOperators) {
+    // Return PipedCommand for pure pipe chains
+    return {
+      commands,
+      operators: operators as '|'[],
+    };
+  }
+
+  // Return ChainedCommand for other operator chains
   return {
     commands,
-    operators,
+    operators: operators as ('&&' | '||' | ';')[],
   };
 }

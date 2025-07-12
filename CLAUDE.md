@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important Guidelines
+
+**NEVER commit code automatically.** Always ask the user before creating any git commits. The user should be the one to decide when and what to commit.
+
 ## Development Commands
 
 ### Essential Commands
