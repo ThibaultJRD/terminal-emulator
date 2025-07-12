@@ -919,7 +919,44 @@ export const commands: Record<string, CommandHandler> = {
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
     lastExitCode?: number,
   ): CommandResult => {
-    return createErrorResult('head: use with pipes or input redirection', 1);
+    if (args.length === 0) {
+      return createErrorResult('head: use with pipes or input redirection', 1);
+    }
+
+    const { flags, positionalArgs } = parseOptions(args);
+    let lineCount = 10;
+
+    // Check for -n flag
+    if (flags.has('n') && positionalArgs[0]) {
+      const num = parseInt(positionalArgs[0], 10);
+      if (!isNaN(num) && num >= 0) {
+        lineCount = num;
+        positionalArgs.shift(); // Remove the number from positional args
+      } else {
+        return createErrorResult('head: invalid number of lines', 1);
+      }
+    }
+
+    const filename = positionalArgs[0];
+    if (!filename) {
+      return createErrorResult('head: missing file operand', 1);
+    }
+
+    const targetPath = resolvePath(filesystem, filename);
+    const file = getNodeAtPath(filesystem, targetPath);
+
+    if (!file) {
+      return createErrorResult(`head: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`, 1);
+    }
+
+    if (file.type === 'directory') {
+      return createErrorResult(`head: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`, 1);
+    }
+
+    const content = file.content || '';
+    const lines = content.split('\n');
+    const result = lines.slice(0, lineCount).join('\n');
+    return createSuccessResult(result, 0);
   },
 
   tail: (
@@ -929,7 +966,44 @@ export const commands: Record<string, CommandHandler> = {
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
     lastExitCode?: number,
   ): CommandResult => {
-    return createErrorResult('tail: use with pipes or input redirection', 1);
+    if (args.length === 0) {
+      return createErrorResult('tail: use with pipes or input redirection', 1);
+    }
+
+    const { flags, positionalArgs } = parseOptions(args);
+    let lineCount = 10;
+
+    // Check for -n flag
+    if (flags.has('n') && positionalArgs[0]) {
+      const num = parseInt(positionalArgs[0], 10);
+      if (!isNaN(num) && num >= 0) {
+        lineCount = num;
+        positionalArgs.shift(); // Remove the number from positional args
+      } else {
+        return createErrorResult('tail: invalid number of lines', 1);
+      }
+    }
+
+    const filename = positionalArgs[0];
+    if (!filename) {
+      return createErrorResult('tail: missing file operand', 1);
+    }
+
+    const targetPath = resolvePath(filesystem, filename);
+    const file = getNodeAtPath(filesystem, targetPath);
+
+    if (!file) {
+      return createErrorResult(`tail: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`, 1);
+    }
+
+    if (file.type === 'directory') {
+      return createErrorResult(`tail: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`, 1);
+    }
+
+    const content = file.content || '';
+    const lines = content.split('\n');
+    const result = lines.slice(-lineCount).join('\n');
+    return createSuccessResult(result, 0);
   },
 
   sort: (
@@ -939,7 +1013,51 @@ export const commands: Record<string, CommandHandler> = {
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
     lastExitCode?: number,
   ): CommandResult => {
-    return createErrorResult('sort: use with pipes or input redirection', 1);
+    if (args.length === 0) {
+      return createErrorResult('sort: use with pipes or input redirection', 1);
+    }
+
+    const { flags, positionalArgs } = parseOptions(args);
+    const filename = positionalArgs[0];
+
+    if (!filename) {
+      return createErrorResult('sort: missing file operand', 1);
+    }
+
+    const targetPath = resolvePath(filesystem, filename);
+    const file = getNodeAtPath(filesystem, targetPath);
+
+    if (!file) {
+      return createErrorResult(`sort: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`, 1);
+    }
+
+    if (file.type === 'directory') {
+      return createErrorResult(`sort: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`, 1);
+    }
+
+    const content = file.content || '';
+    const lines = content.split('\n');
+
+    let sortedLines: string[];
+    if (flags.has('n')) {
+      // Numeric sort
+      sortedLines = lines.sort((a, b) => {
+        const numA = parseFloat(a);
+        const numB = parseFloat(b);
+        const valueA = isNaN(numA) ? 0 : numA;
+        const valueB = isNaN(numB) ? 0 : numB;
+        return valueA - valueB;
+      });
+    } else {
+      // Alphabetical sort
+      sortedLines = lines.sort();
+    }
+
+    if (flags.has('r')) {
+      sortedLines.reverse();
+    }
+
+    return createSuccessResult(sortedLines.join('\n'), 0);
   },
 
   uniq: (
@@ -949,7 +1067,35 @@ export const commands: Record<string, CommandHandler> = {
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
     lastExitCode?: number,
   ): CommandResult => {
-    return createErrorResult('uniq: use with pipes or input redirection', 1);
+    if (args.length === 0) {
+      return createErrorResult('uniq: use with pipes or input redirection', 1);
+    }
+
+    const filename = args[0];
+    const targetPath = resolvePath(filesystem, filename);
+    const file = getNodeAtPath(filesystem, targetPath);
+
+    if (!file) {
+      return createErrorResult(`uniq: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`, 1);
+    }
+
+    if (file.type === 'directory') {
+      return createErrorResult(`uniq: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`, 1);
+    }
+
+    const content = file.content || '';
+    const lines = content.split('\n');
+    const uniqueLines: string[] = [];
+    let lastLine = '';
+
+    for (const line of lines) {
+      if (line !== lastLine) {
+        uniqueLines.push(line);
+        lastLine = line;
+      }
+    }
+
+    return createSuccessResult(uniqueLines.join('\n'), 0);
   },
 };
 
@@ -1169,9 +1315,11 @@ function handleStdinCommand(
       if (flags.has('n')) {
         // Numeric sort
         sortedLines = lines.sort((a, b) => {
-          const numA = parseFloat(a) || 0;
-          const numB = parseFloat(b) || 0;
-          return numA - numB;
+          const numA = parseFloat(a);
+          const numB = parseFloat(b);
+          const valueA = isNaN(numA) ? 0 : numA;
+          const valueB = isNaN(numB) ? 0 : numB;
+          return valueA - valueB;
         });
       } else {
         // Alphabetical sort
