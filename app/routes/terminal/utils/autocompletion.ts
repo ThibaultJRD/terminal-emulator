@@ -147,7 +147,7 @@ export function getAutocompletions(
     return getDirectoryCompletions(pathArg, filesystem);
   }
 
-  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi', 'cp', 'mv', 'source'].includes(command)) {
+  if (command && ['ls', 'cat', 'rm', 'touch', 'wc', 'vi', 'cp', 'mv', 'source', 'grep', 'head', 'tail', 'sort', 'uniq'].includes(command)) {
     return getPathCompletions(pathArg, filesystem);
   }
 

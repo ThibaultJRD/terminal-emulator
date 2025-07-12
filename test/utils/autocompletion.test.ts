@@ -306,7 +306,7 @@ describe('Autocompletion', () => {
 
     it('should handle completion with various command types', () => {
       // Commands that should complete paths
-      const pathCommands = ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch'];
+      const pathCommands = ['cd', 'ls', 'cat', 'rm', 'rmdir', 'mkdir', 'touch', 'head', 'tail', 'sort', 'uniq'];
 
       for (const cmd of pathCommands) {
         const result = getAutocompletions(`${cmd} test`, filesystem);
@@ -357,6 +357,35 @@ describe('Autocompletion', () => {
       // Apply completion for output file
       const completed = applyCompletion('ls -la > output', 'output.txt');
       expect(completed).toBe('ls -la > output.txt');
+    });
+
+    it('should complete file names for text processing commands', () => {
+      // Change to documents directory where we have test files
+      filesystem.currentPath = ['home', 'user', 'documents'];
+
+      // Test each text processing command
+      const commands = ['head', 'tail', 'sort', 'uniq'];
+
+      for (const cmd of commands) {
+        const result = getAutocompletions(`${cmd} read`, filesystem);
+        expect(result.completions).toContain('readme.txt');
+        expect(result.completions.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should complete file names with options for text processing commands', () => {
+      // Change to documents directory
+      filesystem.currentPath = ['home', 'user', 'documents'];
+
+      // Test completion with flags
+      const result1 = getAutocompletions('head -n 5 read', filesystem);
+      expect(result1.completions).toContain('readme.txt');
+
+      const result2 = getAutocompletions('tail -n 3 read', filesystem);
+      expect(result2.completions).toContain('readme.txt');
+
+      const result3 = getAutocompletions('sort -r read', filesystem);
+      expect(result3.completions).toContain('readme.txt');
     });
   });
 });

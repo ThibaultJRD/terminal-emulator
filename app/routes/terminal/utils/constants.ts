@@ -3,7 +3,8 @@
  */
 
 /**
- * Regex pattern for detecting command chaining operators (&&, ||, ;)
+ * Regex pattern for detecting command chaining operators (&&, ||, ;, |)
  * Used in both command parsing and autocompletion
+ * Note: || must come before | in the alternation to match correctly
  */
-export const CHAIN_REGEX = /(\|\||&&|;)/g;
+export const CHAIN_REGEX = /(\|\||&&|;|\|)/g;

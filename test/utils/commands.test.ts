@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { FileSystemState } from '~/routes/terminal/types/filesystem';
 import { commands } from '~/routes/terminal/utils/commands';
-import { createDefaultFileSystem } from '~/routes/terminal/utils/filesystem';
+import { createDefaultFileSystem, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
 describe('Commands', () => {
   let filesystem: FileSystemState;
@@ -673,6 +673,212 @@ describe('Commands', () => {
     it('should handle multiple trailing slashes', () => {
       const result = commands.rmdir(['test/nested/deep///'], filesystem);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('head command with files', () => {
+    beforeEach(() => {
+      // Create test file with multiple lines
+      const content = 'line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10\nline11\nline12';
+      const testFile = getNodeAtPath(filesystem, resolvePath(filesystem, 'testfile.txt'));
+      if (!testFile) {
+        // Add the file directly to the filesystem
+        const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+        if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+          currentDir.children['testfile.txt'] = {
+            name: 'testfile.txt',
+            type: 'file',
+            content: content,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            permissions: '644',
+          };
+        }
+      }
+    });
+
+    it('should show first 10 lines by default', () => {
+      const result = commands.head(['testfile.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines.length).toBe(10);
+      expect(lines[0]).toBe('line1');
+      expect(lines[9]).toBe('line10');
+    });
+
+    it('should respect -n flag', () => {
+      const result = commands.head(['-n', '3', 'testfile.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines.length).toBe(3);
+      expect(lines[0]).toBe('line1');
+      expect(lines[2]).toBe('line3');
+    });
+
+    it('should fail for non-existent file', () => {
+      const result = commands.head(['nonexistent.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No such file or directory');
+    });
+
+    it('should fail for directory', () => {
+      commands.mkdir(['testdir'], filesystem);
+      const result = commands.head(['testdir'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Is a directory');
+    });
+
+    it('should show error message when no arguments', () => {
+      const result = commands.head([], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('use with pipes or input redirection');
+    });
+  });
+
+  describe('tail command with files', () => {
+    beforeEach(() => {
+      // Create test file with multiple lines
+      const content = 'line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10\nline11\nline12';
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['testfile.txt'] = {
+          name: 'testfile.txt',
+          type: 'file',
+          content: content,
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+    });
+
+    it('should show last 10 lines by default', () => {
+      const result = commands.tail(['testfile.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines.length).toBe(10);
+      expect(lines[0]).toBe('line3');
+      expect(lines[9]).toBe('line12');
+    });
+
+    it('should respect -n flag', () => {
+      const result = commands.tail(['-n', '3', 'testfile.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines.length).toBe(3);
+      expect(lines[0]).toBe('line10');
+      expect(lines[2]).toBe('line12');
+    });
+
+    it('should fail for non-existent file', () => {
+      const result = commands.tail(['nonexistent.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No such file or directory');
+    });
+
+    it('should fail for directory', () => {
+      commands.mkdir(['testdir'], filesystem);
+      const result = commands.tail(['testdir'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Is a directory');
+    });
+  });
+
+  describe('sort command with files', () => {
+    beforeEach(() => {
+      // Create test file with unsorted lines
+      const content = 'zebra\napple\nbanana\n3\n1\n2\n10';
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['unsorted.txt'] = {
+          name: 'unsorted.txt',
+          type: 'file',
+          content: content,
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+    });
+
+    it('should sort alphabetically by default', () => {
+      const result = commands.sort(['unsorted.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines[0]).toBe('1');
+      expect(lines[1]).toBe('10');
+      expect(lines[2]).toBe('2');
+      expect(lines[3]).toBe('3');
+      expect(lines[4]).toBe('apple');
+    });
+
+    it('should sort numerically with -n flag', () => {
+      const result = commands.sort(['-n', 'unsorted.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      // Non-numeric lines are treated as 0 and come first in stable sort
+      expect(lines.slice(0, 3)).toEqual(['zebra', 'apple', 'banana']);
+      expect(lines.slice(3)).toEqual(['1', '2', '3', '10']);
+    });
+
+    it('should reverse sort with -r flag', () => {
+      const result = commands.sort(['-r', 'unsorted.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines[0]).toBe('zebra');
+      expect(lines[lines.length - 1]).toBe('1');
+    });
+
+    it('should fail for non-existent file', () => {
+      const result = commands.sort(['nonexistent.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No such file or directory');
+    });
+  });
+
+  describe('uniq command with files', () => {
+    beforeEach(() => {
+      // Create test file with duplicate lines
+      const content = 'apple\napple\nbanana\nbanana\nbanana\ncherry\napple';
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['duplicates.txt'] = {
+          name: 'duplicates.txt',
+          type: 'file',
+          content: content,
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+    });
+
+    it('should remove consecutive duplicates', () => {
+      const result = commands.uniq(['duplicates.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(typeof result.output).toBe('string');
+      const lines = (result.output as string).split('\n');
+      expect(lines).toEqual(['apple', 'banana', 'cherry', 'apple']);
+    });
+
+    it('should fail for non-existent file', () => {
+      const result = commands.uniq(['nonexistent.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No such file or directory');
+    });
+
+    it('should fail for directory', () => {
+      commands.mkdir(['testdir'], filesystem);
+      const result = commands.uniq(['testdir'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Is a directory');
     });
   });
 });

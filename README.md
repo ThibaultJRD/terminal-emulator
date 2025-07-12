@@ -5,7 +5,7 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-483%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-621%20passing-green?logo=vitest)
 
 ## 🚀 Live Demo
 
@@ -25,6 +25,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Filesystem Management**: `reset-fs`, `storage-info`
 - **Alias System**: `alias`, `unalias`, `source` (shell script parsing)
 - **Manual System**: `man` (command manuals and documentation)
+- **Text Processing**: `grep` (regex pattern matching), `head`, `tail`, `sort`, `uniq`
 - **Utilities**: `echo` (with `$?` support), `wc`, `clear`, `help`
 - **Exit Codes**: Unix-standard exit codes (0 = success, >0 = error)
 
@@ -40,6 +41,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - `cmd1 && cmd2` - Execute cmd2 only if cmd1 succeeds (exit code 0)
 - `cmd1 || cmd2` - Execute cmd2 only if cmd1 fails (exit code ≠ 0)
 - `cmd1 ; cmd2` - Execute cmd2 unconditionally after cmd1
+- `cmd1 | cmd2` - Pipe output from cmd1 as input to cmd2
 - `echo $?` - Display exit code of last command
 - **Complex Chains**: Mix operators for sophisticated command sequences
 
@@ -61,9 +63,16 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Text Editor**: Full-screen vim-inspired editor with modal editing
 - **Responsive**: Works on desktop and mobile devices
 
+### 🔗 Pipes & Text Processing
+
+- **Pipe Operator**: `cmd1 | cmd2` - Pass output from cmd1 as input to cmd2
+- **Text Processing Commands**: `grep` (files + pipes), `head`, `tail`, `sort`, `uniq` (pipes only)
+- **Pattern Matching**: Regular expressions with security limits
+- **Chain Compatibility**: Pipes work with `ls`, `cat`, `echo`, `wc` and other output commands
+
 ### 🧪 Testing
 
-- **483 tests** with comprehensive coverage
+- **621 tests** with comprehensive coverage
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
@@ -216,6 +225,176 @@ help                   # Command help
 man command            # Show manual for command
 ```
 
+### Pipes & Text Processing
+
+The terminal supports powerful Unix-style pipe operations for chaining commands and processing text data.
+
+#### Pipe Operator
+
+The pipe operator (`|`) passes the output of one command as input to the next command:
+
+```bash
+# Basic piping
+ls | grep .txt                    # List files, filter for .txt files
+cat file.txt | wc                 # Count lines/words/chars in file
+echo "hello world" | grep hello   # Search for pattern in text
+
+# Multi-stage processing
+cat data.txt | grep error | sort | uniq    # Extract errors, sort, remove duplicates
+ls -la | head -10 | tail -5                # Get files 6-10 from detailed listing
+```
+
+#### Text Processing Commands
+
+**grep - Pattern Matching** (Works with files AND pipes)
+
+```bash
+# File input (direct file access)
+grep "pattern" file.txt           # Find lines containing pattern
+grep -i "hello" file.txt          # Case-insensitive search
+grep -v "exclude" file.txt        # Invert match (show non-matching lines)
+grep -n "pattern" file.txt        # Show line numbers with matches
+grep -c "pattern" file.txt        # Count matching lines
+
+# Pipe input
+ls | grep .js                     # Filter files by extension
+cat log.txt | grep -i error       # Find error messages (case-insensitive)
+echo "test line" | grep test      # Search piped text
+```
+
+**head - First Lines** (Pipe input only)
+
+```bash
+# Works only with pipes - NOT direct file access
+ls -la | head -5                  # First 5 files in listing
+cat file.txt | head -10           # First 10 lines from cat output
+echo -e "line1\nline2\nline3" | head -2   # First 2 lines from echo
+
+# Options
+command | head                    # First 10 lines (default)
+command | head -5                 # First 5 lines
+command | head -n 3               # First 3 lines (explicit syntax)
+```
+
+**tail - Last Lines** (Pipe input only)
+
+```bash
+# Works only with pipes - NOT direct file access
+ls -la | tail -5                  # Last 5 files in listing
+cat log.txt | tail -20            # Last 20 lines from cat output
+echo -e "a\nb\nc\nd" | tail -2    # Last 2 lines from echo
+
+# Options
+command | tail                    # Last 10 lines (default)
+command | tail -5                 # Last 5 lines
+command | tail -n 3               # Last 3 lines (explicit syntax)
+```
+
+**sort - Sort Lines** (Pipe input only)
+
+```bash
+# Works only with pipes - NOT direct file access
+ls | sort                         # Sort file listing alphabetically
+cat data.txt | sort               # Sort file contents
+echo -e "zebra\napple\nbanana" | sort  # Sort piped input
+
+# Options
+command | sort                    # Sort alphabetically
+command | sort -r                 # Reverse sort
+command | sort -n                 # Numeric sort
+```
+
+**uniq - Remove Duplicates** (Pipe input only)
+
+```bash
+# Works only with pipes - NOT direct file access
+# Note: Input should be sorted for best results
+ls | sort | uniq                  # Unique sorted file list
+cat data.txt | sort | uniq        # Remove duplicates from file
+echo -e "a\na\nb\nb" | sort | uniq # Remove duplicates from echo
+
+# Common pattern
+command | sort | uniq | wc        # Count unique lines
+```
+
+#### Complex Pipe Examples
+
+**Data Processing Pipeline:**
+
+```bash
+# Process a log file: extract errors, sort, remove duplicates
+cat server.log | grep ERROR | sort | uniq
+
+# Find and sort file extensions
+ls | grep "\." | sort
+
+# Count lines in sorted unique content
+cat data.txt | sort | uniq | wc
+```
+
+**Text Analysis:**
+
+```bash
+# Analyze text file: word count of unique lines
+cat document.txt | sort | uniq | wc
+
+# Find files and get first few
+ls -la | grep "\.txt" | head -5
+
+# Search and sort results
+cat log.txt | grep "error" | sort
+```
+
+**System Information:**
+
+```bash
+# Process directory listings
+ls -la | grep "^d" | head -5      # First 5 directories
+ls -la | grep "^-" | tail -10     # Last 10 regular files
+
+# Filter and format output
+ls -la | grep "\.txt" | head -3   # First 3 text files with details
+```
+
+**Development Workflows:**
+
+```bash
+# Find configuration files
+ls | grep config | head -5
+
+# Search for patterns in files
+cat README.md | grep -i "install" | head -3
+
+# Analyze file structure
+ls -la | grep "^-" | wc           # Count regular files
+ls -la | grep "^d" | wc           # Count directories
+
+# Process file listings
+ls | sort | head -10              # First 10 files alphabetically
+echo -e "apple\nbanana\napple\ncherry" | sort | uniq | wc  # Count unique items
+```
+
+#### Pipe Limitations and Notes
+
+- **Text Processing Commands**: `head`, `tail`, `sort`, and `uniq` only work with piped input, not direct file arguments
+- **Grep Exception**: `grep` works with both files and pipes: `grep pattern file.txt` OR `command | grep pattern`
+- **No Mixing with Other Operators**: Pipes cannot be mixed with `&&`, `||`, or `;` in the same command chain
+- **Data Flow**: Each command in a pipe receives the complete output of the previous command
+- **Exit Codes**: Pipe chains return the exit code of the last command in the chain
+- **Memory**: Large outputs are processed in memory, so be mindful of file sizes
+
+#### Error Handling in Pipes
+
+```bash
+# If any command in the pipe fails, subsequent commands may still execute
+ls nonexistent | grep test        # ls fails, but grep still runs (with empty input)
+cat missing.txt | sort | head     # cat fails, sort and head receive empty input
+
+# Check exit codes (note: cannot mix pipes with && in same command)
+ls | grep test                    # Pipe operation
+echo $?                          # Separate command to check exit code
+```
+
 ### Advanced Redirection
 
 ```bash
@@ -292,8 +471,9 @@ rm temp.txt && echo "Cleaned up" || echo "Nothing to clean" ; echo "Process comp
 # Build and deploy pipeline
 make build && make test && make deploy || echo "Pipeline failed"
 
-# File processing with error handling
-cat input.txt | sort > sorted.txt && echo "Sorted successfully" || echo "Sort failed" ; rm -f temp.*
+# Note: Cannot mix pipes with other chaining operators
+# This would work: cat input.txt | sort
+# Followed by: echo "Sorted successfully" && rm -f temp.*
 ```
 
 #### Practical Examples
@@ -799,15 +979,16 @@ Shows:
 
 ### Test Structure
 
-- **Unit Tests** (298+ tests)
+- **Unit Tests** (313+ tests)
   - File system operations and persistence
   - Command implementations with exit codes
-  - Command and option parsers with chaining support
+  - Command and option parsers with chaining and pipe support
   - Text editor functionality (69 comprehensive tests)
   - Autocompletion system with chaining context detection (66 tests)
   - Alias system and shell script parsing (comprehensive coverage)
   - Exit code handling and command chaining logic
-- **Integration Tests** (185+ tests)
+  - Pipe operations and text processing commands
+- **Integration Tests** (193+ tests)
   - Complete command execution workflows
   - Exit code propagation and chaining operators
   - Text editor integration with filesystem
@@ -816,12 +997,13 @@ Shows:
   - Alias resolution and parameter substitution
   - Shell script parsing and execution
   - Command chaining in complex scenarios
+  - Pipe operations and text processing workflows
   - Error handling and edge cases
 
 ### Coverage
 
 - ✅ All commands with comprehensive option testing and exit codes
-- ✅ Advanced parsing with I/O redirection and command chaining
+- ✅ Advanced parsing with I/O redirection, command chaining, and pipes
 - ✅ Navigation and path resolution with Unicode support
 - ✅ Complete text editor functionality (modes, vim commands, file operations)
 - ✅ Context-aware autocompletion including chained commands
@@ -829,6 +1011,7 @@ Shows:
 - ✅ Alias system with parameter substitution and circular reference detection
 - ✅ Shell script parsing with security validation
 - ✅ Exit code handling and command chaining logic (`&&`, `||`, `;`)
+- ✅ Pipe operations and text processing commands (`|`, `grep`, `head`, `tail`, `sort`, `uniq`)
 - ✅ `$?` variable substitution and last exit code tracking
 - ✅ Complex command chain scenarios and edge cases
 - ✅ Error scenarios, edge cases, and performance testing
