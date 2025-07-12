@@ -1128,7 +1128,7 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult(uniqueLines.join('\n'), 0);
   },
 
-  exportCmd: (
+  export: (
     args: string[],
     filesystem: FileSystemState,
     aliasManager?: AliasManager,
