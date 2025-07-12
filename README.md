@@ -407,6 +407,196 @@ wc < document.txt              # Count from file
 cat << EOF                     # Simplified heredoc
 ```
 
+### Environment Variables
+
+The terminal includes a comprehensive environment variable system that closely mimics Unix shell behavior, providing variable management, substitution, and persistence across sessions.
+
+#### Default Environment Variables
+
+The system provides essential Unix-like environment variables:
+
+```bash
+HOME='/home/user'              # User home directory
+USER='user'                    # Current user name
+SHELL='/bin/bash'              # Shell program
+TERM='terminal-emulator'       # Terminal type
+PATH='/usr/bin:/bin:/usr/local/bin'  # Executable search path
+LANG='en_US.UTF-8'            # System locale
+PWD='/'                       # Current working directory (dynamic)
+TERMINAL_VERSION='1.0.0'      # Terminal version
+EDITOR='vi'                   # Default text editor
+```
+
+#### Environment Commands
+
+**Setting Variables:**
+
+```bash
+# Set environment variables
+export VAR=value              # Set variable
+export NAME="John Doe"        # Set with quotes
+export PATH="$PATH:/new/path" # Append to existing variable
+
+# Multiple variables
+export VAR1=value1 VAR2=value2
+```
+
+**Viewing Variables:**
+
+```bash
+# List all environment variables
+env                           # Show all variables (sorted)
+
+# View specific variable
+echo $HOME                    # Display HOME variable
+echo ${USER}                  # Alternative syntax
+```
+
+**Removing Variables:**
+
+```bash
+# Remove user-defined variables
+unset VAR                     # Remove single variable
+unset VAR1 VAR2 VAR3         # Remove multiple variables
+
+# Note: System variables (HOME, USER, SHELL, TERM) cannot be unset
+```
+
+#### Variable Substitution
+
+Environment variables can be used in commands and arguments using `$VAR` or `${VAR}` syntax:
+
+```bash
+# Basic substitution
+echo $HOME                    # /home/user
+echo "Welcome $USER"          # Welcome user
+cd $HOME                      # Change to home directory
+
+# Advanced substitution
+echo "Path: ${PATH}"          # Explicit variable boundaries
+echo "$USER's home: $HOME"    # Mixed text and variables
+
+# Use in commands
+ls $HOME/documents            # List documents directory
+cat $HOME/.bashrc            # View shell configuration
+touch $HOME/newfile.txt      # Create file in home
+```
+
+#### Variable Substitution in Command Chains
+
+Environment variables work seamlessly with all terminal features:
+
+```bash
+# With command chaining
+cd $HOME && ls -la && echo "Listed $PWD contents"
+mkdir $HOME/backup || echo "Failed to create backup in $HOME"
+
+# With I/O redirection
+echo "User: $USER" > $HOME/userinfo.txt
+cat $HOME/config.txt | grep $USER
+
+# With pipes
+ls $HOME | grep $USER         # Filter by username
+echo $PATH | head -1          # First path entry
+```
+
+#### Exit Code Variable
+
+The special `$?` variable contains the exit code of the last executed command:
+
+```bash
+# Check command success
+ls /home/user
+echo $?                       # Shows 0 (success)
+
+ls nonexistent
+echo $?                       # Shows 1 (error)
+
+unknowncommand
+echo $?                       # Shows 127 (command not found)
+
+# Use in conditional logic
+ls /tmp && echo "Success: $?" || echo "Failed: $?"
+```
+
+#### Practical Examples
+
+**Development Environment Setup:**
+
+```bash
+# Set up development paths
+export PROJECT_ROOT="/home/user/projects"
+export NODE_PATH="/usr/local/lib/node_modules"
+
+# Navigate using variables
+cd $PROJECT_ROOT
+ls $PROJECT_ROOT/myapp
+
+# Create project structure
+mkdir -p $PROJECT_ROOT/newapp/src
+touch $PROJECT_ROOT/newapp/package.json
+```
+
+**User Configuration:**
+
+```bash
+# Customize environment
+export EDITOR='vi'
+export BROWSER='firefox'
+export LANG='fr_FR.UTF-8'
+
+# Use in commands
+$EDITOR $HOME/.bashrc         # Open config in preferred editor
+echo "Language: $LANG" > $HOME/locale.txt
+```
+
+**System Information:**
+
+```bash
+# Display system info
+echo "Terminal: $TERM version $TERMINAL_VERSION"
+echo "User: $USER working in $PWD"
+echo "Shell: $SHELL"
+echo "Search path: $PATH"
+```
+
+**Backup Operations:**
+
+```bash
+# Dynamic backup paths
+export BACKUP_DIR="$HOME/backups/$(date +%Y%m%d)"
+mkdir -p $BACKUP_DIR
+cp *.txt $BACKUP_DIR/
+echo "Backup created in $BACKUP_DIR"
+```
+
+#### Persistence and Security
+
+**Automatic Persistence:**
+
+- User-defined variables are automatically saved to browser localStorage
+- Variables persist across terminal sessions and page reloads
+- Mode-specific storage (default vs portfolio filesystems have separate environments)
+
+**Security Features:**
+
+- Variable names must follow Unix naming conventions (`[a-zA-Z_][a-zA-Z0-9_]*`)
+- Maximum variable name length: 100 characters
+- Maximum variable value length: 1,000 characters
+- Maximum total variables: 100
+- System variables (HOME, USER, SHELL, TERM) are protected from removal
+- No arbitrary code execution - only safe string substitution
+
+**Storage Management:**
+
+```bash
+# View storage information
+storage-info                  # Shows environment variable storage usage
+
+# Reset environment (removes all user-defined variables)
+reset-fs                      # Resets filesystem and environment to defaults
+```
+
 ### Command Chaining & Exit Codes
 
 The terminal supports Unix-style command chaining with exit codes for powerful command sequences.
