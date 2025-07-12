@@ -1,4 +1,5 @@
 import type { CommandHandler, CommandResult, FileSystemNode, FileSystemState } from '~/routes/terminal/types/filesystem';
+import type { OutputSegment } from '~/routes/terminal/types/filesystem';
 import type { AliasManager } from '~/routes/terminal/utils/aliasManager';
 import { type ChainedCommand, type ParsedCommand, type PipedCommand, parseChainedCommand, parseCommand } from '~/routes/terminal/utils/commandParser';
 import {
@@ -1315,6 +1316,11 @@ function executePipedCommand(
   return lastResult;
 }
 
+// Helper function to convert OutputSegment[] to string for backward compatibility
+function outputSegmentsToString(segments: OutputSegment[]): string {
+  return segments.map((segment) => segment.text).join('');
+}
+
 function executeChainedCommand(
   chainedCommand: ChainedCommand,
   filesystem: FileSystemState,
@@ -1324,7 +1330,7 @@ function executeChainedCommand(
 ): CommandResult {
   const { commands, operators } = chainedCommand;
   let lastResult: CommandResult = { success: true, output: '', exitCode: 0 };
-  let combinedOutput: string[] = [];
+  let combinedOutput: OutputSegment[] = [];
 
   for (let i = 0; i < commands.length; i++) {
     const command = commands[i];
@@ -1346,9 +1352,9 @@ function executeChainedCommand(
     // Add output to combined output
     if (result.output) {
       if (typeof result.output === 'string') {
-        combinedOutput.push(result.output);
+        combinedOutput.push({ text: result.output });
       } else if (Array.isArray(result.output)) {
-        combinedOutput.push(result.output.map((segment) => segment.text || '').join(''));
+        combinedOutput.push(...result.output);
       }
     }
 
@@ -1358,7 +1364,7 @@ function executeChainedCommand(
 
   return {
     success: lastResult.success,
-    output: combinedOutput.join(''),
+    output: combinedOutput.length > 0 ? combinedOutput : '',
     error: lastResult.error,
     exitCode: lastResult.exitCode,
   };
