@@ -11,6 +11,20 @@ export interface AutocompletionResult {
   commonPrefix: string;
 }
 
+/**
+ * Helper function to get environment variable completions that match a prefix
+ */
+function getEnvironmentVariableCompletions(prefix: string, environmentManager: EnvironmentManager): AutocompletionResult {
+  const variables = environmentManager.getAll();
+  const varNames = Object.keys(variables);
+  const matchingVars = varNames.filter((varName) => varName.startsWith(prefix));
+
+  return {
+    completions: matchingVars,
+    commonPrefix: getCommonPrefix(matchingVars),
+  };
+}
+
 interface CommandContext {
   isChainedContext: boolean;
   currentInput: string;
@@ -191,14 +205,7 @@ export function getAutocompletions(
 
   // Special handling for unset command - complete with environment variable names
   if (command === 'unset' && environmentManager) {
-    const variables = environmentManager.getAll();
-    const varNames = Object.keys(variables);
-    const matchingVars = varNames.filter((varName) => varName.startsWith(pathArg));
-
-    return {
-      completions: matchingVars,
-      commonPrefix: getCommonPrefix(matchingVars),
-    };
+    return getEnvironmentVariableCompletions(pathArg, environmentManager);
   }
 
   // Special handling for alias command - complete with existing alias names
