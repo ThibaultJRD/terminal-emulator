@@ -17,9 +17,9 @@ function createManualPage(
   examples: string[],
   options?: string[],
   seeAlso?: string[],
-  mode: 'default' | 'portfolio' = 'default',
+  mode: 'default' | 'portfolio' | 'tutorial' = 'default',
 ): FileSystemNode {
-  const header = mode === 'portfolio' ? 'Portfolio Terminal Manual' : 'User Commands';
+  const header = mode === 'portfolio' ? 'Portfolio Terminal Manual' : mode === 'tutorial' ? 'Tutorial Terminal Manual' : 'User Commands';
   const upperCommand = command.toUpperCase();
 
   let content = `${upperCommand}(1)                    ${header}                    ${upperCommand}(1)
@@ -51,6 +51,8 @@ DESCRIPTION
 
   if (mode === 'portfolio') {
     content += '\n\nAUTHOR\n       Part of the Portfolio Terminal Emulator';
+  } else if (mode === 'tutorial') {
+    content += '\n\nTUTORIAL\n       Part of the Interactive Terminal Learning Experience';
   }
 
   return {
@@ -68,7 +70,7 @@ DESCRIPTION
  * Creates all manual pages for the man1 directory.
  * @param mode - Filesystem mode for customized content
  */
-function createManualPages(mode: 'default' | 'portfolio' = 'default'): Record<string, FileSystemNode> {
+function createManualPages(mode: 'default' | 'portfolio' | 'tutorial' = 'default'): Record<string, FileSystemNode> {
   const manPages: Record<string, FileSystemNode> = {};
 
   // File Operations
@@ -81,7 +83,9 @@ function createManualPages(mode: 'default' | 'portfolio' = 'default'): Record<st
       'ls -la\n              List all files in long format, including hidden files',
       mode === 'portfolio'
         ? 'ls /home/user/projects\n              List files in specific directory'
-        : 'ls /home/user/documents\n              List files in specific directory',
+        : mode === 'tutorial'
+          ? 'ls lessons\n              List tutorial lessons'
+          : 'ls /home/user/documents\n              List files in specific directory',
     ],
     ['-a, --all\n              do not ignore entries starting with .', '-l     use a long listing format', '-la    combination of -l and -a'],
     ['cat(1)', 'mkdir(1)', 'rm(1)'],
@@ -96,9 +100,15 @@ function createManualPages(mode: 'default' | 'portfolio' = 'default'): Record<st
       'cd\n              Change to home directory',
       mode === 'portfolio'
         ? 'cd /home/user/projects\n              Change to projects directory'
-        : 'cd /home/user/documents\n              Change to specific directory',
+        : mode === 'tutorial'
+          ? 'cd lessons/01-basics\n              Change to first lesson'
+          : 'cd /home/user/documents\n              Change to specific directory',
       'cd ..\n              Change to parent directory',
-      mode === 'portfolio' ? 'cd about\n              Change to about directory' : 'cd ../..\n              Change to grandparent directory',
+      mode === 'portfolio'
+        ? 'cd about\n              Change to about directory'
+        : mode === 'tutorial'
+          ? 'cd sandbox\n              Change to practice area'
+          : 'cd ../..\n              Change to grandparent directory',
     ],
     undefined,
     ['pwd(1)', 'ls(1)'],
@@ -2373,16 +2383,1095 @@ Only accessible in portfolio mode.
 }
 
 /**
+ * Creates a tutorial filesystem structure with progressive Unix learning lessons.
+ * This structure guides users through interactive terminal learning from basics to advanced concepts.
+ */
+export function createTutorialFilesystem(): FileSystemNode {
+  return {
+    name: '/',
+    type: 'directory',
+    permissions: 'drwxr-xr-x',
+    size: 4096,
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+    children: {
+      home: {
+        name: 'home',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          user: {
+            name: 'user',
+            type: 'directory',
+            permissions: 'drwxr-xr-x',
+            size: 4096,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            children: {
+              lessons: {
+                name: 'lessons',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  '01-basics': {
+                    name: '01-basics',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Lesson 1: Basic Terminal Commands
+
+Welcome to your first lesson! 🚀
+
+## Objectives
+- Learn to navigate directories
+- Display directory contents  
+- Know your current location
+- Read file contents
+
+## Commands to Learn
+
+### 1. pwd - Print Working Directory
+\`\`\`bash
+pwd
+\`\`\`
+Shows the current directory (where you are).
+
+### 2. ls - List Directory Contents  
+\`\`\`bash
+ls           # List files
+ls -l        # Detailed list
+ls -a        # Show hidden files
+ls -la       # Combine -l and -a
+\`\`\`
+
+### 3. cd - Change Directory
+\`\`\`bash
+cd              # Return to home directory
+cd folder       # Go to 'folder'
+cd ..           # Go up one level
+cd ../..        # Go up two levels
+cd /            # Go to root
+\`\`\`
+
+### 4. cat - Display File Contents
+\`\`\`bash
+cat file.txt    # Display file contents
+\`\`\`
+
+## Practical Exercises
+
+### Exercise 1: Getting Oriented
+1. Type \`pwd\` to see where you are
+2. Type \`ls\` to see what's here
+3. Type \`ls -la\` to see all files
+
+### Exercise 2: Navigation
+1. Go to the \`practice\` folder: \`cd practice\`
+2. Show where you are: \`pwd\`
+3. List files: \`ls\`
+4. Return to parent folder: \`cd ..\`
+
+### Exercise 3: Reading Files
+1. Display contents of \`welcome.txt\`: \`cat welcome.txt\`
+2. Read the \`commands.txt\` file: \`cat commands.txt\`
+
+## 🎯 Challenge
+Can you navigate to \`practice/files\` and list its contents?
+
+Once these exercises are complete, move to the next lesson:
+\`cd ../02-files\``,
+                        permissions: '-rw-r--r--',
+                        size: 1500,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'welcome.txt': {
+                        name: 'welcome.txt',
+                        type: 'file',
+                        content: `🎉 Congratulations! You just read your first file with 'cat'!
+
+The terminal is your ally for:
+- Quickly navigating your system
+- Efficiently manipulating files  
+- Automating repetitive tasks
+- Controlling remote servers
+
+Continue the exercises to master these superpowers! 💪`,
+                        permissions: '-rw-r--r--',
+                        size: 256,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'commands.txt': {
+                        name: 'commands.txt',
+                        type: 'file',
+                        content: `Basic commands cheat sheet:
+
+pwd     - Show current directory
+ls      - List files
+ls -l   - Detailed list with permissions  
+ls -a   - Show hidden files (starting with .)
+ls -la  - Combine -l and -a
+cd      - Change directory
+cat     - Display file contents
+help    - Show general help
+man ls  - Manual for ls command`,
+                        permissions: '-rw-r--r--',
+                        size: 384,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      practice: {
+                        name: 'practice',
+                        type: 'directory',
+                        permissions: 'drwxr-xr-x',
+                        size: 4096,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                        children: {
+                          'note.txt': {
+                            name: 'note.txt',
+                            type: 'file',
+                            content: `Well done! You navigated to the practice folder.
+
+💡 Tip: Use Tab for auto-completion!
+Type 'cd ../f' then Tab to see suggestions.`,
+                            permissions: '-rw-r--r--',
+                            size: 128,
+                            createdAt: new Date(),
+                            modifiedAt: new Date(),
+                          },
+                          files: {
+                            name: 'files',
+                            type: 'directory',
+                            permissions: 'drwxr-xr-x',
+                            size: 4096,
+                            createdAt: new Date(),
+                            modifiedAt: new Date(),
+                            children: {
+                              'secret.txt': {
+                                name: 'secret.txt',
+                                type: 'file',
+                                content: `🎊 BRAVO! You found the secret file!
+
+You now master:
+✅ pwd - know your position
+✅ ls - list files  
+✅ cd - change directories
+✅ cat - read files
+
+Ready for the next step? Go to lesson 2:
+cd ../../02-files`,
+                                permissions: '-rw-r--r--',
+                                size: 256,
+                                createdAt: new Date(),
+                                modifiedAt: new Date(),
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  '02-files': {
+                    name: '02-files',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Lesson 2: File and Directory Management
+
+You now know how to navigate! 🧭  
+Let's learn to create, copy, move, and delete files.
+
+## Commandes à apprendre
+
+### 1. touch - Créer des fichiers vides
+\`\`\`bash
+touch fichier.txt
+touch file1.txt file2.txt    # Créer plusieurs fichiers
+\`\`\`
+
+### 2. mkdir - Créer des dossiers
+\`\`\`bash
+mkdir dossier
+mkdir -p dossier/sous-dossier    # Créer parents si nécessaire
+\`\`\`
+
+### 3. cp - Copier des fichiers/dossiers
+\`\`\`bash
+cp fichier.txt copie.txt
+cp -r dossier nouveau_dossier    # Copier récursivement
+\`\`\`
+
+### 4. mv - Déplacer/Renommer
+\`\`\`bash
+mv ancien.txt nouveau.txt        # Renommer
+mv fichier.txt dossier/          # Déplacer
+\`\`\`
+
+### 5. rm - Supprimer des fichiers
+\`\`\`bash
+rm fichier.txt
+rm -r dossier     # Supprimer récursivement
+rm -f fichier     # Forcer la suppression
+\`\`\`
+
+### 6. rmdir - Supprimer des dossiers vides
+\`\`\`bash
+rmdir dossier_vide
+\`\`\`
+
+## Exercices Pratiques
+
+### Exercice 1 : Création
+1. Créez un fichier \`mon_fichier.txt\` : \`touch mon_fichier.txt\`
+2. Créez un dossier \`mon_dossier\` : \`mkdir mon_dossier\`
+3. Vérifiez avec \`ls\`
+
+### Exercice 2 : Copie et déplacement
+1. Copiez \`exemple.txt\` vers \`copie.txt\` : \`cp exemple.txt copie.txt\`
+2. Déplacez \`copie.txt\` dans \`mon_dossier\` : \`mv copie.txt mon_dossier/\`
+3. Vérifiez : \`ls mon_dossier\`
+
+### Exercice 3 : Suppression ⚠️
+1. Supprimez \`mon_fichier.txt\` : \`rm mon_fichier.txt\`
+2. Supprimez le dossier et son contenu : \`rm -r mon_dossier\`
+
+## 🎯 Défi avancé
+Créez cette structure :
+\`\`\`
+projet/
+├── src/
+│   └── main.txt
+└── docs/
+    └── readme.txt
+\`\`\`
+
+Indice : \`mkdir -p projet/{src,docs}\`
+
+## ⚠️ Attention !
+\`rm\` supprime définitivement ! Contrairement à la corbeille, 
+il n'y a pas de retour en arrière possible.
+
+Prêt pour l'éditeur de texte ? 
+\`cd ../03-editor\``,
+                        permissions: '-rw-r--r--',
+                        size: 1800,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'exemple.txt': {
+                        name: 'exemple.txt',
+                        type: 'file',
+                        content: `Ceci est un fichier d'exemple pour s'exercer.
+
+Vous pouvez le copier, le déplacer, le renommer...
+C'est en pratiquant qu'on apprend ! 🚀`,
+                        permissions: '-rw-r--r--',
+                        size: 128,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                  '03-editor': {
+                    name: '03-editor',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Leçon 3 : L'éditeur de texte Vi
+
+Apprenons à utiliser l'éditeur vi intégré ! ✏️  
+C'est un outil puissant pour éditer des fichiers directement dans le terminal.
+
+## Modes de Vi
+
+Vi fonctionne avec 2 modes principaux :
+
+### Mode NORMAL (mode commande)
+- **Naviguer** dans le texte
+- **Exécuter** des commandes
+- **Mode par défaut** à l'ouverture
+
+### Mode INSERT (mode édition)  
+- **Écrire** et **modifier** le texte
+- Comme un éditeur classique
+
+## Commandes essentielles
+
+### Ouvrir un fichier
+\`\`\`bash
+vi nom_fichier.txt
+\`\`\`
+
+### En mode NORMAL :
+- **i** : Passer en mode INSERT (avant le curseur)
+- **ESC** : Retourner en mode NORMAL
+- **:w** : Sauvegarder le fichier
+- **:q** : Quitter l'éditeur
+- **:wq** : Sauvegarder et quitter
+- **:q!** : Quitter sans sauvegarder
+
+### Navigation en mode NORMAL :
+- **h, j, k, l** : Gauche, Bas, Haut, Droite
+- **Flèches** : Fonctionnent aussi !
+
+## Exercices Pratiques
+
+### Exercice 1 : Premier fichier
+1. Ouvrez l'éditeur : \`vi mon_premier_fichier.txt\`
+2. Appuyez sur **i** pour entrer en mode INSERT
+3. Tapez : "Bonjour, je maîtrise vi !"
+4. Appuyez sur **ESC** pour revenir en mode NORMAL
+5. Tapez **:wq** pour sauvegarder et quitter
+6. Vérifiez : \`cat mon_premier_fichier.txt\`
+
+### Exercice 2 : Éditer un fichier existant
+1. Éditez \`practice.txt\` : \`vi practice.txt\`
+2. Lisez les instructions dans le fichier
+3. Modifiez-le selon les consignes
+4. Sauvegardez avec **:w**
+5. Quittez avec **:q**
+
+### Exercice 3 : Annulation d'édition
+1. Ouvrez \`important.txt\` : \`vi important.txt\`
+2. Faites des modifications
+3. Quittez SANS sauvegarder : **:q!**
+4. Vérifiez que le fichier n'a pas changé : \`cat important.txt\`
+
+## 🎯 Défi
+Créez un fichier \`mon_cv.txt\` avec vi et écrivez votre présentation !
+
+## 💡 Astuces
+- **ESC ESC** si vous êtes perdus (retour forcé en mode NORMAL)
+- **Vi = Vim** dans ce terminal (version améliorée)
+- L'autocomplétion marche aussi en mode INSERT (Tab)
+
+Prêt pour les redirections ?
+\`cd ../04-redirection\``,
+                        permissions: '-rw-r--r--',
+                        size: 2000,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'practice.txt': {
+                        name: 'practice.txt',
+                        type: 'file',
+                        content: `EXERCICE VI - Éditez ce fichier !
+
+Instructions :
+1. Ajoutez votre nom après "Nom :"
+2. Complétez la phrase "J'apprends vi parce que..."
+3. Ajoutez une nouvelle ligne avec votre citation préférée
+
+Nom : [AJOUTEZ VOTRE NOM ICI]
+
+J'apprends vi parce que... [COMPLÉTEZ]
+
+Ma citation : [AJOUTEZ UNE CITATION]
+
+Sauvegardez et quittez quand c'est terminé !`,
+                        permissions: '-rw-r--r--',
+                        size: 256,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'important.txt': {
+                        name: 'important.txt',
+                        type: 'file',
+                        content: `⚠️ FICHIER IMPORTANT - NE PAS MODIFIER ⚠️
+
+Ce fichier contient des données critiques.
+Utilisez :q! pour sortir sans sauvegarder !
+
+Si vous voyez ce message inchangé après l'exercice,
+c'est que vous avez bien maîtrisé la sortie sans sauvegarde ! 👍`,
+                        permissions: '-rw-r--r--',
+                        size: 256,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                  '04-redirection': {
+                    name: '04-redirection',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Leçon 4 : Redirections et Pipes
+
+Découvrons la puissance des redirections ! 🔄  
+Connecter des commandes entre elles pour des tâches complexes.
+
+## Types de redirections
+
+### 1. Redirection de sortie (>)
+\`\`\`bash
+echo "Bonjour" > fichier.txt    # Écrit dans fichier (écrase)
+ls > liste.txt                  # Sauvegarde la liste des fichiers
+\`\`\`
+
+### 2. Redirection d'ajout (>>)
+\`\`\`bash
+echo "Nouvelle ligne" >> fichier.txt    # Ajoute à la fin
+date >> log.txt                         # Ajoute date au log
+\`\`\`
+
+### 3. Redirection d'entrée (<)
+\`\`\`bash
+wc < fichier.txt                # Compte les lignes depuis fichier
+cat < input.txt                 # Lit depuis fichier
+\`\`\`
+
+### 4. Here document (<<)
+\`\`\`bash
+cat << EOF
+Texte sur
+plusieurs lignes
+EOF
+\`\`\`
+
+## Commandes utiles avec redirections
+
+### wc - Word Count
+\`\`\`bash
+wc fichier.txt          # Lignes, mots, caractères
+wc -l fichier.txt       # Nombre de lignes seulement
+\`\`\`
+
+### echo - Affichage de texte
+\`\`\`bash
+echo "Message"          # Affiche à l'écran
+echo "Message" > file   # Écrit dans fichier
+\`\`\`
+
+## Exercices Pratiques
+
+### Exercice 1 : Créer avec redirections
+1. \`echo "Liste de courses" > courses.txt\`
+2. \`echo "- Pain" >> courses.txt\`
+3. \`echo "- Lait" >> courses.txt\`
+4. \`echo "- Œufs" >> courses.txt\`
+5. Vérifiez : \`cat courses.txt\`
+
+### Exercice 2 : Compter et analyser
+1. Comptez les lignes : \`wc -l courses.txt\`
+2. Sauvegardez le résultat : \`wc -l courses.txt > stats.txt\`
+3. Affichez : \`cat stats.txt\`
+
+### Exercice 3 : Lister et sauvegarder
+1. \`ls -la > inventory.txt\`
+2. \`echo "--- Fin de l'inventaire ---" >> inventory.txt\`
+3. \`cat inventory.txt\`
+
+### Exercice 4 : Here document
+\`\`\`bash
+cat << EOF > poem.txt
+Les roses sont rouges
+Les violettes sont bleues
+J'apprends le terminal
+Et c'est merveilleux !
+EOF
+\`\`\`
+
+## 🎯 Défi
+Créez un fichier \`rapport.txt\` qui contient :
+1. La date actuelle (vous pouvez inventer)
+2. La liste des fichiers du répertoire
+3. Le nombre total de fichiers
+
+## 💡 Astuces importantes
+- **>** écrase le fichier existant
+- **>>** ajoute à la fin du fichier
+- Attention à ne pas écraser des fichiers importants !
+
+Prêt pour les concepts avancés ?
+\`cd ../05-advanced\``,
+                        permissions: '-rw-r--r--',
+                        size: 2200,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                  '05-advanced': {
+                    name: '05-advanced',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Leçon 5 : Concepts Avancés
+
+Félicitations ! 🎉 Vous maîtrisez les bases.  
+Explorons maintenant les fonctionnalités avancées du shell.
+
+## Variables d'environnement
+
+### Qu'est-ce que c'est ?
+Les variables stockent des informations que les programmes peuvent utiliser.
+
+### Variables importantes
+- **$HOME** : Votre dossier personnel
+- **$PATH** : Où le système cherche les commandes
+- **$USER** : Votre nom d'utilisateur
+- **$PWD** : Répertoire actuel
+
+### Utilisation
+\`\`\`bash
+echo $HOME                 # Affiche le dossier home
+echo "Je suis $USER"       # Utilise la variable dans du texte
+\`\`\`
+
+## Le fichier .bashrc
+
+### Qu'est-ce que c'est ?
+Le fichier \`.bashrc\` contient des configurations qui s'exécutent 
+à chaque ouverture de terminal.
+
+### Contenu typique :
+- **Aliases** (raccourcis de commandes)
+- **Variables d'environnement**
+- **Fonctions personnalisées**
+
+## Aliases - Raccourcis de commandes
+
+### Créer des aliases
+\`\`\`bash
+alias ll='ls -l'           # ll devient un raccourci pour ls -l
+alias la='ls -la'          # la pour ls -la
+alias ..='cd ..'           # .. pour remonter
+\`\`\`
+
+### Voir les aliases
+\`\`\`bash
+alias                      # Liste tous les aliases
+\`\`\`
+
+### Supprimer un alias
+\`\`\`bash
+unalias ll                 # Supprime l'alias ll
+\`\`\`
+
+## La commande source
+
+### Charger des configurations
+\`\`\`bash
+source ~/.bashrc           # Recharge la configuration
+source alias_file.sh       # Charge des aliases depuis un fichier
+\`\`\`
+
+## Exercices Pratiques
+
+### Exercice 1 : Variables d'environnement
+1. \`echo $HOME\`
+2. \`echo $USER\` 
+3. \`echo "Mon dossier : $HOME"\`
+
+### Exercice 2 : Aliases utiles
+1. \`alias ll='ls -l'\`
+2. \`alias la='ls -la'\`
+3. \`alias h='history'\`
+4. Testez vos nouveaux aliases !
+
+### Exercice 3 : Fichier .bashrc
+1. Ouvrez le fichier : \`vi ~/.bashrc\`
+2. Regardez son contenu (mode NORMAL)
+3. Quittez sans modifier : \`:q\`
+
+### Exercice 4 : Aliases persistants
+1. Créez un fichier : \`vi my_aliases.sh\`
+2. Ajoutez vos aliases préférés :
+   \`\`\`bash
+   alias ll='ls -l'
+   alias la='ls -la'
+   alias projects='cd ~/projects'
+   \`\`\`
+3. Sauvegardez et quittez
+4. Chargez les aliases : \`source my_aliases.sh\`
+
+## 🎯 Défi Expert
+Créez un alias \`weather\` qui affiche :
+\`\`\`bash
+alias weather='echo "🌞 Beau temps pour coder !"'
+\`\`\`
+
+## 💡 Conseils pro
+- Les aliases disparaissent quand vous fermez le terminal
+- Pour les rendre permanents, ajoutez-les au .bashrc
+- Utilisez des noms courts mais explicites
+- Attention à ne pas écraser des commandes existantes !
+
+## 🏆 Félicitations !
+Vous avez terminé toutes les leçons de base !
+
+Pour aller plus loin :
+- \`cd ../challenges\` : Défis pratiques
+- \`cd ../../sandbox\` : Zone de test libre
+- \`help\` : Aide générale du terminal`,
+                        permissions: '-rw-r--r--',
+                        size: 2800,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'my_aliases.sh': {
+                        name: 'my_aliases.sh',
+                        type: 'file',
+                        content: `#!/bin/bash
+# Mes aliases personnalisés
+
+# Navigation rapide
+alias ..='cd ..'
+alias ...='cd ../..'
+alias home='cd ~'
+
+# Listings améliorés
+alias ll='ls -l'
+alias la='ls -la'
+alias lt='ls -lt'
+
+# Raccourcis utiles
+alias h='history'
+alias c='clear'
+alias reload='source ~/.bashrc'
+
+# Créez vos propres aliases ici !
+`,
+                        permissions: '-rw-r--r--',
+                        size: 384,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                  challenges: {
+                    name: 'challenges',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# 🏆 Défis Pratiques
+
+Testez vos compétences avec ces défis progressifs !
+
+## Défi 1 : Explorateur 🔍
+**But :** Trouvez tous les fichiers cachés du système
+**Indices :** 
+- Les fichiers cachés commencent par \`.\`
+- Utilisez \`ls -a\`
+- Explorez différents dossiers
+
+## Défi 2 : Organisateur 📁
+**But :** Créez cette structure de projet :
+\`\`\`
+mon-projet/
+├── src/
+│   ├── main.js
+│   └── utils.js
+├── tests/
+│   └── test.js
+├── docs/
+│   └── README.md
+└── package.json
+\`\`\`
+
+## Défi 3 : Journaliste 📝
+**But :** Créez un système de logs
+1. Fichier \`daily.log\` avec la date du jour
+2. Ajoutez des entrées avec \`>>\`
+3. Comptez les lignes avec \`wc -l\`
+
+## Défi 4 : Maître Vi ✏️
+**But :** Éditez le fichier \`story.txt\`
+1. Ajoutez votre nom d'auteur
+2. Complétez l'histoire
+3. Corrigez les fautes de frappe
+
+## Défi 5 : Alias Master 🚀
+**But :** Créez des aliases pratiques
+1. \`proj\` pour aller dans vos projets
+2. \`backup\` pour copier des fichiers importants
+3. \`clean\` pour supprimer les fichiers temporaires
+
+## 🎖️ Défi Ultimate
+Créez un script qui :
+1. Crée un dossier de backup avec la date
+2. Y copie tous vos fichiers importants
+3. Affiche un rapport du backup
+
+Bonne chance ! 💪`,
+                        permissions: '-rw-r--r--',
+                        size: 1200,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'story.txt': {
+                        name: 'story.txt',
+                        type: 'file',
+                        content: `Il était une fois, dans un terminal lointain...
+
+Un développeur découvrit la puisance du commande line.
+Chaque jour, il apprenai de nouvelles commandes.
+
+[CORRIGEZ LES FAUTES ET COMPLETEZ L'HISTOIRE]
+
+Auteur : [VOTRE NOM ICI]`,
+                        permissions: '-rw-r--r--',
+                        size: 256,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                },
+              },
+              sandbox: {
+                name: 'sandbox',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  'README.md': {
+                    name: 'README.md',
+                    type: 'file',
+                    content: `# 🏖️ Sandbox - Zone de Test Libre
+
+Bienvenue dans votre bac à sable ! 
+
+Ici, vous pouvez :
+- Tester toutes les commandes apprises
+- Créer vos propres fichiers et dossiers  
+- Expérimenter sans risque
+- Pratiquer vos nouveaux alias
+
+## Conseils
+- Créez ce que vous voulez
+- Supprimez, copiez, déplacez à volonté
+- C'est votre espace d'entraînement !
+
+## Commandes de nettoyage
+\`\`\`bash
+rm -rf *        # Supprime tout (attention !)
+ls -la          # Vérifie ce qui reste
+\`\`\`
+
+Amusez-vous bien ! 🚀`,
+                    permissions: '-rw-r--r--',
+                    size: 512,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                },
+              },
+              progress: {
+                name: 'progress',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  'tutorial_progress.md': {
+                    name: 'tutorial_progress.md',
+                    type: 'file',
+                    content: `# 📊 Tutorial Progress
+
+## ✅ Completed Lessons
+
+- [ ] 01-basics: Navigation and reading
+- [ ] 02-files: File management  
+- [ ] 03-editor: Vi mastery
+- [ ] 04-redirection: Redirections and pipes
+- [ ] 05-advanced: Variables and aliases
+
+## 🎯 Goals
+
+### Beginner
+- [ ] Navigate with cd, ls, pwd
+- [ ] Read files with cat
+- [ ] Create files with touch
+
+### Intermediate  
+- [ ] Manage files (cp, mv, rm)
+- [ ] Use vi editor
+- [ ] Master redirections
+
+### Advanced
+- [ ] Create aliases
+- [ ] Understand variables
+- [ ] Modify .bashrc
+
+## 📈 Statistics
+- Time spent: 0 minutes
+- Commands executed: 0
+- Files created: 0
+
+Keep learning! 💪`,
+                    permissions: '-rw-r--r--',
+                    size: 768,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                },
+              },
+              '.bashrc': {
+                name: '.bashrc',
+                type: 'file',
+                content: `# ~/.bashrc - Tutorial configuration
+
+# Environment variables
+export TUTORIAL_MODE=true
+export EDITOR=vi
+export PAGER=cat
+
+# Basic aliases (already configured)
+alias ll='ls -l'
+alias la='ls -la'
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# Special tutorial aliases
+alias lessons='cd ~/lessons'
+alias sandbox='cd ~/sandbox'
+alias progress='cat ~/progress/tutorial_progress.md'
+
+# Welcome message
+echo "💡 Tutorial mode active! Type 'lessons' to begin."
+`,
+                permissions: '-rw-r--r--',
+                size: 512,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+              },
+            },
+          },
+        },
+      },
+      etc: {
+        name: 'etc',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          version: {
+            name: 'version',
+            type: 'file',
+            content: `Terminal Tutorial v1.0.0
+Built with React Router v7, TypeScript 5.0+, and TailwindCSS v4
+Interactive Unix terminal learning environment
+
+Features:
+- Progressive lessons from basics to advanced concepts
+- Hands-on practice with real terminal commands
+- Interactive file system for safe experimentation
+- Built-in vi editor training
+- Progress tracking and challenges
+- Sandbox environment for free practice
+
+Learning Path:
+- 01-basics: Navigation fundamentals (ls, cd, pwd, cat)
+- 02-files: File management (touch, mkdir, cp, mv, rm)
+- 03-editor: Vi editor mastery (modes, editing, saving)
+- 04-redirection: I/O redirection and pipes (>, >>, <)
+- 05-advanced: Environment variables, .bashrc, aliases
+
+Technical Stack:
+- React Router v7 (CSR mode)
+- TypeScript with strict typing
+- TailwindCSS v4 with Catppuccin theme
+- Comprehensive test coverage
+- Safe learning environment with no system access`,
+            permissions: '-r--r--r--',
+            size: 896,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+          },
+        },
+      },
+      usr: {
+        name: 'usr',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          share: {
+            name: 'share',
+            type: 'directory',
+            permissions: 'drwxr-xr-x',
+            size: 4096,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            children: {
+              man: {
+                name: 'man',
+                type: 'directory',
+                permissions: 'drwxr-xr-x',
+                size: 4096,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+                children: {
+                  man1: {
+                    name: 'man1',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: createManualPages('tutorial'),
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      tmp: {
+        name: 'tmp',
+        type: 'directory',
+        permissions: 'drwxrwxrwx',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {},
+      },
+      var: {
+        name: 'var',
+        type: 'directory',
+        permissions: 'drwxr-xr-x',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          log: {
+            name: 'log',
+            type: 'directory',
+            permissions: 'drwxr-xr-x',
+            size: 4096,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            children: {
+              'tutorial.log': {
+                name: 'tutorial.log',
+                type: 'file',
+                content: `[2024-01-01 10:00:00] Tutorial mode initialized
+[2024-01-01 10:00:01] Learning environment ready
+[2024-01-01 10:00:02] All lessons and exercises loaded
+[2024-01-01 10:00:03] Sandbox environment prepared
+[2024-01-01 10:00:04] Tutorial ready for interactive learning`,
+                permissions: '-rw-r--r--',
+                size: 256,
+                createdAt: new Date(),
+                modifiedAt: new Date(),
+              },
+            },
+          },
+        },
+      },
+      root: {
+        name: 'root',
+        type: 'directory',
+        permissions: 'drwx------',
+        size: 4096,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        children: {
+          '.tutorial_admin.md': {
+            name: '.tutorial_admin.md',
+            type: 'file',
+            content: `# Tutorial Administration
+
+This tutorial provides a comprehensive learning environment for Unix terminal commands.
+
+## Lesson Structure
+1. **01-basics**: Navigation fundamentals
+2. **02-files**: File and directory management  
+3. **03-editor**: Vi editor training
+4. **04-redirection**: I/O redirection and pipes
+5. **05-advanced**: Environment variables and configuration
+
+## Safety Features
+- Isolated learning environment
+- No system access or modification
+- Safe file operations within tutorial filesystem
+- Progress tracking without external dependencies
+
+## Learning Objectives
+- Master essential Unix commands
+- Understand file system navigation
+- Learn text editing with vi
+- Practice I/O redirection concepts
+- Configure shell environment
+
+Built for interactive, hands-on learning! 🎓`,
+            permissions: '-rw-------',
+            size: 768,
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+          },
+        },
+      },
+    },
+  };
+}
+
+/**
  * Returns the appropriate filesystem based on the specified mode.
  * This function serves as the main entry point for filesystem initialization.
  *
- * @param mode - The filesystem mode ('default' or 'portfolio')
+ * @param mode - The filesystem mode ('default', 'portfolio', or 'tutorial')
  * @returns The complete filesystem structure for the specified mode
  */
 export function getFilesystemByMode(mode: FilesystemMode = 'default'): FileSystemNode {
   switch (mode) {
     case 'portfolio':
       return createPortfolioFilesystem();
+    case 'tutorial':
+      return createTutorialFilesystem();
     case 'default':
     default:
       return createDefaultFilesystem();
@@ -2401,5 +3490,5 @@ export function getDefaultFilesystem(): FileSystemNode {
  * Available filesystem modes that can be used with the switch-fs command.
  * Add new modes here when implementing additional filesystem structures.
  */
-export const FILESYSTEM_MODES = ['default', 'portfolio'] as const;
+export const FILESYSTEM_MODES = ['default', 'portfolio', 'tutorial'] as const;
 export type FilesystemMode = (typeof FILESYSTEM_MODES)[number];

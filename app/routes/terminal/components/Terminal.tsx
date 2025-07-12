@@ -27,11 +27,11 @@ interface OutputLine {
 }
 
 interface TerminalProps {
-  mode?: 'default' | 'portfolio';
+  mode?: 'default' | 'portfolio' | 'tutorial';
 }
 
 export function Terminal({ mode = 'default' }: TerminalProps) {
-  const filesystemMode: FilesystemMode = mode === 'portfolio' ? 'portfolio' : 'default';
+  const filesystemMode: FilesystemMode = mode === 'portfolio' ? 'portfolio' : mode === 'tutorial' ? 'tutorial' : 'default';
 
   const [terminalState, setTerminalState] = useState<TerminalState>(() => {
     // Initialize filesystem with persistence support
@@ -86,6 +86,31 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         {
           type: 'output',
           content: 'Explore my projects and experience with Unix commands. Type "help" to get started.',
+          timestamp: new Date().toISOString(),
+        },
+      ];
+    }
+
+    if (mode === 'tutorial') {
+      return [
+        {
+          type: 'output',
+          content: '🎓 Welcome to the Interactive Terminal Tutorial!',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: 'Learn Unix commands step by step | ls, cd, vi, pipes, variables...',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: 'Start your learning journey: cd lessons/01-basics && cat README.md',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: 'Track your progress: progress | General help: help',
           timestamp: new Date().toISOString(),
         },
       ];
@@ -571,13 +596,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     }
   };
 
-  const generatePromptText = (path: string[], currentMode: 'default' | 'portfolio'): string => {
-    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+  const generatePromptText = (path: string[], currentMode: 'default' | 'portfolio' | 'tutorial'): string => {
+    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : currentMode === 'tutorial' ? 'student' : 'user';
     return `${user}@terminal:${formatPath(path)} ❯ `;
   };
 
-  const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio'): OutputSegment[] => {
-    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+  const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio' | 'tutorial'): OutputSegment[] => {
+    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : currentMode === 'tutorial' ? 'student' : 'user';
     const formattedPath = formatPathWithTilde(path);
     return [
       { type: 'user' as const, text: user },
