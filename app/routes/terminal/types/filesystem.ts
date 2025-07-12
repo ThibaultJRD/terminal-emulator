@@ -56,6 +56,7 @@ export interface TerminalState {
   output: string[];
   filesystem: FileSystemState;
   aliasManager: import('~/routes/terminal/utils/aliasManager').AliasManager;
+  environmentManager: import('~/routes/terminal/utils/environmentManager').EnvironmentManager;
   lastExitCode: number;
 }
 
@@ -77,7 +78,10 @@ export type Command =
   | 'storage-info'
   | 'alias'
   | 'unalias'
-  | 'source';
+  | 'source'
+  | 'export'
+  | 'env'
+  | 'unset';
 
 export interface CommandHandler {
   (
@@ -86,5 +90,6 @@ export interface CommandHandler {
     aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
     lastExitCode?: number,
+    environmentManager?: import('~/routes/terminal/utils/environmentManager').EnvironmentManager,
   ): CommandResult;
 }

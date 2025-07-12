@@ -915,6 +915,12 @@ HISTCONTROL=ignoreboth
 HISTSIZE=1000
 HISTFILESIZE=2000
 
+# Environment variables
+export EDITOR=vi
+export PAGER=less
+export GREP_OPTIONS='--color=auto'
+export TERM_PROGRAM='terminal-emulator'
+
 # Aliases (Implemented in the terminal emulator)
 alias ll='ls -l'
 alias la='ls -a'
@@ -1795,6 +1801,12 @@ esac
 HISTCONTROL=ignoreboth
 HISTSIZE=1000
 HISTFILESIZE=2000
+
+# Environment variables
+export EDITOR=vi
+export PAGER=less
+export GREP_OPTIONS='--color=auto'
+export TERM_PROGRAM='terminal-emulator'
 
 # Aliases (Implemented in the terminal emulator)
 alias ll='ls -l'

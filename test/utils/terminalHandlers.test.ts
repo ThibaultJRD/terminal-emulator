@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { FileSystemState, TerminalState } from '~/routes/terminal/types/filesystem';
 import { AliasManager } from '~/routes/terminal/utils/aliasManager';
+import { createEnvironmentManager } from '~/routes/terminal/utils/environmentManager';
 import { createDefaultFileSystem, createDirectory, createFile } from '~/routes/terminal/utils/filesystem';
 import {
   addToHistory,
@@ -35,6 +36,7 @@ describe('terminalHandlers', () => {
       output: [],
       filesystem,
       aliasManager: new AliasManager(),
+      environmentManager: createEnvironmentManager(filesystem),
       lastExitCode: 0,
     };
   });
@@ -338,6 +340,7 @@ describe('terminalHandlers', () => {
         output: [],
         filesystem,
         aliasManager: expect.any(AliasManager),
+        environmentManager: expect.any(Object),
         lastExitCode: 0,
       });
     });

@@ -51,6 +51,7 @@ interface PersistedFilesystemData {
   version: string;
   savedAt: string;
   currentPath: string[];
+  environment?: Record<string, string>;
 }
 
 /**
@@ -126,7 +127,12 @@ function isValidFileSystemNode(node: any): boolean {
  * @param currentPath - The current directory path
  * @returns PersistenceResult indicating success or failure
  */
-export function saveFilesystemState(filesystem: FileSystemNode, mode: FilesystemMode, currentPath: string[]): PersistenceResult {
+export function saveFilesystemState(
+  filesystem: FileSystemNode,
+  mode: FilesystemMode,
+  currentPath: string[],
+  environment?: Record<string, string>,
+): PersistenceResult {
   try {
     if (!isLocalStorageAvailable()) {
       return {
@@ -141,6 +147,7 @@ export function saveFilesystemState(filesystem: FileSystemNode, mode: Filesystem
       version: STORAGE_CONFIG.CURRENT_VERSION,
       savedAt: new Date().toISOString(),
       currentPath,
+      environment,
     };
 
     const storageKey = getStorageKey(mode);
@@ -615,5 +622,62 @@ export function importFilesystemData(jsonData: string): PersistenceResult {
       success: false,
       error: error instanceof Error ? error.message : 'Invalid JSON data',
     };
+  }
+}
+
+/**
+ * Saves environment variables to localStorage for a specific mode.
+ * This is used to persist user-defined environment variables between sessions.
+ *
+ * @param environment - The environment variables to save
+ * @param mode - The filesystem mode
+ * @returns boolean indicating success
+ */
+export function saveEnvironmentVariables(environment: Record<string, string>, mode: FilesystemMode): boolean {
+  try {
+    if (!isLocalStorageAvailable()) {
+      return false;
+    }
+
+    // Load existing filesystem data
+    const loadResult = loadFilesystemState(mode);
+    if (loadResult.success && loadResult.data) {
+      // Update existing data with new environment
+      const updatedData = {
+        ...loadResult.data,
+        environment,
+        savedAt: new Date().toISOString(),
+      };
+
+      const storageKey = getStorageKey(mode);
+      localStorage.setItem(storageKey, JSON.stringify(updatedData));
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Failed to save environment variables:', error);
+    return false;
+  }
+}
+
+/**
+ * Loads environment variables from localStorage for a specific mode.
+ * Returns an empty object if no saved environment exists.
+ *
+ * @param mode - The filesystem mode
+ * @returns The saved environment variables or empty object
+ */
+export function loadEnvironmentVariables(mode: FilesystemMode): Record<string, string> {
+  try {
+    const loadResult = loadFilesystemState(mode);
+    if (loadResult.success && loadResult.data && loadResult.data.environment) {
+      return loadResult.data.environment;
+    }
+
+    return {};
+  } catch (error) {
+    console.error('Failed to load environment variables:', error);
+    return {};
   }
 }
