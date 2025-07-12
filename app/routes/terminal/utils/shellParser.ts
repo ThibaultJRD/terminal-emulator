@@ -9,6 +9,7 @@
  * - Simple command execution
  */
 import type { AliasManager } from '~/routes/terminal/utils/aliasManager';
+import type { EnvironmentManager } from '~/routes/terminal/utils/environmentManager';
 
 // Regex pattern for valid alias names (allows letters, numbers, underscores, and dots)
 export const ALIAS_NAME_REGEX = /^[a-zA-Z_.][a-zA-Z0-9_.]*$/;
@@ -96,12 +97,15 @@ export class ShellParser {
   static execute(
     parseResult: ShellParseResult,
     aliasManager: AliasManager,
+    environmentManager?: EnvironmentManager,
   ): {
     success: boolean;
     appliedAliases: string[];
+    appliedExports: string[];
     errors: string[];
   } {
     const appliedAliases: string[] = [];
+    const appliedExports: string[] = [];
     const errors: string[] = [...parseResult.errors]; // Include parse errors
 
     for (const parsedLine of parseResult.lines) {
@@ -112,14 +116,21 @@ export class ShellParser {
         } else {
           errors.push(`Failed to set alias: ${parsedLine.alias.name}`);
         }
+      } else if (parsedLine.type === 'export' && parsedLine.export && environmentManager) {
+        const success = environmentManager.set(parsedLine.export.name, parsedLine.export.value);
+        if (success) {
+          appliedExports.push(parsedLine.export.name);
+        } else {
+          errors.push(`Failed to set variable: ${parsedLine.export.name}`);
+        }
       }
-      // Note: We don't execute commands or exports for security reasons
-      // This is a simplified implementation focused on alias management
+      // Note: We don't execute arbitrary commands for security reasons
     }
 
     return {
       success: errors.length === 0,
       appliedAliases,
+      appliedExports,
       errors,
     };
   }

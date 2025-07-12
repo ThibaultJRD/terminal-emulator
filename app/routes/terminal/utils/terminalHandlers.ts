@@ -2,8 +2,10 @@ import type { CommandResult, FileSystemNode, FileSystemState, OutputSegment, Ter
 import { AliasManager } from '~/routes/terminal/utils/aliasManager';
 import { parseCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
+import { type EnvironmentManager, createEnvironmentManager } from '~/routes/terminal/utils/environmentManager';
 // FilesystemMode removed as both modes now use the same structure
 import { createFile, getNodeAtPath } from '~/routes/terminal/utils/filesystem';
+import type { FilesystemMode } from '~/routes/terminal/utils/persistence';
 import { resetToDefaultFilesystem, saveFilesystemState } from '~/routes/terminal/utils/persistence';
 import { ShellParser } from '~/routes/terminal/utils/shellParser';
 import { createTextEditorState } from '~/routes/terminal/utils/textEditor';
@@ -32,9 +34,10 @@ export function executeCommandSafely(
   filesystem: FileSystemState,
   aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
   lastExitCode?: number,
+  environmentManager?: EnvironmentManager,
 ): CommandResult {
   try {
-    return executeCommand(input, filesystem, aliasManager, lastExitCode);
+    return executeCommand(input, filesystem, aliasManager, lastExitCode, environmentManager);
   } catch (error) {
     console.error('Error executing command:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -229,9 +232,10 @@ export function addToHistory(history: string[], command: string): string[] {
 /**
  * Initializes terminal state (history is loaded from file on demand)
  */
-export function initializeTerminalState(filesystem: FileSystemState): TerminalState {
-  // Initialize alias manager
+export function initializeTerminalState(filesystem: FileSystemState, mode: FilesystemMode = 'default'): TerminalState {
+  // Initialize alias manager and environment manager
   const aliasManager = new AliasManager();
+  const environmentManager = createEnvironmentManager(filesystem, mode);
 
   // Try to auto-source .bashrc if it exists
   const bashrcPath = ['home', 'user', '.bashrc'];
@@ -240,11 +244,14 @@ export function initializeTerminalState(filesystem: FileSystemState): TerminalSt
   if (bashrcFile && bashrcFile.type === 'file' && bashrcFile.content) {
     try {
       const parseResult = ShellParser.parse(bashrcFile.content);
-      const executeResult = ShellParser.execute(parseResult, aliasManager);
+      const executeResult = ShellParser.execute(parseResult, aliasManager, environmentManager);
 
       // Log any errors but don't fail initialization
       if (!executeResult.success) {
         console.warn('Failed to source .bashrc:', executeResult.errors);
+      } else {
+        // Save environment variables after successful .bashrc sourcing
+        environmentManager.saveToStorage(mode);
       }
     } catch (error) {
       console.warn('Error sourcing .bashrc:', error);
@@ -256,6 +263,7 @@ export function initializeTerminalState(filesystem: FileSystemState): TerminalSt
     output: [],
     filesystem,
     aliasManager,
+    environmentManager,
     lastExitCode: 0,
   };
 }
@@ -331,9 +339,14 @@ export function updateTerminalStateAfterCommand(prevState: TerminalState, input:
   // Save history to the new filesystem copy
   saveHistoryToFile(newFilesystem, newHistory);
 
+  // Update PWD in environment manager
+  const updatedEnvironmentManager = prevState.environmentManager;
+  updatedEnvironmentManager.updatePWD(newFilesystem.currentPath);
+
   return {
     ...prevState,
     filesystem: newFilesystem,
+    environmentManager: updatedEnvironmentManager,
     currentInput: '',
     output: prevState.output, // Preserve existing output
     lastExitCode: exitCode ?? prevState.lastExitCode,
@@ -363,9 +376,13 @@ export function handleFilesystemReset(
   const currentHistory = loadHistoryFromFile(terminalState.filesystem);
   saveHistoryToFile(newFilesystem, currentHistory);
 
+  // Reset environment manager with new filesystem
+  const newEnvironmentManager = createEnvironmentManager(newFilesystem, mode as FilesystemMode);
+
   const newTerminalState = {
     ...terminalState,
     filesystem: newFilesystem,
+    environmentManager: newEnvironmentManager,
     currentInput: '',
     output: terminalState.output, // Preserve existing output
     lastExitCode: 0, // Reset command always succeeds

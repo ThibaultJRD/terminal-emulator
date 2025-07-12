@@ -11,6 +11,8 @@ import {
   joinOutputSegments,
   sortDirectoryEntries,
 } from '~/routes/terminal/utils/commandUtils';
+import type { EnvironmentManager } from '~/routes/terminal/utils/environmentManager';
+import { parseVariableAssignment } from '~/routes/terminal/utils/environmentManager';
 import { createDirectory, createFile, deleteNode, formatPath, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 import { renderMarkdown } from '~/routes/terminal/utils/markdown';
 import { parseOptions } from '~/routes/terminal/utils/optionParser';
@@ -372,14 +374,27 @@ export const commands: Record<string, CommandHandler> = {
     aliasManager?: AliasManager,
     currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
     lastExitCode?: number,
+    environmentManager?: EnvironmentManager,
   ): CommandResult => {
-    // Handle $? substitution
-    const processedArgs = args.map((arg) => {
-      if (arg === '$?') {
-        return String(lastExitCode ?? 0);
-      }
-      return arg.replace(/\$\?/g, String(lastExitCode ?? 0));
-    });
+    let processedArgs: string[];
+
+    if (environmentManager) {
+      // Use environment manager for all variable substitution
+      processedArgs = args.map((arg) => {
+        // Handle special $? variable for exit code
+        let substituted = arg.replace(/\$\?/g, String(lastExitCode ?? 0));
+        // Then substitute other environment variables
+        return environmentManager.substitute(substituted);
+      });
+    } else {
+      // Fallback to original $? handling only
+      processedArgs = args.map((arg) => {
+        if (arg === '$?') {
+          return String(lastExitCode ?? 0);
+        }
+        return arg.replace(/\$\?/g, String(lastExitCode ?? 0));
+      });
+    }
 
     const output = processedArgs.join(' ');
     return { success: true, output: output + '\n', exitCode: 0 };
@@ -688,7 +703,14 @@ export const commands: Record<string, CommandHandler> = {
     return createSuccessResult('');
   },
 
-  source: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+  source: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+    environmentManager?: EnvironmentManager,
+  ): CommandResult => {
     if (!aliasManager) {
       return createErrorResult('source: alias manager not available');
     }
@@ -719,16 +741,24 @@ export const commands: Record<string, CommandHandler> = {
     }
 
     // Execute the parsed script
-    const executeResult = ShellParser.execute(parseResult, aliasManager);
+    const executeResult = ShellParser.execute(parseResult, aliasManager, environmentManager);
 
     if (!executeResult.success) {
       return createErrorResult(`source: ${filename}: ${executeResult.errors.join(', ')}`);
+    }
+
+    // Save environment variables after successful sourcing
+    if (environmentManager && currentMode && executeResult.appliedExports.length > 0) {
+      environmentManager.saveToStorage(currentMode);
     }
 
     // Generate success message
     const messages: string[] = [];
     if (executeResult.appliedAliases.length > 0) {
       messages.push(`Applied ${executeResult.appliedAliases.length} alias${executeResult.appliedAliases.length === 1 ? '' : 'es'}`);
+    }
+    if (executeResult.appliedExports.length > 0) {
+      messages.push(`Applied ${executeResult.appliedExports.length} export${executeResult.appliedExports.length === 1 ? '' : 's'}`);
     }
     if (parseResult.commandCount > 0) {
       messages.push(`Ignored ${parseResult.commandCount} command${parseResult.commandCount === 1 ? '' : 's'} (commands not executed for security)`);
@@ -1097,10 +1127,120 @@ export const commands: Record<string, CommandHandler> = {
 
     return createSuccessResult(uniqueLines.join('\n'), 0);
   },
+
+  export: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+    environmentManager?: EnvironmentManager,
+  ): CommandResult => {
+    if (!environmentManager) {
+      return createErrorResult('export: environment manager not available');
+    }
+
+    if (args.length === 0) {
+      // List all exported variables (same as env)
+      const variables = environmentManager.getAll();
+      const output = Object.entries(variables)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, value]) => `${name}=${value}`)
+        .join('\n');
+
+      return createSuccessResult(output, 0);
+    }
+
+    // Process each argument as VAR=value
+    for (const arg of args) {
+      const assignment = parseVariableAssignment(arg);
+      if (!assignment) {
+        return createErrorResult(`export: invalid assignment: ${arg}`);
+      }
+
+      const success = environmentManager.set(assignment.name, assignment.value);
+      if (!success) {
+        return createErrorResult(`export: failed to set variable: ${assignment.name}`);
+      }
+    }
+
+    // Save environment variables to storage after changes
+    if (currentMode) {
+      environmentManager.saveToStorage(currentMode);
+    }
+
+    return createSuccessResult('', 0);
+  },
+
+  env: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+    environmentManager?: EnvironmentManager,
+  ): CommandResult => {
+    if (!environmentManager) {
+      return createErrorResult('env: environment manager not available');
+    }
+
+    if (args.length > 0) {
+      return createErrorResult('env: command arguments not supported yet');
+    }
+
+    const variables = environmentManager.getAll();
+    const output = Object.entries(variables)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, value]) => `${name}=${value}`)
+      .join('\n');
+
+    return createSuccessResult(output, 0);
+  },
+
+  unset: (
+    args: string[],
+    filesystem: FileSystemState,
+    aliasManager?: AliasManager,
+    currentMode?: import('~/constants/defaultFilesystems').FilesystemMode,
+    lastExitCode?: number,
+    environmentManager?: EnvironmentManager,
+  ): CommandResult => {
+    if (!environmentManager) {
+      return createErrorResult('unset: environment manager not available');
+    }
+
+    if (args.length === 0) {
+      return createErrorResult('unset: missing variable name');
+    }
+
+    for (const varName of args) {
+      if (!varName) {
+        continue;
+      }
+
+      const success = environmentManager.unset(varName);
+      if (!success) {
+        return createErrorResult(`unset: cannot unset ${varName}: invalid name or reserved variable`);
+      }
+    }
+
+    // Save environment variables to storage after changes
+    if (currentMode) {
+      environmentManager.saveToStorage(currentMode);
+    }
+
+    return createSuccessResult('', 0);
+  },
 };
 
-export function executeCommand(input: string, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
-  const parsed = parseChainedCommand(input);
+export function executeCommand(
+  input: string,
+  filesystem: FileSystemState,
+  aliasManager?: AliasManager,
+  lastExitCode?: number,
+  environmentManager?: EnvironmentManager,
+): CommandResult {
+  const parsed = parseChainedCommand(input, environmentManager);
 
   // Handle chained commands or piped commands
   if ('commands' in parsed) {
@@ -1108,18 +1248,24 @@ export function executeCommand(input: string, filesystem: FileSystemState, alias
     if ('operators' in parsed && parsed.operators.length > 0) {
       const hasOnlyPipes = parsed.operators.every((op) => op === '|');
       if (hasOnlyPipes) {
-        return executePipedCommand(parsed as PipedCommand, filesystem, aliasManager, lastExitCode);
+        return executePipedCommand(parsed as PipedCommand, filesystem, aliasManager, lastExitCode, environmentManager);
       }
     }
     // Otherwise it's a ChainedCommand
-    return executeChainedCommand(parsed as ChainedCommand, filesystem, aliasManager, lastExitCode);
+    return executeChainedCommand(parsed as ChainedCommand, filesystem, aliasManager, lastExitCode, environmentManager);
   }
 
   // Handle single command
-  return executeSingleCommand(parsed, filesystem, aliasManager, lastExitCode);
+  return executeSingleCommand(parsed, filesystem, aliasManager, lastExitCode, environmentManager);
 }
 
-function executePipedCommand(pipedCommand: PipedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
+function executePipedCommand(
+  pipedCommand: PipedCommand,
+  filesystem: FileSystemState,
+  aliasManager?: AliasManager,
+  lastExitCode?: number,
+  environmentManager?: EnvironmentManager,
+): CommandResult {
   const { commands } = pipedCommand;
 
   if (commands.length === 0) {
@@ -1154,10 +1300,10 @@ function executePipedCommand(pipedCommand: PipedCommand, filesystem: FileSystemS
         };
       }
 
-      lastResult = executeSingleCommand(modifiedCommand, filesystem, aliasManager, lastResult.exitCode);
+      lastResult = executeSingleCommand(modifiedCommand, filesystem, aliasManager, lastResult.exitCode, environmentManager);
     } else {
       // Execute first command normally
-      lastResult = executeSingleCommand(command, filesystem, aliasManager, lastExitCode);
+      lastResult = executeSingleCommand(command, filesystem, aliasManager, lastExitCode, environmentManager);
     }
 
     // If any command in the pipe fails, stop execution
@@ -1169,7 +1315,13 @@ function executePipedCommand(pipedCommand: PipedCommand, filesystem: FileSystemS
   return lastResult;
 }
 
-function executeChainedCommand(chainedCommand: ChainedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
+function executeChainedCommand(
+  chainedCommand: ChainedCommand,
+  filesystem: FileSystemState,
+  aliasManager?: AliasManager,
+  lastExitCode?: number,
+  environmentManager?: EnvironmentManager,
+): CommandResult {
   const { commands, operators } = chainedCommand;
   let lastResult: CommandResult = { success: true, output: '', exitCode: 0 };
   let combinedOutput: string[] = [];
@@ -1189,7 +1341,7 @@ function executeChainedCommand(chainedCommand: ChainedCommand, filesystem: FileS
     // ; operator: always execute (no condition to check)
 
     // Execute the command
-    const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode);
+    const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode, environmentManager);
 
     // Add output to combined output
     if (result.output) {
@@ -1219,6 +1371,7 @@ function handleStdinCommand(
   filesystem: FileSystemState,
   aliasManager?: AliasManager,
   lastExitCode?: number,
+  environmentManager?: EnvironmentManager,
 ): CommandResult {
   switch (command) {
     case 'grep': {
@@ -1353,7 +1506,13 @@ function handleStdinCommand(
   }
 }
 
-function executeSingleCommand(parsed: ParsedCommand, filesystem: FileSystemState, aliasManager?: AliasManager, lastExitCode?: number): CommandResult {
+function executeSingleCommand(
+  parsed: ParsedCommand,
+  filesystem: FileSystemState,
+  aliasManager?: AliasManager,
+  lastExitCode?: number,
+  environmentManager?: EnvironmentManager,
+): CommandResult {
   let { command, args, redirectOutput, redirectInput } = parsed;
 
   if (!command) {
@@ -1430,9 +1589,9 @@ function executeSingleCommand(parsed: ParsedCommand, filesystem: FileSystemState
   ) {
     // Handle commands that can process piped input
     const inputData = redirectInput.source;
-    result = handleStdinCommand(command, finalArgs, inputData, filesystem, aliasManager, lastExitCode);
+    result = handleStdinCommand(command, finalArgs, inputData, filesystem, aliasManager, lastExitCode, environmentManager);
   } else {
-    result = handler(finalArgs, filesystem, aliasManager, undefined, lastExitCode);
+    result = handler(finalArgs, filesystem, aliasManager, undefined, lastExitCode, environmentManager);
   }
 
   // Handle output redirection

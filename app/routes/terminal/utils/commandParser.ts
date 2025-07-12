@@ -1,4 +1,5 @@
 import { CHAIN_REGEX } from './constants';
+import type { EnvironmentManager } from './environmentManager';
 
 export interface ParsedCommand {
   command: string;
@@ -27,8 +28,50 @@ export interface PipedCommand {
 const MAX_COMMAND_LENGTH = 1000;
 const MAX_FILENAME_LENGTH = 255;
 
-export function parseCommand(input: string): ParsedCommand {
-  const trimmed = input.trim();
+/**
+ * Performs variable substitution on a string using the environment manager
+ */
+export function substituteVariables(input: string, environmentManager?: EnvironmentManager): string {
+  if (!environmentManager) {
+    return input;
+  }
+  return environmentManager.substitute(input);
+}
+
+/**
+ * Performs variable substitution on all parts of a parsed command
+ */
+export function substituteVariablesInParsedCommand(parsedCommand: ParsedCommand, environmentManager?: EnvironmentManager): ParsedCommand {
+  if (!environmentManager) {
+    return parsedCommand;
+  }
+
+  const substituted: ParsedCommand = {
+    command: environmentManager.substitute(parsedCommand.command),
+    args: parsedCommand.args.map((arg) => environmentManager.substitute(arg)),
+  };
+
+  if (parsedCommand.redirectOutput) {
+    substituted.redirectOutput = {
+      type: parsedCommand.redirectOutput.type,
+      filename: environmentManager.substitute(parsedCommand.redirectOutput.filename),
+    };
+  }
+
+  if (parsedCommand.redirectInput) {
+    substituted.redirectInput = {
+      type: parsedCommand.redirectInput.type,
+      source: environmentManager.substitute(parsedCommand.redirectInput.source),
+    };
+  }
+
+  return substituted;
+}
+
+export function parseCommand(input: string, environmentManager?: EnvironmentManager): ParsedCommand {
+  // Perform variable substitution first
+  const substituted = substituteVariables(input, environmentManager);
+  const trimmed = substituted.trim();
 
   // Security: Limit command length to prevent ReDoS attacks
   if (trimmed.length > MAX_COMMAND_LENGTH) {
@@ -136,7 +179,7 @@ function parseArguments(input: string): string[] {
   return args.filter((arg) => arg.length > 0);
 }
 
-export function parseChainedCommand(input: string): ChainedCommand | PipedCommand | ParsedCommand {
+export function parseChainedCommand(input: string, environmentManager?: EnvironmentManager): ChainedCommand | PipedCommand | ParsedCommand {
   const trimmed = input.trim();
 
   // Security: Limit command length to prevent ReDoS attacks
@@ -149,7 +192,7 @@ export function parseChainedCommand(input: string): ChainedCommand | PipedComman
 
   if (matches.length === 0) {
     // No chaining operators, return single command
-    return parseCommand(trimmed);
+    return parseCommand(trimmed, environmentManager);
   }
 
   // Parse chained commands - separate pipes from other operators
@@ -160,7 +203,7 @@ export function parseChainedCommand(input: string): ChainedCommand | PipedComman
   for (const match of matches) {
     const commandStr = trimmed.slice(lastIndex, match.index).trim();
     if (commandStr) {
-      commands.push(parseCommand(commandStr));
+      commands.push(parseCommand(commandStr, environmentManager));
     }
     operators.push(match[1] as '&&' | '||' | ';' | '|');
     lastIndex = match.index! + match[0].length;
@@ -169,7 +212,7 @@ export function parseChainedCommand(input: string): ChainedCommand | PipedComman
   // Add the last command
   const lastCommandStr = trimmed.slice(lastIndex).trim();
   if (lastCommandStr) {
-    commands.push(parseCommand(lastCommandStr));
+    commands.push(parseCommand(lastCommandStr, environmentManager));
   }
 
   // Validate we have the right number of operators

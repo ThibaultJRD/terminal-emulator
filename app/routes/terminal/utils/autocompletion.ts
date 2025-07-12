@@ -1,5 +1,6 @@
 import type { FileSystemState } from '~/routes/terminal/types/filesystem';
 import { commands } from '~/routes/terminal/utils/commands';
+import type { EnvironmentManager } from '~/routes/terminal/utils/environmentManager';
 // FilesystemMode removed as both modes now use the same structure
 import { getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
@@ -8,6 +9,20 @@ import { CHAIN_REGEX } from './constants';
 export interface AutocompletionResult {
   completions: string[];
   commonPrefix: string;
+}
+
+/**
+ * Helper function to get environment variable completions that match a prefix
+ */
+function getEnvironmentVariableCompletions(prefix: string, environmentManager: EnvironmentManager): AutocompletionResult {
+  const variables = environmentManager.getAll();
+  const varNames = Object.keys(variables);
+  const matchingVars = varNames.filter((varName) => varName.startsWith(prefix));
+
+  return {
+    completions: matchingVars,
+    commonPrefix: getCommonPrefix(matchingVars),
+  };
 }
 
 interface CommandContext {
@@ -62,10 +77,36 @@ export function getAutocompletions(
   input: string,
   filesystem: FileSystemState,
   aliasManager?: import('~/routes/terminal/utils/aliasManager').AliasManager,
+  environmentManager?: EnvironmentManager,
 ): AutocompletionResult {
   // Parse command context to handle chaining
   const context = parseCommandContext(input);
   const workingInput = context.currentInput.trim();
+
+  // Check for environment variable completion ($VAR or ${VAR})
+  const varMatch = workingInput.match(/.*(\$\{([^}]*)|(\$[a-zA-Z_][a-zA-Z0-9_]*))$/);
+  if (varMatch && environmentManager) {
+    const [, , bracedVar, dollarVar] = varMatch;
+    const partialVar = bracedVar !== undefined ? bracedVar : dollarVar ? dollarVar.slice(1) : '';
+
+    const variables = environmentManager.getAll();
+    const varNames = Object.keys(variables);
+    const matchingVars = varNames.filter((name) => name.startsWith(partialVar));
+
+    // Format completions based on the input format
+    const completions = matchingVars.map((name) => {
+      if (bracedVar !== undefined) {
+        return `\${${name}}`;
+      } else {
+        return `$${name}`;
+      }
+    });
+
+    return {
+      completions,
+      commonPrefix: getCommonPrefix(completions),
+    };
+  }
 
   // If we're in a chained context and at the beginning of a new command,
   // force command completion
@@ -160,6 +201,11 @@ export function getAutocompletions(
       completions: matchingAliases,
       commonPrefix: getCommonPrefix(matchingAliases),
     };
+  }
+
+  // Special handling for unset command - complete with environment variable names
+  if (command === 'unset' && environmentManager) {
+    return getEnvironmentVariableCompletions(pathArg, environmentManager);
   }
 
   // Special handling for alias command - complete with existing alias names

@@ -43,7 +43,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     };
 
     // Initialize terminal state (history is loaded from file on demand)
-    return initializeTerminalState(filesystemState);
+    return initializeTerminalState(filesystemState, filesystemMode);
   });
 
   const [currentFilesystemMode, setCurrentFilesystemMode] = useState<FilesystemMode>(() => {
@@ -149,7 +149,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       }
 
       // Execute command safely
-      const result = executeCommandSafely(input, terminalState.filesystem, terminalState.aliasManager, terminalState.lastExitCode);
+      const result = executeCommandSafely(
+        input,
+        terminalState.filesystem,
+        terminalState.aliasManager,
+        terminalState.lastExitCode,
+        terminalState.environmentManager,
+      );
 
       // Handle command execution error
       if (!result.success) {
@@ -304,7 +310,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
           }
         } else {
           // Start completion
-          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem, terminalState.aliasManager);
+          const result = getAutocompletions(terminalState.currentInput, terminalState.filesystem, terminalState.aliasManager, terminalState.environmentManager);
 
           if (result.completions.length === 0) {
             return;
