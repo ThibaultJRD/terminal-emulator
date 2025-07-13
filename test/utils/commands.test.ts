@@ -241,6 +241,32 @@ describe('Commands', () => {
     });
   });
 
+  describe('date command', () => {
+    it('should output current date in default format', () => {
+      const result = commands.date([], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.exitCode).toBe(0);
+      expect(typeof result.output).toBe('string');
+      // Should include day, month, year
+      expect(result.output).toMatch(/\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}/);
+    });
+
+    it('should handle custom format strings', () => {
+      const result = commands.date(['+%Y-%m-%d'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.exitCode).toBe(0);
+      // Should match YYYY-MM-DD format
+      expect(result.output).toMatch(/\d{4}-\d{2}-\d{2}/);
+    });
+
+    it('should handle invalid options', () => {
+      const result = commands.date(['invalid'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.exitCode).toBe(1);
+      expect(result.error).toContain('invalid option');
+    });
+  });
+
   describe('cp command', () => {
     it('should copy file to new location', () => {
       // Create test file

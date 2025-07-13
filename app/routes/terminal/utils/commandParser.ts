@@ -78,8 +78,46 @@ export function parseCommand(input: string, environmentManager?: EnvironmentMana
     throw new Error(`Command too long (max ${MAX_COMMAND_LENGTH} characters)`);
   }
 
-  // Check for output redirection operators (must come before input redirection check)
-  // Use more specific regex to prevent ReDoS
+  // Check for combined input and output redirection (e.g., cat << EOF > file.txt)
+  const combinedRedirectMatch = trimmed.match(/^([^<>]+?)\s*(<<|<)\s*([^<>]+?)\s*(>>|>)\s*([^<>]+)$/);
+
+  if (combinedRedirectMatch) {
+    const [, commandPart, inputOperator, inputSource, outputOperator, outputFilename] = combinedRedirectMatch;
+    const parts = parseArguments(commandPart.trim());
+    const command = parts[0];
+    const args = parts.slice(1);
+    const cleanInputSource = inputSource.trim().replace(/^["']|["']$/g, '');
+    const cleanOutputFilename = outputFilename.trim().replace(/^["']|["']$/g, '');
+
+    // Security: Validate lengths and characters
+    if (cleanInputSource.length > MAX_FILENAME_LENGTH) {
+      throw new Error(`Input source too long (max ${MAX_FILENAME_LENGTH} characters)`);
+    }
+    if (cleanOutputFilename.length > MAX_FILENAME_LENGTH) {
+      throw new Error(`Output filename too long (max ${MAX_FILENAME_LENGTH} characters)`);
+    }
+    if (cleanInputSource.includes('\0') || cleanInputSource.includes('..')) {
+      throw new Error('Invalid input source: contains forbidden characters');
+    }
+    if (cleanOutputFilename.includes('\0') || cleanOutputFilename.includes('..')) {
+      throw new Error('Invalid output filename: contains forbidden characters');
+    }
+
+    return {
+      command,
+      args,
+      redirectInput: {
+        type: inputOperator as '<<' | '<',
+        source: cleanInputSource,
+      },
+      redirectOutput: {
+        type: outputOperator as '>>' | '>',
+        filename: cleanOutputFilename,
+      },
+    };
+  }
+
+  // Check for output redirection operators only
   const outputRedirectMatch = trimmed.match(/^([^>]+?)\s*(>>|>)\s*([^>]+)$/);
 
   if (outputRedirectMatch) {
@@ -107,8 +145,7 @@ export function parseCommand(input: string, environmentManager?: EnvironmentMana
     };
   }
 
-  // Check for input redirection operators
-  // Use more specific regex to prevent ReDoS
+  // Check for input redirection operators only
   const inputRedirectMatch = trimmed.match(/^([^<]+?)\s*(<<|<)\s*([^<]+)$/);
 
   if (inputRedirectMatch) {

@@ -401,6 +401,46 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: output + '\n', exitCode: 0 };
   },
 
+  date: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    const now = new Date();
+
+    // Simple date command implementation
+    if (args.length === 0) {
+      // Default format: Day Mon DD HH:MM:SS YYYY
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const dayName = days[now.getDay()];
+      const monthName = months[now.getMonth()];
+      const day = now.getDate().toString().padStart(2, '0');
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const year = now.getFullYear();
+
+      const dateStr = `${dayName} ${monthName} ${day} ${hours}:${minutes}:${seconds} ${year}`;
+      return { success: true, output: dateStr, exitCode: 0 };
+    }
+
+    // Handle format option
+    if (args[0] && args[0].startsWith('+')) {
+      const format = args[0].substring(1);
+      let result = format;
+
+      // Simple format substitutions
+      result = result.replace(/%Y/g, now.getFullYear().toString());
+      result = result.replace(/%m/g, (now.getMonth() + 1).toString().padStart(2, '0'));
+      result = result.replace(/%d/g, now.getDate().toString().padStart(2, '0'));
+      result = result.replace(/%H/g, now.getHours().toString().padStart(2, '0'));
+      result = result.replace(/%M/g, now.getMinutes().toString().padStart(2, '0'));
+      result = result.replace(/%S/g, now.getSeconds().toString().padStart(2, '0'));
+
+      return { success: true, output: result, exitCode: 0 };
+    }
+
+    return { success: false, output: '', error: 'date: invalid option', exitCode: 1 };
+  },
+
   wc: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     if (args.length === 0) {
       return { success: false, output: '', error: 'wc: missing operand', exitCode: 1 };
@@ -804,6 +844,7 @@ export const commands: Record<string, CommandHandler> = {
       '  pwd              - Print working directory',
       '  touch <file>     - Create empty file or update timestamp',
       '  cat <file>       - Display file contents (supports markdown rendering)',
+      '  date [+format]   - Display current date and time',
       '  mkdir [-p] <dir> - Create directory (-p: create parent directories)',
       '  rm [-r] [-f] <file> - Remove file (-r: recursive, -f: force)',
       '  rmdir <dir>      - Remove empty directory',
@@ -820,6 +861,8 @@ export const commands: Record<string, CommandHandler> = {
       'Aliases and Shell:',
       '  alias [name=cmd] - Create or list command aliases',
       '  unalias [-a] <name> - Remove alias (-a: remove all)',
+      '  export [VAR=value] - Create/list environment variables',
+      '  unset <VAR>      - Remove environment variables',
       '  source <file>    - Execute shell script and apply aliases',
       '',
       'Text Processing:',
@@ -1507,6 +1550,12 @@ function handleStdinCommand(
       return createSuccessResult(uniqueLines.join('\n'), 0);
     }
 
+    case 'cat': {
+      // For cat with here document, output the input data directly
+      // This allows cat << EOF > file.txt to work properly
+      return createSuccessResult(inputData, 0);
+    }
+
     default:
       return createErrorResult(`${command}: command not supported for stdin`, 1);
   }
@@ -1581,11 +1630,7 @@ function executeSingleCommand(
     }
 
     if (redirectInput.type === '<<') {
-      // Heredoc - for now, simulate with empty input for cat, or pass delimiter for other commands
-      if (command === 'cat' && args.length === 0) {
-        // For cat with heredoc and no files, simulate stdin input
-        return { success: true, output: `Reading input until '${redirectInput.source}'...`, exitCode: 0 };
-      }
+      // Heredoc - treat the source as the delimiter for multiline input
       finalArgs = [...args];
     } else {
       // File input - validate the file exists and is readable
@@ -1620,7 +1665,7 @@ function executeSingleCommand(
   if (
     redirectInput &&
     redirectInput.type === '<<' &&
-    (command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq')
+    (command === 'cat' || command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq')
   ) {
     // Handle commands that can process piped input
     const inputData = redirectInput.source;

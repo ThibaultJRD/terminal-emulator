@@ -2894,21 +2894,20 @@ echo "Message" > file   # Write to file
 2. \`echo "--- End of inventory ---" >> inventory.txt\`
 3. \`cat inventory.txt\`
 
-### Exercise 4: Here document
+### Exercise 4: Creating multiline files
 \`\`\`bash
-cat << EOF > poem.txt
-Roses are red
-Violets are blue
-I'm learning the terminal
-And it's wonderful too!
-EOF
+echo "Roses are red" > poem.txt
+echo "Violets are blue" >> poem.txt
+echo "I'm learning the terminal" >> poem.txt
+echo "And it's wonderful too!" >> poem.txt
 \`\`\`
+Verify with: \`cat poem.txt\`
 
 ## 🎯 Challenge
 Create a file \`report.txt\` that contains:
-1. The current date (you can make it up)
-2. The list of files in the directory
-3. The total number of files
+1. The current date using: \`date > report.txt\`
+2. The list of files: \`ls -la >> report.txt\`
+3. The total number of files: \`ls | wc -l >> report.txt\`
 
 ## 💡 Important tips
 - **>** overwrites the existing file
@@ -2957,6 +2956,45 @@ echo $HOME                 # Display the home directory
 echo "I am $USER"          # Use variable in text
 \`\`\`
 
+### Creating and modifying variables
+\`\`\`bash
+export MY_VAR="Hello World"    # Create/export a variable
+export PATH="$PATH:/new/path"  # Modify existing variable
+echo $MY_VAR                   # Use your custom variable
+\`\`\`
+
+### Variable scope
+- **Local variables**: Only available in current session
+- **Exported variables**: Available to child processes
+- **Built-in variables**: Set by the system ($HOME, $USER, etc.)
+
+## Variable Management Commands
+
+### export command
+Creates or modifies environment variables and makes them available to child processes.
+
+\`\`\`bash
+export              # List all exported variables
+export VAR=value    # Create and export a variable
+export VAR          # Export an existing local variable
+\`\`\`
+
+### unset command
+Removes environment variables completely.
+
+\`\`\`bash
+unset VAR_NAME      # Remove a variable
+unset VAR1 VAR2     # Remove multiple variables
+\`\`\`
+
+### Examples
+\`\`\`bash
+export PROJECT_DIR="/home/user/myproject"
+export EDITOR="vi"
+echo "Working in: $PROJECT_DIR"
+unset PROJECT_DIR   # Remove the variable
+\`\`\`
+
 ## The .bashrc file
 
 ### What is it?
@@ -3002,18 +3040,31 @@ source alias_file.sh       # Load aliases from a file
 2. \`echo $USER\` 
 3. \`echo "My directory: $HOME"\`
 
-### Exercise 2: Useful aliases
+### Exercise 2: Creating custom variables
+1. \`export MY_NAME="Your Name"\`
+2. \`echo "Hello, I'm $MY_NAME"\`
+3. \`export PROJECT_PATH="/home/user/projects"\`
+4. \`echo "My projects are in: $PROJECT_PATH"\`
+5. \`export\` (list all variables)
+
+### Exercise 3: Variable management
+1. \`export TEMP_VAR="temporary"\`
+2. \`echo $TEMP_VAR\`
+3. \`unset TEMP_VAR\`
+4. \`echo $TEMP_VAR\` (should be empty now)
+
+### Exercise 4: Useful aliases
 1. \`alias ll='ls -l'\`
 2. \`alias la='ls -la'\`
 3. \`alias h='history'\`
 4. Test your new aliases!
 
-### Exercise 3: .bashrc file
+### Exercise 5: .bashrc file
 1. Open the file: \`vi ~/.bashrc\`
 2. Look at its contents (NORMAL mode)
 3. Quit without modifying: \`:q\`
 
-### Exercise 4: Persistent aliases
+### Exercise 6: Persistent aliases
 1. Create a file: \`vi my_aliases.sh\`
 2. Add your favorite aliases:
    \`\`\`bash
@@ -3025,16 +3076,36 @@ source alias_file.sh       # Load aliases from a file
 4. Load the aliases: \`source my_aliases.sh\`
 
 ## 🎯 Expert Challenge
-Create a \`weather\` alias that displays:
+Create a personal development environment:
+
+1. **Set up project variables:**
+\`\`\`bash
+export CODING_MODE="productive"
+export CURRENT_PROJECT="terminal-emulator"
+export WORKSPACE="/home/user/projects"
+\`\`\`
+
+2. **Create useful aliases:**
 \`\`\`bash
 alias weather='echo "🌞 Beautiful weather for coding!"'
+alias status='echo "Mode: $CODING_MODE | Project: $CURRENT_PROJECT"'
+alias workspace='cd $WORKSPACE && ls'
+\`\`\`
+
+3. **Test your setup:**
+\`\`\`bash
+status
+weather
+workspace
 \`\`\`
 
 ## 💡 Pro tips
-- Aliases disappear when you close the terminal
+- **Aliases** disappear when you close the terminal
+- **Environment variables** persist during the session
 - To make them permanent, add them to .bashrc
-- Use short but explicit names
-- Be careful not to overwrite existing commands!
+- Use descriptive names for variables (MY_PROJECT_PATH, not mp)
+- Use short but explicit names for aliases
+- Be careful not to overwrite existing commands or variables!
 
 ## 🏆 Congratulations!
 You've completed all the basic lessons!
