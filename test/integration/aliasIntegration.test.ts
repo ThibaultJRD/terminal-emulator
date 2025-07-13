@@ -211,6 +211,73 @@ describe('Alias Integration Tests', () => {
       expect(result.success).toBe(true);
       // Should execute normal ls command
     });
+
+    it('should resolve alias with && operator', () => {
+      aliasManager.setAlias('work', 'cd documents && ls');
+
+      const result = executeCommand('work', filesystem, aliasManager);
+
+      expect(result.success).toBe(true);
+      // Should execute cd documents && ls (both commands)
+      expect(filesystem.currentPath).toEqual(['home', 'user', 'documents']);
+      expect(typeof result.output === 'string' || Array.isArray(result.output)).toBe(true);
+    });
+
+    it('should resolve alias with || operator', () => {
+      aliasManager.setAlias('fallback', 'cd nonexistent || echo fallback');
+
+      const result = executeCommand('fallback', filesystem, aliasManager);
+
+      expect(result.success).toBe(true);
+      // cd should fail but echo should succeed
+      const outputText = Array.isArray(result.output) ? result.output.map((segment) => segment.text).join('') : result.output;
+      expect(outputText).toContain('fallback');
+    });
+
+    it('should resolve alias with ; operator', () => {
+      aliasManager.setAlias('sequence', 'echo first ; echo second');
+
+      const result = executeCommand('sequence', filesystem, aliasManager);
+
+      expect(result.success).toBe(true);
+      // Both commands should execute regardless of first command result
+      const outputText = Array.isArray(result.output) ? result.output.map((segment) => segment.text).join('') : result.output;
+      expect(outputText).toContain('first');
+      expect(outputText).toContain('second');
+    });
+
+    it('should resolve alias with pipe operator', () => {
+      aliasManager.setAlias('piped', 'echo hello world | head -1');
+
+      const result = executeCommand('piped', filesystem, aliasManager);
+
+      expect(result.success).toBe(true);
+      // Should pipe echo output to head
+      const outputText = Array.isArray(result.output) ? result.output.map((segment) => segment.text).join('') : result.output;
+      expect(outputText).toContain('hello world');
+    });
+
+    it('should resolve nested alias with chaining', () => {
+      aliasManager.setAlias('base', 'cd documents');
+      aliasManager.setAlias('chain', 'base && ls');
+
+      const result = executeCommand('chain', filesystem, aliasManager);
+
+      expect(result.success).toBe(true);
+      // Should resolve base to cd documents, then execute ls
+      expect(filesystem.currentPath).toEqual(['home', 'user', 'documents']);
+    });
+
+    it('should handle complex chaining in alias', () => {
+      aliasManager.setAlias('complex', 'cd documents && ls || echo failed');
+
+      const result = executeCommand('complex', filesystem, aliasManager);
+
+      expect(result.success).toBe(true);
+      // cd should succeed, ls should execute, echo should not execute
+      expect(filesystem.currentPath).toEqual(['home', 'user', 'documents']);
+      expect(result.output).not.toContain('failed');
+    });
   });
 
   describe('alias persistence through .bashrc', () => {

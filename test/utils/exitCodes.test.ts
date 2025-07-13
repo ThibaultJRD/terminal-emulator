@@ -4,6 +4,15 @@ import { getFilesystemByMode } from '~/constants/defaultFilesystems';
 import { parseChainedCommand } from '~/routes/terminal/utils/commandParser';
 import { executeCommand } from '~/routes/terminal/utils/commands';
 
+// Helper function to extract text from output (string or OutputSegment[])
+function getOutputText(output: string | any[]): string {
+  if (typeof output === 'string') return output;
+  if (Array.isArray(output)) {
+    return output.map((segment) => segment.text || '').join('');
+  }
+  return '';
+}
+
 describe('Exit Codes and Command Chaining', () => {
   const filesystem = {
     root: getFilesystemByMode('default'),
@@ -114,7 +123,7 @@ describe('Exit Codes and Command Chaining', () => {
     it('should execute second command when first succeeds with &&', () => {
       const result = executeCommand('echo first && echo second', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('first\nsecond\n');
+      expect(getOutputText(result.output)).toBe('first\nsecond\n');
       expect(result.exitCode).toBe(0);
     });
 
@@ -122,29 +131,29 @@ describe('Exit Codes and Command Chaining', () => {
       const result = executeCommand('ls nonexistent && echo should_not_appear', filesystem);
       expect(result.success).toBe(false);
       expect(result.exitCode).toBe(1);
-      expect(result.output).not.toContain('should_not_appear');
+      expect(getOutputText(result.output)).not.toContain('should_not_appear');
     });
 
     it('should execute second command when first fails with ||', () => {
       const result = executeCommand('ls nonexistent || echo fallback', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toContain('fallback');
+      expect(getOutputText(result.output)).toContain('fallback');
       expect(result.exitCode).toBe(0);
     });
 
     it('should not execute second command when first succeeds with ||', () => {
       const result = executeCommand('echo success || echo should_not_appear', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('success\n');
+      expect(getOutputText(result.output)).toBe('success\n');
       expect(result.exitCode).toBe(0);
-      expect(result.output).not.toContain('should_not_appear');
+      expect(getOutputText(result.output)).not.toContain('should_not_appear');
     });
 
     it('should handle complex chaining scenarios', () => {
       // mkdir should succeed, echo should execute, ls should succeed
       const result = executeCommand('mkdir testdir && echo "Created" && ls', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toContain('Created');
+      expect(getOutputText(result.output)).toContain('Created');
       expect(result.exitCode).toBe(0);
     });
 
@@ -158,15 +167,15 @@ describe('Exit Codes and Command Chaining', () => {
     it('should execute all commands with ; operator regardless of exit codes', () => {
       const result = executeCommand('echo "first"; ls nonexistent; echo "third"', filesystem);
       expect(result.success).toBe(true); // Last command succeeds
-      expect(result.output).toContain('first');
-      expect(result.output).toContain('third');
+      expect(getOutputText(result.output)).toContain('first');
+      expect(getOutputText(result.output)).toContain('third');
       expect(result.exitCode).toBe(0); // exit code of last command (echo)
     });
 
     it('should execute commands sequentially with ; operator', () => {
       const result = executeCommand('echo "1"; echo "2"; echo "3"', filesystem);
       expect(result.success).toBe(true);
-      expect(result.output).toBe('1\n2\n3\n');
+      expect(getOutputText(result.output)).toBe('1\n2\n3\n');
       expect(result.exitCode).toBe(0);
     });
 
@@ -174,7 +183,7 @@ describe('Exit Codes and Command Chaining', () => {
       // mkdir will fail because directory already exists, but echo should still run
       const result = executeCommand('mkdir home; echo "still runs"', filesystem);
       expect(result.success).toBe(true); // Last command succeeds
-      expect(result.output).toContain('still runs');
+      expect(getOutputText(result.output)).toContain('still runs');
       expect(result.exitCode).toBe(0); // exit code of echo
     });
   });
