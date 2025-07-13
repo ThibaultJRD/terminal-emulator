@@ -1529,16 +1529,45 @@ function executeSingleCommand(
   if (aliasManager && aliasManager.hasAlias(command)) {
     const resolvedCommand = aliasManager.resolveAlias(command, args);
     if (resolvedCommand) {
-      // Parse the resolved command
-      const resolvedParsed = parseCommand(resolvedCommand);
-      command = resolvedParsed.command;
-      args = resolvedParsed.args;
-      // Note: We don't override redirections from the original command
-      if (!redirectOutput && resolvedParsed.redirectOutput) {
-        redirectOutput = resolvedParsed.redirectOutput;
-      }
-      if (!redirectInput && resolvedParsed.redirectInput) {
-        redirectInput = resolvedParsed.redirectInput;
+      // Check if the resolved command contains chaining operators
+      const chainRegex = /(\|\||&&|;)/;
+      if (chainRegex.test(resolvedCommand)) {
+        // Re-parse the resolved command to handle chaining
+        const reparsed = parseChainedCommand(resolvedCommand, environmentManager);
+
+        // Check if it's a command with operators (ChainedCommand or PipedCommand)
+        if ('operators' in reparsed && reparsed.operators.length > 0) {
+          // Check if it's only pipes
+          const hasOnlyPipes = reparsed.operators.every((op) => op === '|');
+          if (hasOnlyPipes) {
+            return executePipedCommand(reparsed as PipedCommand, filesystem, aliasManager, lastExitCode, environmentManager);
+          }
+          // Otherwise it's a ChainedCommand
+          return executeChainedCommand(reparsed as ChainedCommand, filesystem, aliasManager, lastExitCode, environmentManager);
+        }
+
+        // If it's still a single command after parsing, continue with normal execution
+        const resolvedParsed = reparsed as ParsedCommand;
+        command = resolvedParsed.command;
+        args = resolvedParsed.args;
+        if (!redirectOutput && resolvedParsed.redirectOutput) {
+          redirectOutput = resolvedParsed.redirectOutput;
+        }
+        if (!redirectInput && resolvedParsed.redirectInput) {
+          redirectInput = resolvedParsed.redirectInput;
+        }
+      } else {
+        // Parse the resolved command normally (no chaining)
+        const resolvedParsed = parseCommand(resolvedCommand);
+        command = resolvedParsed.command;
+        args = resolvedParsed.args;
+        // Note: We don't override redirections from the original command
+        if (!redirectOutput && resolvedParsed.redirectOutput) {
+          redirectOutput = resolvedParsed.redirectOutput;
+        }
+        if (!redirectInput && resolvedParsed.redirectInput) {
+          redirectInput = resolvedParsed.redirectInput;
+        }
       }
     }
   }
