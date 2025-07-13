@@ -156,6 +156,84 @@ describe('Commands', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('Is a directory');
     });
+
+    it('should display line numbers with -n option', () => {
+      // Create a test file with multiple lines
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['test-lines.txt'] = {
+          name: 'test-lines.txt',
+          type: 'file',
+          content: 'line 1\nline 2\nline 3',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.cat(['-n', 'test-lines.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('     1\tline 1');
+      expect(result.output).toContain('     2\tline 2');
+      expect(result.output).toContain('     3\tline 3');
+    });
+
+    it('should handle multiple files', () => {
+      // Create test files
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['file1.txt'] = {
+          name: 'file1.txt',
+          type: 'file',
+          content: 'content1',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['file2.txt'] = {
+          name: 'file2.txt',
+          type: 'file',
+          content: 'content2',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.cat(['file1.txt', 'file2.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('content1content2');
+    });
+
+    it('should handle multiple files with line numbers', () => {
+      // Create test files
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['multi1.txt'] = {
+          name: 'multi1.txt',
+          type: 'file',
+          content: 'line 1\nline 2',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['multi2.txt'] = {
+          name: 'multi2.txt',
+          type: 'file',
+          content: 'line 3\nline 4',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.cat(['-n', 'multi1.txt', 'multi2.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('     1\tline 1');
+      expect(result.output).toContain('     2\tline 2');
+      expect(result.output).toContain('     3\tline 3');
+      expect(result.output).toContain('     4\tline 4');
+    });
   });
 
   describe('mkdir command', () => {
@@ -460,6 +538,111 @@ describe('Commands', () => {
       const result = commands.wc(['nonexistent.txt'], filesystem);
       expect(result.success).toBe(false);
       expect(result.error).toContain('No such file or directory');
+    });
+
+    it('should show only line count with -l option', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-test.txt'] = {
+          name: 'wc-test.txt',
+          type: 'file',
+          content: 'line 1\nline 2\nline 3',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-l', 'wc-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*3\s+wc-test\.txt$/);
+    });
+
+    it('should show only word count with -w option', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-words.txt'] = {
+          name: 'wc-words.txt',
+          type: 'file',
+          content: 'hello world test',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-w', 'wc-words.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*3\s+wc-words\.txt$/);
+    });
+
+    it('should show only character count with -c option', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-chars.txt'] = {
+          name: 'wc-chars.txt',
+          type: 'file',
+          content: 'hello',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-c', 'wc-chars.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*5\s+wc-chars\.txt$/);
+    });
+
+    it('should handle multiple options', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-multi.txt'] = {
+          name: 'wc-multi.txt',
+          type: 'file',
+          content: 'line 1\nline 2',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-l', '-w', 'wc-multi.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*2\s+4\s+wc-multi\.txt$/);
+    });
+
+    it('should handle multiple files with options', () => {
+      // Create test files
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-file1.txt'] = {
+          name: 'wc-file1.txt',
+          type: 'file',
+          content: 'a\nb',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['wc-file2.txt'] = {
+          name: 'wc-file2.txt',
+          type: 'file',
+          content: 'c\nd',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-l', 'wc-file1.txt', 'wc-file2.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('2 wc-file1.txt');
+      expect(result.output).toContain('2 wc-file2.txt');
+      expect(result.output).toContain('4 total');
     });
   });
 

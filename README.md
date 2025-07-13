@@ -74,7 +74,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 ### 🎓 Interactive Tutorial
 
 - **Progressive Learning**: 5 structured lessons from basics to advanced concepts
-- **Dynamic Progress Tracking**: `progress` command shows real completion status
+- **Progressive Learning**: Structured lessons with hands-on practice
 - **Hands-on Practice**: Sandbox environment for safe experimentation
 - **Auto-Detection**: Smart tracking of lesson visits and practice activities
 - **Comprehensive Curriculum**: Navigation, file management, text editing, I/O redirection, scripting
@@ -237,7 +237,6 @@ man command            # Show manual for command
 # Tutorial Mode Commands (only available at /tutorial)
 lessons                # Go to lessons directory (alias for 'cd ~/lessons')
 sandbox                # Go to practice sandbox (alias for 'cd ~/sandbox')
-progress               # View dynamic learning progress with completion tracking
 ```
 
 ### Tutorial Learning Workflow
@@ -261,8 +260,8 @@ sandbox                         # Go to practice area
 touch practice.txt              # Create practice files
 mkdir test-dir                  # Practice directory operations
 
-# 4. Track progress
-progress                        # View completion status and analytics
+# 4. Continue learning
+cd lessons/02-files             # Move to next lesson
 ```
 
 #### Learning Path
@@ -273,21 +272,12 @@ progress                        # View completion status and analytics
 4. **04-redirection**: Understand I/O redirection (`>`, `>>`, `<`, `|`)
 5. **05-advanced**: Explore variables (`export`) and aliases (`alias`)
 
-#### Progress Tracking Features
+#### Learning Features
 
-- **Auto-Detection**: Progress automatically updates when you read lessons and create practice files
-- **Visual Progress Bars**: ASCII progress bars show completion percentages
-- **Activity Summary**: Track files created in sandbox and challenges attempted
-- **Smart Analytics**: Differentiate between visited lessons and truly completed ones
-
-```bash
-# Example progress output shows:
-# - Overall completion percentage
-# - Visual progress bars for visited vs completed lessons
-# - Practice files created count
-# - Challenge completion status
-# - Helpful learning tips
-```
+- **Auto-Detection**: Smart detection of lesson completion through practice activities
+- **Hands-on Practice**: Create files in sandbox to reinforce learning
+- **Practical Challenges**: Real-world exercises to test your skills
+- **Interactive Environment**: Safe space to experiment with Unix commands
 
 ### Pipes & Text Processing
 
@@ -727,7 +717,7 @@ make build && make test && make deploy || echo "Pipeline failed"
 
 # Note: Cannot mix pipes with other chaining operators
 # This would work: cat input.txt | sort
-# Followed by: echo "Sorted successfully" && rm -f temp.*
+# Followed by: echo "Sorted successfully" && rm -f temp.txt
 ```
 
 #### Practical Examples
@@ -751,7 +741,7 @@ mkdir backup ; cp *.txt backup/ ; echo "Backup attempt completed"
 
 ```bash
 # Clean temporary files
-rm temp.* && echo "Cleaned temp files" || echo "No temp files found" ; echo "Cleanup done"
+rm temp.txt temp.log && echo "Cleaned temp files" || echo "No temp files found" ; echo "Cleanup done"
 ```
 
 **Development Workflow:**
@@ -1089,8 +1079,7 @@ An interactive learning environment with progressive Unix lessons:
   - **05-advanced**: Variables and aliases (export, alias, $VAR)
 - `~/sandbox/` - Practice area for hands-on learning and experimentation
 - `~/challenges/` - Practical exercises to test and apply skills
-- `~/progress/` - Dynamic progress tracking (see `progress` command)
-- **Features**: Auto-detection of lesson completion, practice file tracking, smart progress analytics
+- **Features**: Interactive lessons, hands-on practice, and practical challenges
 
 ### Accessing Different Modes
 

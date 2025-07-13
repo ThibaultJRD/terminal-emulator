@@ -17,24 +17,24 @@ export default function TutorialScreen() {
         // });
       }}
     >
-      <title>Terminal Tutorial - Interactive Unix Command Learning</title>
+      <title>Terminal Tutorial - Interactive Unix Command Learning | How ls, cd, vi Works</title>
       <meta
         name="description"
-        content="Learn Unix terminal commands interactively! Master ls, cd, mkdir, vi editor, pipes, environment variables and more with hands-on lessons. Perfect for beginners to advanced users wanting to improve their command line skills."
+        content="Learn Unix terminal commands interactively! Complete tutorial to master ls, cd, mkdir, vi, pipes, grep and more. Perfect terminal tutorial for beginners and advanced users wanting to improve their command line skills."
       />
       <meta
         name="keywords"
-        content="unix tutorial, terminal tutorial, bash tutorial, command line tutorial, learn terminal, unix commands, shell tutorial, vi editor tutorial, terminal basics, interactive learning, command line training"
+        content="terminal tutorial, unix tutorial, bash tutorial, command line tutorial, learn terminal, how ls works, how cd works, how vi works, unix commands, shell tutorial, vi editor tutorial, terminal basics, interactive learning, command line training, tuto terminal, unix tuto, tutoriel terminal"
       />
       <meta name="author" content="Terminal Tutorial" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#1e1e2e" />
 
       <meta property="og:type" content="website" />
-      <meta property="og:title" content="Terminal Tutorial - Interactive Unix Command Learning" />
+      <meta property="og:title" content="Terminal Tutorial - Interactive Unix Command Learning | How ls, cd, vi Works" />
       <meta
         property="og:description"
-        content="Learn Unix terminal commands interactively! Master ls, cd, mkdir, vi editor, pipes, environment variables and more with hands-on lessons. Perfect for beginners to advanced users wanting to improve their command line skills."
+        content="Learn Unix terminal commands interactively! Complete tutorial to master ls, cd, mkdir, vi, pipes, grep and more. Perfect terminal tutorial for beginners and advanced users wanting to improve their command line skills."
       />
       <meta property="og:site_name" content="Terminal Tutorial" />
       <meta property="og:locale" content="en_US" />
@@ -45,10 +45,10 @@ export default function TutorialScreen() {
       <meta property="og:image:alt" content="Terminal Tutorial - Interactive Unix Command Learning Interface" />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Terminal Tutorial - Interactive Unix Command Learning" />
+      <meta name="twitter:title" content="Terminal Tutorial - Interactive Unix Command Learning | How ls, cd, vi Works" />
       <meta
         name="twitter:description"
-        content="Learn Unix terminal commands interactively! Master ls, cd, mkdir, vi editor, pipes, environment variables and more with hands-on lessons. Perfect for beginners to advanced users wanting to improve their command line skills."
+        content="Learn Unix terminal commands interactively! Complete tutorial to master ls, cd, mkdir, vi, pipes, grep and more. Perfect terminal tutorial for beginners and advanced users wanting to improve their command line skills."
       />
       <meta name="twitter:creator" content="@terminal_tutorial" />
       <meta name="twitter:image" content="https://terminal-emulator-nine.vercel.app/og-tutorial.png" />
@@ -67,11 +67,11 @@ export default function TutorialScreen() {
       <CanonicalLink url="https://terminal-emulator-nine.vercel.app/tutorial" />
       <WebApplicationStructuredData
         name="Terminal Tutorial"
-        description="Learn Unix terminal commands interactively! Master ls, cd, mkdir, vi editor, pipes, environment variables and more with hands-on lessons. Perfect for beginners to advanced users wanting to improve their command line skills."
+        description="Learn Unix terminal commands interactively! Complete tutorial to master ls, cd, mkdir, vi, pipes, grep and more. Perfect terminal tutorial for beginners and advanced users wanting to improve their command line skills."
         url="https://terminal-emulator-nine.vercel.app/tutorial"
         creator={{
           name: 'ThibaultJRD',
-          url: 'https://github.com/ThibaultJRD',
+          url: 'https://thibault.iusevimbtw.com',
         }}
         features={['Interactive Lessons', 'Unix Commands', 'Step-by-step Learning', 'Hands-on Practice', 'Progress Tracking']}
       />

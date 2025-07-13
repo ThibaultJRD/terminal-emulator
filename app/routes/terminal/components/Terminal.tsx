@@ -126,10 +126,18 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         {
           type: 'output',
           content: [
-            { text: '📊 Track your progress: ', type: 'bold' },
-            { text: 'progress', type: 'inline-code' },
-            { text: ' | General help: ', type: 'normal' },
+            { text: 'General help: ', type: 'bold' },
             { text: 'help', type: 'inline-code' },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: [
+            { text: '🔄 ', type: 'normal' },
+            { text: 'Stuck? Reset and refresh: ', type: 'bold' },
+            { text: 'reset-fs', type: 'inline-code' },
+            { text: ' then refresh your browser', type: 'normal' },
           ],
           timestamp: new Date().toISOString(),
         },
@@ -709,6 +717,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       {isTextEditorOpen && textEditorState && (
         <TextEditor initialState={textEditorState} onSave={handleTextEditorSave} onClose={handleTextEditorClose} onStateChange={setTextEditorState} />
       )}
+
+      {/* Attribution */}
+      <div className="text-ctp-subtext0 absolute right-2 bottom-2 text-xs opacity-30 transition-opacity duration-200 hover:opacity-70">
+        <a href="https://thibault.iusevimbtw.com" target="_blank" rel="noopener noreferrer" className="hover:text-ctp-subtext1">
+          Made by ThibaultJRD
+        </a>
+      </div>
     </div>
   );
 }

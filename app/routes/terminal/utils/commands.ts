@@ -195,82 +195,130 @@ export const commands: Record<string, CommandHandler> = {
   },
 
   touch: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    if (args.length === 0) {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
 
-    const filepath = args[0];
+    for (const filepath of positionalArgs) {
+      // Resolve the path to handle tilde expansion
+      const targetPath = resolvePath(filesystem, filepath);
 
-    // Resolve the path to handle tilde expansion
-    const targetPath = resolvePath(filesystem, filepath);
+      // Extract parent directory path and filename
+      const parentPath = targetPath.slice(0, -1);
+      const filename = targetPath[targetPath.length - 1];
 
-    // Extract parent directory path and filename
-    const parentPath = targetPath.slice(0, -1);
-    const filename = targetPath[targetPath.length - 1];
+      // Security: Enhanced filename validation for the actual filename
+      if (filename.includes('\\') || filename.includes('\0')) {
+        return createErrorResult('touch: invalid filename');
+      }
 
-    // Security: Enhanced filename validation for the actual filename
-    if (filename.includes('\\') || filename.includes('\0')) {
-      return createErrorResult('touch: invalid filename');
-    }
+      if (filename.length > 255) {
+        return createErrorResult('touch: filename too long');
+      }
 
-    if (filename.length > 255) {
-      return createErrorResult('touch: filename too long');
-    }
+      const parentDir = getNodeAtPath(filesystem, parentPath);
+      if (!parentDir || parentDir.type !== 'directory' || !parentDir.children) {
+        return createErrorResult('touch: cannot access parent directory');
+      }
 
-    const parentDir = getNodeAtPath(filesystem, parentPath);
-    if (!parentDir || parentDir.type !== 'directory' || !parentDir.children) {
-      return createErrorResult('touch: cannot access parent directory');
-    }
+      // Security: Check directory file count limit
+      if (Object.keys(parentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
+        return createErrorResult(`touch: too many files in directory (max ${MAX_FILES_PER_DIRECTORY})`);
+      }
 
-    // Security: Check directory file count limit
-    if (Object.keys(parentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
-      return createErrorResult(`touch: too many files in directory (max ${MAX_FILES_PER_DIRECTORY})`);
-    }
+      if (parentDir.children[filename]) {
+        parentDir.children[filename].modifiedAt = new Date();
+        continue; // Move to next file
+      }
 
-    if (parentDir.children[filename]) {
-      parentDir.children[filename].modifiedAt = new Date();
-      return createSuccessResult('');
-    }
+      // Security: Check filesystem size before creating file
+      const sizeValidation = validateFilesystemSize(filesystem);
+      if (!sizeValidation.valid) {
+        return createErrorResult(`touch: ${sizeValidation.error}`);
+      }
 
-    // Security: Check filesystem size before creating file
-    const sizeValidation = validateFilesystemSize(filesystem);
-    if (!sizeValidation.valid) {
-      return createErrorResult(`touch: ${sizeValidation.error}`);
-    }
-
-    const success = createFile(filesystem, parentPath, filename, '');
-    if (!success) {
-      return createErrorResult(`touch: cannot create '${filepath}'`);
+      const success = createFile(filesystem, parentPath, filename, '');
+      if (!success) {
+        return createErrorResult(`touch: cannot create '${filepath}'`);
+      }
     }
 
     return createSuccessResult('');
   },
 
   cat: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    if (args.length === 0) {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('cat', 'file'));
     }
 
-    const filename = args[0];
-    const targetPath = resolvePath(filesystem, filename);
-    const file = getNodeAtPath(filesystem, targetPath);
+    const showLineNumbers = flags.has('n');
 
-    if (!file) {
-      return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
+    // Handle single file for backward compatibility (especially for markdown)
+    if (positionalArgs.length === 1 && !showLineNumbers) {
+      const filename = positionalArgs[0];
+      const targetPath = resolvePath(filesystem, filename);
+      const file = getNodeAtPath(filesystem, targetPath);
+
+      if (!file) {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
+      }
+
+      if (file.type === 'directory') {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
+      }
+
+      const content = file.content || '';
+
+      // Check if it's a markdown file - return original renderMarkdown result
+      if (filename.endsWith('.md')) {
+        return createSuccessResult(renderMarkdown(content));
+      }
+
+      return createSuccessResult(content);
     }
 
-    if (file.type === 'directory') {
-      return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
+    // Handle multiple files or line numbers
+    const results: string[] = [];
+    let currentLineNumber = 1;
+
+    for (const filename of positionalArgs) {
+      const targetPath = resolvePath(filesystem, filename);
+      const file = getNodeAtPath(filesystem, targetPath);
+
+      if (!file) {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
+      }
+
+      if (file.type === 'directory') {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
+      }
+
+      let content = file.content || '';
+
+      // For markdown files with multiple files or line numbers, convert to string
+      if (filename.endsWith('.md')) {
+        const markdownResult = renderMarkdown(content);
+        content = Array.isArray(markdownResult) ? markdownResult.map((seg) => seg.text).join('') : markdownResult;
+      }
+
+      if (showLineNumbers) {
+        const lines = content.split('\n');
+        const numberedLines = lines.map((line) => {
+          const lineNum = currentLineNumber.toString().padStart(6);
+          currentLineNumber++;
+          return `${lineNum}\t${line}`;
+        });
+        results.push(numberedLines.join('\n'));
+      } else {
+        results.push(content);
+      }
     }
 
-    const content = file.content || '';
-
-    // Check if it's a markdown file
-    if (filename.endsWith('.md')) {
-      return createSuccessResult(renderMarkdown(content));
-    }
-
-    return createSuccessResult(content);
+    return createSuccessResult(results.join(''));
   },
 
   mkdir: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
@@ -442,16 +490,25 @@ export const commands: Record<string, CommandHandler> = {
   },
 
   wc: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    if (args.length === 0) {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length === 0) {
       return { success: false, output: '', error: 'wc: missing operand', exitCode: 1 };
     }
+
+    const showLines = flags.has('l');
+    const showWords = flags.has('w');
+    const showChars = flags.has('c');
+
+    // If no flags specified, show all (default behavior)
+    const showAll = !showLines && !showWords && !showChars;
 
     let totalLines = 0;
     let totalWords = 0;
     let totalChars = 0;
     const results: string[] = [];
 
-    for (const filename of args) {
+    for (const filename of positionalArgs) {
       const targetPath = resolvePath(filesystem, filename);
       const file = getNodeAtPath(filesystem, targetPath);
 
@@ -482,11 +539,37 @@ export const commands: Record<string, CommandHandler> = {
       totalWords += words;
       totalChars += chars;
 
-      results.push(`${lines.toString().padStart(8)} ${words.toString().padStart(8)} ${chars.toString().padStart(8)} ${filename}`);
+      const outputParts: string[] = [];
+
+      if (showAll || showLines) {
+        outputParts.push(lines.toString().padStart(8));
+      }
+      if (showAll || showWords) {
+        outputParts.push(words.toString().padStart(8));
+      }
+      if (showAll || showChars) {
+        outputParts.push(chars.toString().padStart(8));
+      }
+
+      outputParts.push(filename);
+      results.push(outputParts.join(' '));
     }
 
-    if (args.length > 1) {
-      results.push(`${totalLines.toString().padStart(8)} ${totalWords.toString().padStart(8)} ${totalChars.toString().padStart(8)} total`);
+    if (positionalArgs.length > 1) {
+      const totalParts: string[] = [];
+
+      if (showAll || showLines) {
+        totalParts.push(totalLines.toString().padStart(8));
+      }
+      if (showAll || showWords) {
+        totalParts.push(totalWords.toString().padStart(8));
+      }
+      if (showAll || showChars) {
+        totalParts.push(totalChars.toString().padStart(8));
+      }
+
+      totalParts.push('total');
+      results.push(totalParts.join(' '));
     }
 
     return { success: true, output: results.join('\n'), exitCode: 0 };
@@ -498,105 +581,6 @@ export const commands: Record<string, CommandHandler> = {
     return {
       success: true,
       output: `RESET_FILESYSTEM`,
-      exitCode: 0,
-    };
-  },
-
-  progress: (args: string[], filesystem: FileSystemState): CommandResult => {
-    // Only available in tutorial mode
-    const isInTutorialMode = filesystem.root.children?.home?.children?.user?.children?.lessons;
-    if (!isInTutorialMode) {
-      return createErrorResult('progress: command only available in tutorial mode');
-    }
-
-    const lessonsNode = getNodeAtPath(filesystem, ['home', 'user', 'lessons']);
-    if (!lessonsNode || !lessonsNode.children) {
-      return createErrorResult('progress: lessons directory not found');
-    }
-
-    const sandboxNode = getNodeAtPath(filesystem, ['home', 'user', 'sandbox']);
-    const challengesNode = getNodeAtPath(filesystem, ['home', 'user', 'challenges']);
-
-    // Define lessons structure
-    const lessons = [
-      { id: '01-basics', name: 'Navigation and reading', key: 'basics' },
-      { id: '02-files', name: 'File management', key: 'files' },
-      { id: '03-editor', name: 'Vi mastery', key: 'editor' },
-      { id: '04-redirection', name: 'Redirections and pipes', key: 'redirection' },
-      { id: '05-advanced', name: 'Variables and aliases', key: 'advanced' },
-    ];
-
-    // Analyze progress for each lesson
-    const progressData = lessons.map((lesson) => {
-      const lessonNode = lessonsNode.children?.[lesson.id];
-      if (!lessonNode || !lessonNode.children) {
-        return { ...lesson, completed: false, visited: false };
-      }
-
-      // Check if any file in the lesson has been accessed (modifiedAt different from createdAt)
-      const visited = Object.values(lessonNode.children).some(
-        (file) => file.type === 'file' && file.modifiedAt && file.createdAt && file.modifiedAt.getTime() !== file.createdAt.getTime(),
-      );
-
-      // Simple heuristic: lesson is "completed" if user has visited it and created files in sandbox
-      const hasCreatedFiles = sandboxNode?.children && Object.keys(sandboxNode.children).length > 0;
-
-      return { ...lesson, completed: visited && hasCreatedFiles, visited };
-    });
-
-    // Calculate overall progress
-    const totalLessons = lessons.length;
-    const visitedLessons = progressData.filter((l) => l.visited).length;
-    const completedLessons = progressData.filter((l) => l.completed).length;
-
-    // Count sandbox files for practice tracking
-    const sandboxFileCount = sandboxNode?.children ? Object.keys(sandboxNode.children).length : 0;
-
-    // Count challenges files
-    const challengeFileCount = challengesNode?.children ? Object.keys(challengesNode.children).length : 0;
-
-    // Generate dynamic progress report
-    const progressPercentage = Math.round((completedLessons / totalLessons) * 100);
-    const visitedPercentage = Math.round((visitedLessons / totalLessons) * 100);
-
-    const output = [
-      '# 📊 Tutorial Progress',
-      '',
-      `## Overall Progress: ${progressPercentage}% Complete`,
-      '',
-      '```',
-      `Progress: [${'█'.repeat(Math.floor(progressPercentage / 10))}${' '.repeat(10 - Math.floor(progressPercentage / 10))}] ${progressPercentage}%`,
-      `Visited:  [${'█'.repeat(Math.floor(visitedPercentage / 10))}${' '.repeat(10 - Math.floor(visitedPercentage / 10))}] ${visitedPercentage}%`,
-      '```',
-      '',
-      '## ✅ Lesson Progress',
-      '',
-      ...progressData.map((lesson) => {
-        const status = lesson.completed ? '✅' : lesson.visited ? '🔄' : '⬜';
-        const indicator = lesson.completed ? ' ✓' : lesson.visited ? ' ~' : '';
-        return `- [${lesson.completed ? 'x' : ' '}] ${lesson.id}: ${lesson.name}${indicator}`;
-      }),
-      '',
-      '## 🎯 Activity Summary',
-      '',
-      `### Practice Files Created: ${sandboxFileCount}`,
-      sandboxFileCount > 0 ? '- 🎉 Great job practicing with real files!' : '- Try creating files in ~/sandbox to practice!',
-      '',
-      `### Challenge Files: ${challengeFileCount}`,
-      challengeFileCount > 0 ? '- 🏆 Excellent work on challenges!' : '- Check ~/challenges for practical exercises!',
-      '',
-      '## 🎨 Legend',
-      '- ✅ **Completed**: Lesson visited + practice files created',
-      '- 🔄 **In Progress**: Lesson visited but needs more practice',
-      '- ⬜ **Not Started**: Lesson not yet visited',
-      '',
-      '---',
-      '*💡 Tip: Progress auto-detects when you read lessons and create practice files in ~/sandbox*',
-    ].join('\n');
-
-    return {
-      success: true,
-      output: output,
       exitCode: 0,
     };
   },
@@ -1018,6 +1002,9 @@ export const commands: Record<string, CommandHandler> = {
       '  ls -la | grep ".txt" | sort',
       '  cat file.txt | grep "pattern" | head -5',
       '  cat data.txt | sort | uniq | wc -l',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Made by ThibaultJRD - https://thibault.iusevimbtw.com',
     ].join('\n');
 
     return { success: true, output: helpText, exitCode: 0 };

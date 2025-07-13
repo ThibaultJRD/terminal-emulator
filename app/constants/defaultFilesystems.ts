@@ -402,7 +402,7 @@ function createManualPages(mode: 'default' | 'portfolio' | 'tutorial' = 'default
       'grep "pattern" file.txt\n              Search for "pattern" in file.txt',
       'cat file.txt | grep "error"\n              Search for "error" in cat output',
       'grep -i "hello" file.txt\n              Case-insensitive search for "hello"',
-      'grep -n "TODO" *.txt\n              Show line numbers for matches',
+      'grep -n "TODO" file.txt\n              Show line numbers for matches',
       'grep -v "debug" log.txt\n              Show lines NOT containing "debug"',
       'grep -c "error" log.txt\n              Count matching lines',
     ],
@@ -2486,6 +2486,9 @@ man command     # Show manual for specific command
 ## Practical Exercises
 
 ### Exercise 1: Getting Oriented
+
+**💡 Note**: If you need to re-read this lesson after clearing the screen, type \`cat README.md\`
+
 1. Clear the screen: \`clear\`
 2. Type \`pwd\` to see where you are
 3. Type \`ls\` to see what's here
@@ -2927,13 +2930,13 @@ Save and quit when finished!`,
                       'important.txt': {
                         name: 'important.txt',
                         type: 'file',
-                        content: `⚠️ FICHIER IMPORTANT - NE PAS MODIFIER ⚠️
+                        content: `⚠️ IMPORTANT FILE - DO NOT MODIFY ⚠️
 
-Ce fichier contient des données critiques.
-Utilisez :q! pour sortir sans sauvegarder !
+This file contains critical data.
+Use :q! to exit without saving!
 
-Si vous voyez ce message inchangé après l'exercice,
-c'est que vous avez bien maîtrisé la sortie sans sauvegarde ! 👍`,
+If you see this message unchanged after the exercise,
+it means you have mastered exiting without saving! 👍`,
                         permissions: '-rw-r--r--',
                         size: 256,
                         createdAt: new Date(),
@@ -2976,7 +2979,6 @@ Best for small files where you want to see everything.
 \`\`\`bash
 head file.txt               # Show first 10 lines
 head -n 5 file.txt          # Show first 5 lines
-head -20 file.txt           # Show first 20 lines
 \`\`\`
 Perfect for previewing large files or logs.
 
@@ -2984,7 +2986,6 @@ Perfect for previewing large files or logs.
 \`\`\`bash
 tail file.txt               # Show last 10 lines
 tail -n 5 file.txt          # Show last 5 lines
-tail -20 file.txt           # Show last 20 lines
 \`\`\`
 Great for checking recent log entries or file endings.
 
@@ -3132,16 +3133,7 @@ grep -c "word" file.txt      # Count matches only
 grep -v "word" file.txt      # Show lines NOT containing "word"
 \`\`\`
 
-### 2. Wildcards for Pattern Matching
-\`\`\`bash
-ls *.txt                     # All files ending with .txt
-ls file?.txt                 # file1.txt, fileA.txt, etc.
-grep "test*" file.txt        # Lines with "test", "testing", etc.
-\`\`\`
-- **\*** matches any number of characters
-- **?** matches exactly one character
-
-### 3. Advanced grep Patterns
+### 2. Advanced grep Patterns
 \`\`\`bash
 grep "^Start" file.txt       # Lines starting with "Start"
 grep "end$" file.txt         # Lines ending with "end"
@@ -3567,14 +3559,14 @@ Good luck! 💪`,
                       'story.txt': {
                         name: 'story.txt',
                         type: 'file',
-                        content: `Il était une fois, dans un terminal lointain...
+                        content: `Once upon a time, in a distant terminal...
 
-Un développeur découvrit la puisance du commande line.
-Chaque jour, il apprenai de nouvelles commandes.
+A developer discoverd the power of the command line.
+Every day, he learnt new commands.
 
-[CORRIGEZ LES FAUTES ET COMPLETEZ L'HISTOIRE]
+[FIX THE TYPOS AND COMPLETE THE STORY]
 
-Auteur : [VOTRE NOM ICI]`,
+Author: [YOUR NAME HERE]`,
                         permissions: '-rw-r--r--',
                         size: 256,
                         createdAt: new Date(),
@@ -3595,81 +3587,31 @@ Auteur : [VOTRE NOM ICI]`,
                   'README.md': {
                     name: 'README.md',
                     type: 'file',
-                    content: `# 🏖️ Sandbox - Zone de Test Libre
+                    content: `# 🏖️ Sandbox - Free Testing Area
 
-Bienvenue dans votre bac à sable ! 
+Welcome to your sandbox! 
 
-Ici, vous pouvez :
-- Tester toutes les commandes apprises
-- Créer vos propres fichiers et dossiers  
-- Expérimenter sans risque
-- Pratiquer vos nouveaux alias
+Here, you can:
+- Test all the commands you've learned
+- Create your own files and directories  
+- Experiment safely
+- Practice your new aliases
 
-## Conseils
-- Créez ce que vous voulez
-- Supprimez, copiez, déplacez à volonté
-- C'est votre espace d'entraînement !
+## Tips
+- Create whatever you want
+- Delete, copy, move at will
+- This is your training space!
 
-## Commandes de nettoyage
+## Cleanup commands
 \`\`\`bash
-rm -rf *        # Supprime tout (attention !)
-ls -la          # Vérifie ce qui reste
+rm -rf folder/  # Delete specific directory
+rm file.txt     # Delete specific file
+ls -la          # Check what remains
 \`\`\`
 
-Amusez-vous bien ! 🚀`,
+Have fun! 🚀`,
                     permissions: '-rw-r--r--',
                     size: 512,
-                    createdAt: new Date(),
-                    modifiedAt: new Date(),
-                  },
-                },
-              },
-              progress: {
-                name: 'progress',
-                type: 'directory',
-                permissions: 'drwxr-xr-x',
-                size: 4096,
-                createdAt: new Date(),
-                modifiedAt: new Date(),
-                children: {
-                  'tutorial_progress.md': {
-                    name: 'tutorial_progress.md',
-                    type: 'file',
-                    content: `# 📊 Tutorial Progress
-
-## ✅ Completed Lessons
-
-- [ ] 01-basics: Navigation and reading
-- [ ] 02-files: File management  
-- [ ] 03-editor: Vi mastery
-- [ ] 04-redirection: Redirections and pipes
-- [ ] 05-advanced: Variables and aliases
-
-## 🎯 Goals
-
-### Beginner
-- [ ] Navigate with cd, ls, pwd
-- [ ] Read files with cat
-- [ ] Create files with touch
-
-### Intermediate  
-- [ ] Manage files (cp, mv, rm)
-- [ ] Use vi editor
-- [ ] Master redirections
-
-### Advanced
-- [ ] Create aliases
-- [ ] Understand variables
-- [ ] Modify .bashrc
-
-## 📈 Statistics
-- Time spent: 0 minutes
-- Commands executed: 0
-- Files created: 0
-
-Keep learning! 💪`,
-                    permissions: '-rw-r--r--',
-                    size: 768,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
                   },
