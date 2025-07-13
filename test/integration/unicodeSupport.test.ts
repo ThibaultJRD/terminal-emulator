@@ -18,11 +18,11 @@ describe('Unicode and Emoji Support', () => {
 
   describe('file operations with unicode content', () => {
     it('should handle files with accented characters', () => {
-      createFile(filesystem, ['home', 'user'], 'français.txt', 'Bonjour! Ça va? École, café, résumé.');
+      createFile(filesystem, ['home', 'user'], 'français.txt', 'Hello! How are you? School, coffee, resume.');
 
       const catResult = executeCommand('cat français.txt', filesystem);
       expect(catResult.success).toBe(true);
-      expect(catResult.output).toBe('Bonjour! Ça va? École, café, résumé.');
+      expect(catResult.output).toBe('Hello! How are you? School, coffee, resume.');
     });
 
     it('should handle files with various unicode characters', () => {

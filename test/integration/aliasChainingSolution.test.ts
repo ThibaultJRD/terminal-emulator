@@ -6,9 +6,9 @@ import { AliasManager } from '~/routes/terminal/utils/aliasManager';
 import { executeCommand } from '~/routes/terminal/utils/commands';
 
 /**
- * Tests spécifiques pour valider la correction du bug des alias avec chaining.
- * Bug original: Les alias contenant des opérateurs de chaining (&&, ||, ;)
- * n'exécutaient que la première commande.
+ * Specific tests to validate the fix for the alias chaining bug.
+ * Original bug: Aliases containing chaining operators (&&, ||, ;)
+ * only executed the first command.
  */
 describe('Alias Chaining Solution Tests', () => {
   let filesystem: FileSystemState;
@@ -24,43 +24,43 @@ describe('Alias Chaining Solution Tests', () => {
 
   describe('Original problem case', () => {
     it('should execute both cd and ls in alias work="cd documents/projects && ls"', () => {
-      // Créer le dossier projects pour le test
+      // Create the projects folder for the test
       const createResult = executeCommand('mkdir -p documents/projects', filesystem, aliasManager);
       expect(createResult.success).toBe(true);
 
-      // Créer l'alias problématique original
+      // Create the original problematic alias
       aliasManager.setAlias('work', 'cd documents/projects && ls');
 
-      // Réinitialiser le chemin
+      // Reset the path
       filesystem.currentPath = ['home', 'user'];
 
-      // Exécuter l'alias
+      // Execute the alias
       const result = executeCommand('work', filesystem, aliasManager);
 
       expect(result.success).toBe(true);
-      // Vérifier que cd a fonctionné (changement de répertoire)
+      // Verify that cd worked (directory change)
       expect(filesystem.currentPath).toEqual(['home', 'user', 'documents', 'projects']);
-      // Vérifier que ls a été exécuté (il y a un output)
+      // Verify that ls was executed (there is output)
       expect(typeof result.output === 'string' || Array.isArray(result.output)).toBe(true);
     });
 
     it('should show projects directory content after work alias execution', () => {
-      // Créer le dossier et ajouter des fichiers
+      // Create the folder and add files
       executeCommand('mkdir -p documents/projects', filesystem, aliasManager);
       executeCommand('touch documents/projects/file1.txt', filesystem, aliasManager);
       executeCommand('touch documents/projects/file2.txt', filesystem, aliasManager);
 
-      // Créer et exécuter l'alias
+      // Create and execute the alias
       aliasManager.setAlias('work', 'cd documents/projects && ls');
       filesystem.currentPath = ['home', 'user'];
 
       const result = executeCommand('work', filesystem, aliasManager);
 
       expect(result.success).toBe(true);
-      // Vérifier que nous sommes dans le bon répertoire
+      // Verify that we are in the correct directory
       expect(filesystem.currentPath).toEqual(['home', 'user', 'documents', 'projects']);
 
-      // Vérifier que ls a listé les fichiers
+      // Verify that ls listed the files
       const outputText = Array.isArray(result.output) ? result.output.map((segment) => segment.text).join('') : result.output;
       expect(outputText).toContain('file1.txt');
       expect(outputText).toContain('file2.txt');
@@ -73,7 +73,7 @@ describe('Alias Chaining Solution Tests', () => {
 
       const result = executeCommand('failchain', filesystem, aliasManager);
 
-      // Le cd devrait échouer, donc echo ne devrait pas s'exécuter
+      // The cd should fail, so echo should not execute
       expect(result.success).toBe(false);
       const outputText = Array.isArray(result.output) ? result.output.map((segment) => segment.text).join('') : result.output;
       expect(outputText).not.toContain('this should not appear');
@@ -92,7 +92,7 @@ describe('Alias Chaining Solution Tests', () => {
     });
 
     it('should handle complex chaining with mixed operators', () => {
-      // Test plus simple et plus réaliste
+      // Simpler and more realistic test
       aliasManager.setAlias('complex', 'cd documents && echo "in documents" ; echo "final step"');
 
       const result = executeCommand('complex', filesystem, aliasManager);

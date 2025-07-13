@@ -2601,90 +2601,90 @@ cd ../../../02-files`,
 You now know how to navigate! 🧭  
 Let's learn to create, copy, move, and delete files.
 
-## Commandes à apprendre
+## Commands to Learn
 
-### 1. touch - Créer des fichiers vides
+### 1. touch - Create Empty Files
 \`\`\`bash
-touch fichier.txt
-touch file1.txt file2.txt    # Créer plusieurs fichiers
+touch file.txt
+touch file1.txt file2.txt    # Create multiple files
 \`\`\`
 
-### 2. mkdir - Créer des dossiers
+### 2. mkdir - Create Directories
 \`\`\`bash
-mkdir dossier
-mkdir -p dossier/sous-dossier    # Créer parents si nécessaire
+mkdir folder
+mkdir -p folder/subfolder    # Create parents if needed
 \`\`\`
 
-### 3. cp - Copier des fichiers/dossiers
+### 3. cp - Copy Files/Directories
 \`\`\`bash
-cp fichier.txt copie.txt
-cp -r dossier nouveau_dossier    # Copier récursivement
+cp file.txt copy.txt
+cp -r folder new_folder    # Copy recursively
 \`\`\`
 
-### 4. mv - Déplacer/Renommer
+### 4. mv - Move/Rename
 \`\`\`bash
-mv ancien.txt nouveau.txt        # Renommer
-mv fichier.txt dossier/          # Déplacer
+mv old.txt new.txt        # Rename
+mv file.txt folder/       # Move
 \`\`\`
 
-### 5. rm - Supprimer des fichiers
+### 5. rm - Delete Files
 \`\`\`bash
-rm fichier.txt
-rm -r dossier     # Supprimer récursivement
-rm -f fichier     # Forcer la suppression
+rm file.txt
+rm -r folder     # Delete recursively
+rm -f file       # Force deletion
 \`\`\`
 
-### 6. rmdir - Supprimer des dossiers vides
+### 6. rmdir - Delete Empty Directories
 \`\`\`bash
-rmdir dossier_vide
+rmdir empty_folder
 \`\`\`
 
-## Exercices Pratiques
+## Practical Exercises
 
-### Exercice 1 : Création
-1. Créez un fichier \`mon_fichier.txt\` : \`touch mon_fichier.txt\`
-2. Créez un dossier \`mon_dossier\` : \`mkdir mon_dossier\`
-3. Vérifiez avec \`ls\`
+### Exercise 1: Creation
+1. Create a file \`my_file.txt\`: \`touch my_file.txt\`
+2. Create a folder \`my_folder\`: \`mkdir my_folder\`
+3. Verify with \`ls\`
 
-### Exercice 2 : Copie et déplacement
-1. Copiez \`exemple.txt\` vers \`copie.txt\` : \`cp exemple.txt copie.txt\`
-2. Déplacez \`copie.txt\` dans \`mon_dossier\` : \`mv copie.txt mon_dossier/\`
-3. Vérifiez : \`ls mon_dossier\`
+### Exercise 2: Copy and Move
+1. Copy \`example.txt\` to \`copy.txt\`: \`cp example.txt copy.txt\`
+2. Move \`copy.txt\` into \`my_folder\`: \`mv copy.txt my_folder/\`
+3. Verify: \`ls my_folder\`
 
-### Exercice 3 : Suppression ⚠️
-1. Supprimez \`mon_fichier.txt\` : \`rm mon_fichier.txt\`
-2. Supprimez le dossier et son contenu : \`rm -r mon_dossier\`
+### Exercise 3: Deletion ⚠️
+1. Delete \`my_file.txt\`: \`rm my_file.txt\`
+2. Delete the folder and its contents: \`rm -r my_folder\`
 
-## 🎯 Défi avancé
-Créez cette structure :
+## 🎯 Advanced Challenge
+Create this structure:
 \`\`\`
-projet/
+project/
 ├── src/
 │   └── main.txt
 └── docs/
     └── readme.txt
 \`\`\`
 
-Indice : \`mkdir -p projet/{src,docs}\`
+Hint: \`mkdir -p project/{src,docs}\`
 
-## ⚠️ Attention !
-\`rm\` supprime définitivement ! Contrairement à la corbeille, 
-il n'y a pas de retour en arrière possible.
+## ⚠️ Warning!
+\`rm\` deletes permanently! Unlike the trash/recycle bin, 
+there's no way to recover deleted files.
 
-Prêt pour l'éditeur de texte ? 
+Ready for the text editor? 
 \`cd ../03-editor\``,
                         permissions: '-rw-r--r--',
                         size: 1800,
                         createdAt: new Date(),
                         modifiedAt: new Date(),
                       },
-                      'exemple.txt': {
-                        name: 'exemple.txt',
+                      'example.txt': {
+                        name: 'example.txt',
                         type: 'file',
-                        content: `Ceci est un fichier d'exemple pour s'exercer.
+                        content: `This is an example file for practice.
 
-Vous pouvez le copier, le déplacer, le renommer...
-C'est en pratiquant qu'on apprend ! 🚀`,
+You can copy it, move it, rename it...
+Practice makes perfect! 🚀`,
                         permissions: '-rw-r--r--',
                         size: 128,
                         createdAt: new Date(),
@@ -2703,75 +2703,75 @@ C'est en pratiquant qu'on apprend ! 🚀`,
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Leçon 3 : L'éditeur de texte Vi
+                        content: `# Lesson 3: The Vi Text Editor
 
-Apprenons à utiliser l'éditeur vi intégré ! ✏️  
-C'est un outil puissant pour éditer des fichiers directement dans le terminal.
+Let's learn to use the integrated vi editor! ✏️  
+It's a powerful tool for editing files directly in the terminal.
 
-## Modes de Vi
+## Vi Modes
 
-Vi fonctionne avec 2 modes principaux :
+Vi works with 2 main modes:
 
-### Mode NORMAL (mode commande)
-- **Naviguer** dans le texte
-- **Exécuter** des commandes
-- **Mode par défaut** à l'ouverture
+### NORMAL Mode (command mode)
+- **Navigate** through text
+- **Execute** commands
+- **Default mode** when opening
 
-### Mode INSERT (mode édition)  
-- **Écrire** et **modifier** le texte
-- Comme un éditeur classique
+### INSERT Mode (editing mode)  
+- **Write** and **modify** text
+- Like a standard editor
 
-## Commandes essentielles
+## Essential Commands
 
-### Ouvrir un fichier
+### Opening a file
 \`\`\`bash
-vi nom_fichier.txt
+vi filename.txt
 \`\`\`
 
-### En mode NORMAL :
-- **i** : Passer en mode INSERT (avant le curseur)
-- **ESC** : Retourner en mode NORMAL
-- **:w** : Sauvegarder le fichier
-- **:q** : Quitter l'éditeur
-- **:wq** : Sauvegarder et quitter
-- **:q!** : Quitter sans sauvegarder
+### In NORMAL mode:
+- **i** : Enter INSERT mode (before cursor)
+- **ESC** : Return to NORMAL mode
+- **:w** : Save the file
+- **:q** : Quit the editor
+- **:wq** : Save and quit
+- **:q!** : Quit without saving
 
-### Navigation en mode NORMAL :
-- **h, j, k, l** : Gauche, Bas, Haut, Droite
-- **Flèches** : Fonctionnent aussi !
+### Navigation in NORMAL mode:
+- **h, j, k, l** : Left, Down, Up, Right
+- **Arrow keys** : Also work!
 
-## Exercices Pratiques
+## Practical Exercises
 
-### Exercice 1 : Premier fichier
-1. Ouvrez l'éditeur : \`vi mon_premier_fichier.txt\`
-2. Appuyez sur **i** pour entrer en mode INSERT
-3. Tapez : "Bonjour, je maîtrise vi !"
-4. Appuyez sur **ESC** pour revenir en mode NORMAL
-5. Tapez **:wq** pour sauvegarder et quitter
-6. Vérifiez : \`cat mon_premier_fichier.txt\`
+### Exercise 1: First file
+1. Open the editor: \`vi my_first_file.txt\`
+2. Press **i** to enter INSERT mode
+3. Type: "Hello, I'm mastering vi!"
+4. Press **ESC** to return to NORMAL mode
+5. Type **:wq** to save and quit
+6. Verify: \`cat my_first_file.txt\`
 
-### Exercice 2 : Éditer un fichier existant
-1. Éditez \`practice.txt\` : \`vi practice.txt\`
-2. Lisez les instructions dans le fichier
-3. Modifiez-le selon les consignes
-4. Sauvegardez avec **:w**
-5. Quittez avec **:q**
+### Exercise 2: Edit an existing file
+1. Edit \`practice.txt\`: \`vi practice.txt\`
+2. Read the instructions in the file
+3. Modify it according to the guidelines
+4. Save with **:w**
+5. Quit with **:q**
 
-### Exercice 3 : Annulation d'édition
-1. Ouvrez \`important.txt\` : \`vi important.txt\`
-2. Faites des modifications
-3. Quittez SANS sauvegarder : **:q!**
-4. Vérifiez que le fichier n'a pas changé : \`cat important.txt\`
+### Exercise 3: Cancel editing
+1. Open \`important.txt\`: \`vi important.txt\`
+2. Make some modifications
+3. Quit WITHOUT saving: **:q!**
+4. Verify the file hasn't changed: \`cat important.txt\`
 
-## 🎯 Défi
-Créez un fichier \`mon_cv.txt\` avec vi et écrivez votre présentation !
+## 🎯 Challenge
+Create a file \`my_resume.txt\` with vi and write your introduction!
 
-## 💡 Astuces
-- **ESC ESC** si vous êtes perdus (retour forcé en mode NORMAL)
-- **Vi = Vim** dans ce terminal (version améliorée)
-- L'autocomplétion marche aussi en mode INSERT (Tab)
+## 💡 Tips
+- **ESC ESC** if you're lost (forced return to NORMAL mode)
+- **Vi = Vim** in this terminal (improved version)
+- Autocompletion also works in INSERT mode (Tab)
 
-Prêt pour les redirections ?
+Ready for redirections?
 \`cd ../04-redirection\``,
                         permissions: '-rw-r--r--',
                         size: 2000,
@@ -2781,20 +2781,20 @@ Prêt pour les redirections ?
                       'practice.txt': {
                         name: 'practice.txt',
                         type: 'file',
-                        content: `EXERCICE VI - Éditez ce fichier !
+                        content: `VI EXERCISE - Edit this file!
 
-Instructions :
-1. Ajoutez votre nom après "Nom :"
-2. Complétez la phrase "J'apprends vi parce que..."
-3. Ajoutez une nouvelle ligne avec votre citation préférée
+Instructions:
+1. Add your name after "Name:"
+2. Complete the sentence "I'm learning vi because..."
+3. Add a new line with your favorite quote
 
-Nom : [AJOUTEZ VOTRE NOM ICI]
+Name: [ADD YOUR NAME HERE]
 
-J'apprends vi parce que... [COMPLÉTEZ]
+I'm learning vi because... [COMPLETE]
 
-Ma citation : [AJOUTEZ UNE CITATION]
+My quote: [ADD A QUOTE]
 
-Sauvegardez et quittez quand c'est terminé !`,
+Save and quit when finished!`,
                         permissions: '-rw-r--r--',
                         size: 256,
                         createdAt: new Date(),
@@ -2828,94 +2828,94 @@ c'est que vous avez bien maîtrisé la sortie sans sauvegarde ! 👍`,
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Leçon 4 : Redirections et Pipes
+                        content: `# Lesson 4: Redirections and Pipes
 
-Découvrons la puissance des redirections ! 🔄  
-Connecter des commandes entre elles pour des tâches complexes.
+Let's discover the power of redirections! 🔄  
+Connect commands together for complex tasks.
 
-## Types de redirections
+## Types of redirections
 
-### 1. Redirection de sortie (>)
+### 1. Output redirection (>)
 \`\`\`bash
-echo "Bonjour" > fichier.txt    # Écrit dans fichier (écrase)
-ls > liste.txt                  # Sauvegarde la liste des fichiers
+echo "Hello" > file.txt    # Write to file (overwrite)
+ls > list.txt               # Save the file list
 \`\`\`
 
-### 2. Redirection d'ajout (>>)
+### 2. Append redirection (>>)
 \`\`\`bash
-echo "Nouvelle ligne" >> fichier.txt    # Ajoute à la fin
-date >> log.txt                         # Ajoute date au log
+echo "New line" >> file.txt    # Add to the end
+date >> log.txt                    # Add date to log
 \`\`\`
 
-### 3. Redirection d'entrée (<)
+### 3. Input redirection (<)
 \`\`\`bash
-wc < fichier.txt                # Compte les lignes depuis fichier
-cat < input.txt                 # Lit depuis fichier
+wc < file.txt                # Count lines from file
+cat < input.txt               # Read from file
 \`\`\`
 
 ### 4. Here document (<<)
 \`\`\`bash
 cat << EOF
-Texte sur
-plusieurs lignes
+Text on
+multiple lines
 EOF
 \`\`\`
 
-## Commandes utiles avec redirections
+## Useful commands with redirections
 
 ### wc - Word Count
 \`\`\`bash
-wc fichier.txt          # Lignes, mots, caractères
-wc -l fichier.txt       # Nombre de lignes seulement
+wc file.txt          # Lines, words, characters
+wc -l file.txt       # Number of lines only
 \`\`\`
 
-### echo - Affichage de texte
+### echo - Text Display
 \`\`\`bash
-echo "Message"          # Affiche à l'écran
-echo "Message" > file   # Écrit dans fichier
+echo "Message"          # Display on screen
+echo "Message" > file   # Write to file
 \`\`\`
 
-## Exercices Pratiques
+## Practical Exercises
 
-### Exercice 1 : Créer avec redirections
-1. \`echo "Liste de courses" > courses.txt\`
-2. \`echo "- Pain" >> courses.txt\`
-3. \`echo "- Lait" >> courses.txt\`
-4. \`echo "- Œufs" >> courses.txt\`
-5. Vérifiez : \`cat courses.txt\`
+### Exercise 1: Create with redirections
+1. \`echo "Shopping list" > shopping.txt\`
+2. \`echo "- Bread" >> shopping.txt\`
+3. \`echo "- Milk" >> shopping.txt\`
+4. \`echo "- Eggs" >> shopping.txt\`
+5. Verify: \`cat shopping.txt\`
 
-### Exercice 2 : Compter et analyser
-1. Comptez les lignes : \`wc -l courses.txt\`
-2. Sauvegardez le résultat : \`wc -l courses.txt > stats.txt\`
-3. Affichez : \`cat stats.txt\`
+### Exercise 2: Count and analyze
+1. Count the lines: \`wc -l shopping.txt\`
+2. Save the result: \`wc -l shopping.txt > stats.txt\`
+3. Display: \`cat stats.txt\`
 
-### Exercice 3 : Lister et sauvegarder
+### Exercise 3: List and save
 1. \`ls -la > inventory.txt\`
-2. \`echo "--- Fin de l'inventaire ---" >> inventory.txt\`
+2. \`echo "--- End of inventory ---" >> inventory.txt\`
 3. \`cat inventory.txt\`
 
-### Exercice 4 : Here document
+### Exercise 4: Here document
 \`\`\`bash
 cat << EOF > poem.txt
-Les roses sont rouges
-Les violettes sont bleues
-J'apprends le terminal
-Et c'est merveilleux !
+Roses are red
+Violets are blue
+I'm learning the terminal
+And it's wonderful too!
 EOF
 \`\`\`
 
-## 🎯 Défi
-Créez un fichier \`rapport.txt\` qui contient :
-1. La date actuelle (vous pouvez inventer)
-2. La liste des fichiers du répertoire
-3. Le nombre total de fichiers
+## 🎯 Challenge
+Create a file \`report.txt\` that contains:
+1. The current date (you can make it up)
+2. The list of files in the directory
+3. The total number of files
 
-## 💡 Astuces importantes
-- **>** écrase le fichier existant
-- **>>** ajoute à la fin du fichier
-- Attention à ne pas écraser des fichiers importants !
+## 💡 Important tips
+- **>** overwrites the existing file
+- **>>** adds to the end of the file
+- Be careful not to overwrite important files!
 
-Prêt pour les concepts avancés ?
+Ready for advanced concepts?
 \`cd ../05-advanced\``,
                         permissions: '-rw-r--r--',
                         size: 2200,
@@ -2935,114 +2935,114 @@ Prêt pour les concepts avancés ?
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Leçon 5 : Concepts Avancés
+                        content: `# Lesson 5: Advanced Concepts
 
-Félicitations ! 🎉 Vous maîtrisez les bases.  
-Explorons maintenant les fonctionnalités avancées du shell.
+Congratulations! 🎉 You've mastered the basics.  
+Let's now explore advanced shell features.
 
-## Variables d'environnement
+## Environment Variables
 
-### Qu'est-ce que c'est ?
-Les variables stockent des informations que les programmes peuvent utiliser.
+### What are they?
+Variables store information that programs can use.
 
-### Variables importantes
-- **$HOME** : Votre dossier personnel
-- **$PATH** : Où le système cherche les commandes
-- **$USER** : Votre nom d'utilisateur
-- **$PWD** : Répertoire actuel
+### Important variables
+- **$HOME** : Your home directory
+- **$PATH** : Where the system looks for commands
+- **$USER** : Your username
+- **$PWD** : Current directory
 
-### Utilisation
+### Usage
 \`\`\`bash
-echo $HOME                 # Affiche le dossier home
-echo "Je suis $USER"       # Utilise la variable dans du texte
+echo $HOME                 # Display the home directory
+echo "I am $USER"          # Use variable in text
 \`\`\`
 
-## Le fichier .bashrc
+## The .bashrc file
 
-### Qu'est-ce que c'est ?
-Le fichier \`.bashrc\` contient des configurations qui s'exécutent 
-à chaque ouverture de terminal.
+### What is it?
+The \`.bashrc\` file contains configurations that run 
+every time you open a terminal.
 
-### Contenu typique :
-- **Aliases** (raccourcis de commandes)
-- **Variables d'environnement**
-- **Fonctions personnalisées**
+### Typical content:
+- **Aliases** (command shortcuts)
+- **Environment variables**
+- **Custom functions**
 
-## Aliases - Raccourcis de commandes
+## Aliases - Command Shortcuts
 
-### Créer des aliases
+### Creating aliases
 \`\`\`bash
-alias ll='ls -l'           # ll devient un raccourci pour ls -l
-alias la='ls -la'          # la pour ls -la
-alias ..='cd ..'           # .. pour remonter
+alias ll='ls -l'           # ll becomes a shortcut for ls -l
+alias la='ls -la'          # la for ls -la
+alias ..='cd ..'           # .. to go up
 \`\`\`
 
-### Voir les aliases
+### View aliases
 \`\`\`bash
-alias                      # Liste tous les aliases
+alias                      # List all aliases
 \`\`\`
 
-### Supprimer un alias
+### Remove an alias
 \`\`\`bash
-unalias ll                 # Supprime l'alias ll
+unalias ll                 # Remove the ll alias
 \`\`\`
 
-## La commande source
+## The source command
 
-### Charger des configurations
+### Loading configurations
 \`\`\`bash
-source ~/.bashrc           # Recharge la configuration
-source alias_file.sh       # Charge des aliases depuis un fichier
+source ~/.bashrc           # Reload configuration
+source alias_file.sh       # Load aliases from a file
 \`\`\`
 
-## Exercices Pratiques
+## Practical Exercises
 
-### Exercice 1 : Variables d'environnement
+### Exercise 1: Environment variables
 1. \`echo $HOME\`
 2. \`echo $USER\` 
-3. \`echo "Mon dossier : $HOME"\`
+3. \`echo "My directory: $HOME"\`
 
-### Exercice 2 : Aliases utiles
+### Exercise 2: Useful aliases
 1. \`alias ll='ls -l'\`
 2. \`alias la='ls -la'\`
 3. \`alias h='history'\`
-4. Testez vos nouveaux aliases !
+4. Test your new aliases!
 
-### Exercice 3 : Fichier .bashrc
-1. Ouvrez le fichier : \`vi ~/.bashrc\`
-2. Regardez son contenu (mode NORMAL)
-3. Quittez sans modifier : \`:q\`
+### Exercise 3: .bashrc file
+1. Open the file: \`vi ~/.bashrc\`
+2. Look at its contents (NORMAL mode)
+3. Quit without modifying: \`:q\`
 
-### Exercice 4 : Aliases persistants
-1. Créez un fichier : \`vi my_aliases.sh\`
-2. Ajoutez vos aliases préférés :
+### Exercise 4: Persistent aliases
+1. Create a file: \`vi my_aliases.sh\`
+2. Add your favorite aliases:
    \`\`\`bash
    alias ll='ls -l'
    alias la='ls -la'
    alias projects='cd ~/projects'
    \`\`\`
-3. Sauvegardez et quittez
-4. Chargez les aliases : \`source my_aliases.sh\`
+3. Save and quit
+4. Load the aliases: \`source my_aliases.sh\`
 
-## 🎯 Défi Expert
-Créez un alias \`weather\` qui affiche :
+## 🎯 Expert Challenge
+Create a \`weather\` alias that displays:
 \`\`\`bash
-alias weather='echo "🌞 Beau temps pour coder !"'
+alias weather='echo "🌞 Beautiful weather for coding!"'
 \`\`\`
 
-## 💡 Conseils pro
-- Les aliases disparaissent quand vous fermez le terminal
-- Pour les rendre permanents, ajoutez-les au .bashrc
-- Utilisez des noms courts mais explicites
-- Attention à ne pas écraser des commandes existantes !
+## 💡 Pro tips
+- Aliases disappear when you close the terminal
+- To make them permanent, add them to .bashrc
+- Use short but explicit names
+- Be careful not to overwrite existing commands!
 
-## 🏆 Félicitations !
-Vous avez terminé toutes les leçons de base !
+## 🏆 Congratulations!
+You've completed all the basic lessons!
 
-Pour aller plus loin :
-- \`cd ../challenges\` : Défis pratiques
-- \`cd ../../sandbox\` : Zone de test libre
-- \`help\` : Aide générale du terminal`,
+To go further:
+- \`cd ../challenges\` : Practical challenges
+- \`cd ../../sandbox\` : Free testing area
+- \`help\` : General terminal help`,
                         permissions: '-rw-r--r--',
                         size: 2800,
                         createdAt: new Date(),
@@ -3052,24 +3052,24 @@ Pour aller plus loin :
                         name: 'my_aliases.sh',
                         type: 'file',
                         content: `#!/bin/bash
-# Mes aliases personnalisés
+# My personal aliases
 
-# Navigation rapide
+# Quick navigation
 alias ..='cd ..'
 alias ...='cd ../..'
 alias home='cd ~'
 
-# Listings améliorés
+# Enhanced listings
 alias ll='ls -l'
 alias la='ls -la'
 alias lt='ls -lt'
 
-# Raccourcis utiles
+# Useful shortcuts
 alias h='history'
 alias c='clear'
 alias reload='source ~/.bashrc'
 
-# Créez vos propres aliases ici !
+# Create your own aliases here!
 `,
                         permissions: '-rw-r--r--',
                         size: 384,
@@ -3089,21 +3089,21 @@ alias reload='source ~/.bashrc'
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# 🏆 Défis Pratiques
+                        content: `# 🏆 Practical Challenges
 
-Testez vos compétences avec ces défis progressifs !
+Test your skills with these progressive challenges!
 
-## Défi 1 : Explorateur 🔍
-**But :** Trouvez tous les fichiers cachés du système
-**Indices :** 
-- Les fichiers cachés commencent par \`.\`
-- Utilisez \`ls -a\`
-- Explorez différents dossiers
+## Challenge 1: Explorer 🔍
+**Goal:** Find all hidden files in the system
+**Hints:** 
+- Hidden files start with \`.\`
+- Use \`ls -a\`
+- Explore different directories
 
-## Défi 2 : Organisateur 📁
-**But :** Créez cette structure de projet :
+## Challenge 2: Organizer 📁
+**Goal:** Create this project structure:
 \`\`\`
-mon-projet/
+my-project/
 ├── src/
 │   ├── main.js
 │   └── utils.js
@@ -3114,31 +3114,31 @@ mon-projet/
 └── package.json
 \`\`\`
 
-## Défi 3 : Journaliste 📝
-**But :** Créez un système de logs
-1. Fichier \`daily.log\` avec la date du jour
-2. Ajoutez des entrées avec \`>>\`
-3. Comptez les lignes avec \`wc -l\`
+## Challenge 3: Journalist 📝
+**Goal:** Create a logging system
+1. File \`daily.log\` with today's date
+2. Add entries with \`>>\`
+3. Count lines with \`wc -l\`
 
-## Défi 4 : Maître Vi ✏️
-**But :** Éditez le fichier \`story.txt\`
-1. Ajoutez votre nom d'auteur
-2. Complétez l'histoire
-3. Corrigez les fautes de frappe
+## Challenge 4: Vi Master ✏️
+**Goal:** Edit the \`story.txt\` file
+1. Add your author name
+2. Complete the story
+3. Fix typos
 
-## Défi 5 : Alias Master 🚀
-**But :** Créez des aliases pratiques
-1. \`proj\` pour aller dans vos projets
-2. \`backup\` pour copier des fichiers importants
-3. \`clean\` pour supprimer les fichiers temporaires
+## Challenge 5: Alias Master 🚀
+**Goal:** Create practical aliases
+1. \`proj\` to go to your projects
+2. \`backup\` to copy important files
+3. \`clean\` to delete temporary files
 
-## 🎖️ Défi Ultimate
-Créez un script qui :
-1. Crée un dossier de backup avec la date
-2. Y copie tous vos fichiers importants
-3. Affiche un rapport du backup
+## 🎖️ Ultimate Challenge
+Create a script that:
+1. Creates a backup folder with the date
+2. Copies all your important files there
+3. Shows a backup report
 
-Bonne chance ! 💪`,
+Good luck! 💪`,
                         permissions: '-rw-r--r--',
                         size: 1200,
                         createdAt: new Date(),
