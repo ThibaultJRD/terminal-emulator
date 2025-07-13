@@ -95,22 +95,42 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       return [
         {
           type: 'output',
-          content: '🎓 Welcome to the Interactive Terminal Tutorial!',
+          content: [
+            { text: '🎓 ', type: 'normal' },
+            { text: 'Welcome to the Interactive Terminal Tutorial!', type: 'header-1' },
+          ],
           timestamp: new Date().toISOString(),
         },
         {
           type: 'output',
-          content: 'Learn Unix commands step by step | ls, cd, vi, pipes, variables...',
+          content: [
+            { text: 'Learn Unix commands step by step | ', type: 'header-2' },
+            { text: 'ls', type: 'inline-code' },
+            { text: ', ', type: 'normal' },
+            { text: 'cd', type: 'inline-code' },
+            { text: ', ', type: 'normal' },
+            { text: 'vi', type: 'inline-code' },
+            { text: ', pipes, variables...', type: 'header-2' },
+          ],
           timestamp: new Date().toISOString(),
         },
         {
           type: 'output',
-          content: 'Start your learning journey: cd lessons/01-basics && cat README.md',
+          content: [
+            { text: '✨ ', type: 'normal' },
+            { text: 'Start your learning journey: ', type: 'bold' },
+            { text: 'cd lessons/01-basics && cat README.md', type: 'inline-code' },
+          ],
           timestamp: new Date().toISOString(),
         },
         {
           type: 'output',
-          content: 'Track your progress: progress | General help: help',
+          content: [
+            { text: '📊 Track your progress: ', type: 'bold' },
+            { text: 'progress', type: 'inline-code' },
+            { text: ' | General help: ', type: 'normal' },
+            { text: 'help', type: 'inline-code' },
+          ],
           timestamp: new Date().toISOString(),
         },
       ];

@@ -2547,7 +2547,7 @@ man ls  - Manual for ls command`,
                             content: `Well done! You navigated to the practice folder.
 
 💡 Tip: Use Tab for auto-completion!
-Type 'cd ../f' then Tab to see suggestions.`,
+Type 'cd f' then Tab to see suggestions.`,
                             permissions: '-rw-r--r--',
                             size: 128,
                             createdAt: new Date(),
@@ -2573,7 +2573,7 @@ You now master:
 ✅ cat - read files
 
 Ready for the next step? Go to lesson 2:
-cd ../../02-files`,
+cd ../../../02-files`,
                                 permissions: '-rw-r--r--',
                                 size: 256,
                                 createdAt: new Date(),
