@@ -10,9 +10,10 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ## 🚀 Live Demo
 
 **[Default Terminal](https://terminal-emulator-nine.vercel.app/)** - Unix-like filesystem experience  
-**[Interactive Portfolio](https://terminal-emulator-nine.vercel.app/portfolio)** - Explore professional experience
+**[Interactive Portfolio](https://terminal-emulator-nine.vercel.app/portfolio)** - Explore professional experience  
+**[Interactive Tutorial](https://terminal-emulator-nine.vercel.app/tutorial)** - Learn Unix commands step by step
 
-Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more. Try both modes to see the difference!
+Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more. Try all three modes to see the difference!
 
 ## ✨ Features
 
@@ -69,6 +70,15 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Text Processing Commands**: `grep` (files + pipes), `head`, `tail`, `sort`, `uniq` (pipes only)
 - **Pattern Matching**: Regular expressions with security limits
 - **Chain Compatibility**: Pipes work with `ls`, `cat`, `echo`, `wc` and other output commands
+
+### 🎓 Interactive Tutorial
+
+- **Progressive Learning**: 5 structured lessons from basics to advanced concepts
+- **Dynamic Progress Tracking**: `progress` command shows real completion status
+- **Hands-on Practice**: Sandbox environment for safe experimentation
+- **Auto-Detection**: Smart tracking of lesson visits and practice activities
+- **Comprehensive Curriculum**: Navigation, file management, text editing, I/O redirection, scripting
+- **Real-time Feedback**: Progress updates based on actual command usage and file creation
 
 ### 🧪 Testing
 
@@ -223,6 +233,60 @@ wc file.txt            # Count lines/words/characters
 clear                  # Clear screen
 help                   # Command help
 man command            # Show manual for command
+
+# Tutorial Mode Commands (only available at /tutorial)
+lessons                # Go to lessons directory (alias for 'cd ~/lessons')
+sandbox                # Go to practice sandbox (alias for 'cd ~/sandbox')
+progress               # View dynamic learning progress with completion tracking
+```
+
+### Tutorial Learning Workflow
+
+The interactive tutorial provides a structured learning path for mastering Unix terminal commands:
+
+#### Getting Started
+
+```bash
+# 1. Access tutorial mode
+# Navigate to /tutorial in your browser
+
+# 2. Start learning
+lessons                          # Go to lessons directory
+ls                              # See available lessons (01-basics to 05-advanced)
+cd 01-basics && cat README.md   # Start with basic navigation
+
+# 3. Practice hands-on
+sandbox                         # Go to practice area
+# ... try commands from the lesson ...
+touch practice.txt              # Create practice files
+mkdir test-dir                  # Practice directory operations
+
+# 4. Track progress
+progress                        # View completion status and analytics
+```
+
+#### Learning Path
+
+1. **01-basics**: Master navigation (`cd`, `ls`, `pwd`) and reading files (`cat`)
+2. **02-files**: Learn file operations (`touch`, `mkdir`, `cp`, `mv`, `rm`)
+3. **03-editor**: Practice vim-style text editing (`vi` command)
+4. **04-redirection**: Understand I/O redirection (`>`, `>>`, `<`, `|`)
+5. **05-advanced**: Explore variables (`export`) and aliases (`alias`)
+
+#### Progress Tracking Features
+
+- **Auto-Detection**: Progress automatically updates when you read lessons and create practice files
+- **Visual Progress Bars**: ASCII progress bars show completion percentages
+- **Activity Summary**: Track files created in sandbox and challenges attempted
+- **Smart Analytics**: Differentiate between visited lessons and truly completed ones
+
+```bash
+# Example progress output shows:
+# - Overall completion percentage
+# - Visual progress bars for visited vs completed lessons
+# - Practice files created count
+# - Challenge completion status
+# - Helpful learning tips
 ```
 
 ### Pipes & Text Processing
@@ -1013,6 +1077,21 @@ An interactive portfolio showcasing real professional experience:
   - **Other Projects**: Bonjour Menu (COVID-19 solution), Terminal Emulator
 - `~/contact/` - Contact information and professional social links
 
+#### Tutorial Route (`/tutorial`)
+
+An interactive learning environment with progressive Unix lessons:
+
+- `~/lessons/` - 5 structured lessons (01-basics to 05-advanced)
+  - **01-basics**: Navigation and reading (cd, ls, pwd, cat)
+  - **02-files**: File management (touch, mkdir, cp, mv, rm)
+  - **03-editor**: Vi mastery (modal editing, file operations)
+  - **04-redirection**: Redirections and pipes (>, >>, <, |)
+  - **05-advanced**: Variables and aliases (export, alias, $VAR)
+- `~/sandbox/` - Practice area for hands-on learning and experimentation
+- `~/challenges/` - Practical exercises to test and apply skills
+- `~/progress/` - Dynamic progress tracking (see `progress` command)
+- **Features**: Auto-detection of lesson completion, practice file tracking, smart progress analytics
+
 ### Accessing Different Modes
 
 Simply navigate to different URLs to access different filesystem modes:
@@ -1023,6 +1102,9 @@ https://your-domain.com/
 
 # Access interactive portfolio
 https://your-domain.com/portfolio
+
+# Access interactive tutorial
+https://your-domain.com/tutorial
 ```
 
 ### Filesystem Management Commands

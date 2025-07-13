@@ -2430,7 +2430,7 @@ export function createTutorialFilesystem(): FileSystemNode {
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Lesson 1: Basic Terminal Commands
+                        content: `# Lesson 1: Terminal Basics
 
 Welcome to your first lesson! 🚀
 
@@ -2439,43 +2439,57 @@ Welcome to your first lesson! 🚀
 - Display directory contents  
 - Know your current location
 - Read file contents
+- Get help and clear the screen
 
 ## Commands to Learn
 
-### 1. pwd - Print Working Directory
+### 1. clear - Clear the Screen
+\`\`\`bash
+clear
+\`\`\`
+Clears the terminal screen. Useful when it gets cluttered!
+
+### 2. pwd - Print Working Directory
 \`\`\`bash
 pwd
 \`\`\`
 Shows the current directory (where you are).
 
-### 2. ls - List Directory Contents  
+### 3. ls - List Directory Contents  
 \`\`\`bash
 ls           # List files
-ls -l        # Detailed list
-ls -a        # Show hidden files
-ls -la       # Combine -l and -a
+ls -l        # Detailed list with permissions and sizes
+ls -a        # Show hidden files (starting with .)
+ls -la       # Combine -l and -a for full details
 \`\`\`
 
-### 3. cd - Change Directory
+### 4. cd - Change Directory
 \`\`\`bash
 cd              # Return to home directory
 cd folder       # Go to 'folder'
 cd ..           # Go up one level
 cd ../..        # Go up two levels
-cd /            # Go to root
+cd /            # Go to root directory
 \`\`\`
 
-### 4. cat - Display File Contents
+### 5. cat - Display File Contents
 \`\`\`bash
 cat file.txt    # Display file contents
+\`\`\`
+
+### 6. help - Get Help
+\`\`\`bash
+help            # Show general help
+man command     # Show manual for specific command
 \`\`\`
 
 ## Practical Exercises
 
 ### Exercise 1: Getting Oriented
-1. Type \`pwd\` to see where you are
-2. Type \`ls\` to see what's here
-3. Type \`ls -la\` to see all files
+1. Clear the screen: \`clear\`
+2. Type \`pwd\` to see where you are
+3. Type \`ls\` to see what's here
+4. Type \`ls -la\` to see all files
 
 ### Exercise 2: Navigation
 1. Go to the \`practice\` folder: \`cd practice\`
@@ -2487,11 +2501,16 @@ cat file.txt    # Display file contents
 1. Display contents of \`welcome.txt\`: \`cat welcome.txt\`
 2. Read the \`commands.txt\` file: \`cat commands.txt\`
 
+### Exercise 4: Getting Help
+1. Try \`help\` to see general help
+2. Try \`man ls\` to see ls manual
+
 ## 🎯 Challenge
-Can you navigate to \`practice/files\` and list its contents?
+Navigate to \`practice/files\` and list its contents. 
+Try clearing the screen before each command!
 
 Once these exercises are complete, move to the next lesson:
-\`cd ../02-files\``,
+\`cd ../02-creation\``,
                         permissions: '-rw-r--r--',
                         size: 1500,
                         createdAt: new Date(),
@@ -2519,15 +2538,16 @@ Continue the exercises to master these superpowers! 💪`,
                         type: 'file',
                         content: `Basic commands cheat sheet:
 
+clear   - Clear the terminal screen
 pwd     - Show current directory
 ls      - List files
-ls -l   - Detailed list with permissions  
+ls -l   - Detailed list with permissions and sizes  
 ls -a   - Show hidden files (starting with .)
-ls -la  - Combine -l and -a
+ls -la  - Combine -l and -a for full details
 cd      - Change directory
 cat     - Display file contents
 help    - Show general help
-man ls  - Manual for ls command`,
+man cmd - Manual for specific command (e.g., man ls)`,
                         permissions: '-rw-r--r--',
                         size: 384,
                         createdAt: new Date(),
@@ -2585,8 +2605,8 @@ cd ../../../02-files`,
                       },
                     },
                   },
-                  '02-files': {
-                    name: '02-files',
+                  '02-creation': {
+                    name: '02-creation',
                     type: 'directory',
                     permissions: 'drwxr-xr-x',
                     size: 4096,
@@ -2596,10 +2616,14 @@ cd ../../../02-files`,
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Lesson 2: File and Directory Management
+                        content: `# Lesson 2: File Creation
 
-You now know how to navigate! 🧭  
-Let's learn to create, copy, move, and delete files.
+Now that you know how to navigate, let's create files and directories! 📁
+
+## Objectives
+- Create empty files and directories
+- Write simple text to files
+- Understand basic file creation concepts
 
 ## Commands to Learn
 
@@ -2608,71 +2632,171 @@ Let's learn to create, copy, move, and delete files.
 touch file.txt
 touch file1.txt file2.txt    # Create multiple files
 \`\`\`
+Creates an empty file or updates the timestamp if it exists.
 
 ### 2. mkdir - Create Directories
 \`\`\`bash
 mkdir folder
 mkdir -p folder/subfolder    # Create parents if needed
 \`\`\`
+The \`-p\` flag creates parent directories automatically.
 
-### 3. cp - Copy Files/Directories
+### 3. echo - Display Text (and Write to Files)
 \`\`\`bash
-cp file.txt copy.txt
-cp -r folder new_folder    # Copy recursively
-\`\`\`
-
-### 4. mv - Move/Rename
-\`\`\`bash
-mv old.txt new.txt        # Rename
-mv file.txt folder/       # Move
-\`\`\`
-
-### 5. rm - Delete Files
-\`\`\`bash
-rm file.txt
-rm -r folder     # Delete recursively
-rm -f file       # Force deletion
-\`\`\`
-
-### 6. rmdir - Delete Empty Directories
-\`\`\`bash
-rmdir empty_folder
+echo "Hello World"           # Display text
+echo "Hello" > file.txt      # Write to file (overwrite)
+echo "More text" >> file.txt # Append to file
 \`\`\`
 
 ## Practical Exercises
 
-### Exercise 1: Creation
-1. Create a file \`my_file.txt\`: \`touch my_file.txt\`
-2. Create a folder \`my_folder\`: \`mkdir my_folder\`
-3. Verify with \`ls\`
+### Exercise 1: Basic Creation
+1. Create a file called \`my_first_file.txt\`
+2. Create a directory called \`my_folder\`
+3. Check your work with \`ls\`
 
-### Exercise 2: Copy and Move
-1. Copy \`example.txt\` to \`copy.txt\`: \`cp example.txt copy.txt\`
-2. Move \`copy.txt\` into \`my_folder\`: \`mv copy.txt my_folder/\`
-3. Verify: \`ls my_folder\`
+### Exercise 2: Multiple Files
+1. Create three files at once: \`file1.txt\`, \`file2.txt\`, \`file3.txt\`
+2. List them to verify they were created
 
-### Exercise 3: Deletion ⚠️
-1. Delete \`my_file.txt\`: \`rm my_file.txt\`
-2. Delete the folder and its contents: \`rm -r my_folder\`
+### Exercise 3: Text Creation
+1. Create a file with text: \`echo "Hello Terminal!" > greeting.txt\`
+2. Read it back: \`cat greeting.txt\`
+3. Add more text: \`echo "Learning is fun!" >> greeting.txt\`
+4. Read the full file again
 
-## 🎯 Advanced Challenge
-Create this structure:
+### Exercise 4: Directory Structure
+1. Create a nested directory structure: \`my_project/docs\`
+2. Navigate into it and create a file called \`notes.txt\`
+
+## 🎯 Challenge
+Create this structure in your current directory:
 \`\`\`
-project/
-├── src/
-│   └── main.txt
-└── docs/
-    └── readme.txt
+workspace/
+├── docs/
+│   └── readme.txt (containing "Project documentation")
+└── src/
+    └── main.txt (containing "Main source file")
 \`\`\`
 
-Hint: \`mkdir -p project/{src,docs}\`
+Can you figure out how to do this efficiently?
 
-## ⚠️ Warning!
-\`rm\` deletes permanently! Unlike the trash/recycle bin, 
-there's no way to recover deleted files.
+Once complete, move to the next lesson:
+\`cd ../03-management\``,
+                        permissions: '-rw-r--r--',
+                        size: 1600,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      practice: {
+                        name: 'practice',
+                        type: 'directory',
+                        permissions: 'drwxr-xr-x',
+                        size: 4096,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                        children: {
+                          'example.txt': {
+                            name: 'example.txt',
+                            type: 'file',
+                            content: `This is an example file.
+You can use this as a template for your exercises.`,
+                            permissions: '-rw-r--r--',
+                            size: 128,
+                            createdAt: new Date(),
+                            modifiedAt: new Date(),
+                          },
+                        },
+                      },
+                    },
+                  },
+                  '03-management': {
+                    name: '03-management',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Lesson 3: File Management
 
-Ready for the text editor? 
-\`cd ../03-editor\``,
+Now you can create files and directories! Let's learn to copy, move, and delete them. 🔄
+
+## Objectives
+- Copy files and directories
+- Move and rename files
+- Safely delete files and directories
+- Understand the dangers of deletion
+
+## Commands to Learn
+
+### 1. cp - Copy Files/Directories
+\`\`\`bash
+cp file.txt copy.txt         # Copy a file
+cp file.txt backup/          # Copy to directory
+cp -r folder new_folder      # Copy directory recursively
+cp -r src/ backup/src/       # Copy directory to another location
+\`\`\`
+The \`-r\` flag is required for copying directories.
+
+### 2. mv - Move/Rename
+\`\`\`bash
+mv old.txt new.txt          # Rename a file
+mv file.txt folder/         # Move file to directory
+mv folder/ new_location/    # Move directory
+mv *.txt backup/            # Move all .txt files
+\`\`\`
+\`mv\` works for both renaming and moving!
+
+### 3. rm - Delete Files
+\`\`\`bash
+rm file.txt                 # Delete a file
+rm file1.txt file2.txt      # Delete multiple files
+rm -r folder/               # Delete directory recursively
+rm -f file.txt              # Force delete (no prompts)
+rm -rf folder/              # Force delete directory
+\`\`\`
+⚠️ **WARNING**: Deletion is permanent!
+
+### 4. rmdir - Delete Empty Directories
+\`\`\`bash
+rmdir empty_folder          # Only works on empty directories
+\`\`\`
+
+## Practical Exercises
+
+### Exercise 1: Copying
+1. Copy \`example.txt\` to \`backup.txt\`
+2. Create a directory called \`copies\`
+3. Copy \`example.txt\` into the \`copies\` directory
+4. Verify with \`ls\` and \`ls copies/\`
+
+### Exercise 2: Moving and Renaming
+1. Rename \`backup.txt\` to \`my_backup.txt\`
+2. Move \`my_backup.txt\` into the \`copies\` directory
+3. Create a new directory called \`archive\`
+4. Move the entire \`copies\` directory into \`archive\`
+
+### Exercise 3: Safe Deletion
+1. Create a test file: \`touch test_delete.txt\`
+2. Delete it: \`rm test_delete.txt\`
+3. Try to read it - what happens?
+4. Create and delete an empty directory
+
+## 🎯 Challenge
+Starting with the \`example.txt\` file:
+1. Create a project structure with \`src/\` and \`backup/\` directories
+2. Copy the example file to both directories
+3. Rename the file in \`src/\` to \`main.txt\`
+4. Create a \`logs\` directory and then remove it
+
+**Remember**: Practice these commands carefully - deletion is permanent!
+
+Once complete, move to the text editor lesson:
+\`cd ../04-editor\``,
                         permissions: '-rw-r--r--',
                         size: 1800,
                         createdAt: new Date(),
@@ -2692,8 +2816,8 @@ Practice makes perfect! 🚀`,
                       },
                     },
                   },
-                  '03-editor': {
-                    name: '03-editor',
+                  '04-editor': {
+                    name: '04-editor',
                     type: 'directory',
                     permissions: 'drwxr-xr-x',
                     size: 4096,
@@ -2703,7 +2827,7 @@ Practice makes perfect! 🚀`,
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Lesson 3: The Vi Text Editor
+                        content: `# Lesson 4: The Vi Text Editor
 
 Let's learn to use the integrated vi editor! ✏️  
 It's a powerful tool for editing files directly in the terminal.
@@ -2771,8 +2895,8 @@ Create a file \`my_resume.txt\` with vi and write your introduction!
 - **Vi = Vim** in this terminal (improved version)
 - Autocompletion also works in INSERT mode (Tab)
 
-Ready for redirections?
-\`cd ../04-redirection\``,
+Ready for file reading?
+\`cd ../05-reading\``,
                         permissions: '-rw-r--r--',
                         size: 2000,
                         createdAt: new Date(),
@@ -2817,8 +2941,8 @@ c'est que vous avez bien maîtrisé la sortie sans sauvegarde ! 👍`,
                       },
                     },
                   },
-                  '04-redirection': {
-                    name: '04-redirection',
+                  '05-reading': {
+                    name: '05-reading',
                     type: 'directory',
                     permissions: 'drwxr-xr-x',
                     size: 4096,
@@ -2828,103 +2952,154 @@ c'est que vous avez bien maîtrisé la sortie sans sauvegarde ! 👍`,
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Lesson 4: Redirections and Pipes
+                        content: `# Lesson 5: File Reading
 
-Let's discover the power of redirections! 🔄  
-Connect commands together for complex tasks.
+Now you can edit files! Let's learn different ways to read and analyze them. 📖
 
-## Types of redirections
+## Objectives
+- Read files in different ways
+- Count lines, words, and characters
+- View partial file contents
+- Understand when to use each tool
 
-### 1. Output redirection (>)
+## Commands to Learn
+
+### 1. cat - Display Full File Contents
 \`\`\`bash
-echo "Hello" > file.txt    # Write to file (overwrite)
-ls > list.txt               # Save the file list
+cat file.txt                # Display entire file
+cat file1.txt file2.txt     # Display multiple files
+cat -n file.txt             # Show line numbers
 \`\`\`
+Best for small files where you want to see everything.
 
-### 2. Append redirection (>>)
+### 2. head - Display File Beginning
 \`\`\`bash
-echo "New line" >> file.txt    # Add to the end
-date >> log.txt                    # Add date to log
+head file.txt               # Show first 10 lines
+head -n 5 file.txt          # Show first 5 lines
+head -20 file.txt           # Show first 20 lines
 \`\`\`
+Perfect for previewing large files or logs.
 
-### 3. Input redirection (<)
+### 3. tail - Display File End
 \`\`\`bash
-wc < file.txt                # Count lines from file
-cat < input.txt               # Read from file
+tail file.txt               # Show last 10 lines
+tail -n 5 file.txt          # Show last 5 lines
+tail -20 file.txt           # Show last 20 lines
 \`\`\`
+Great for checking recent log entries or file endings.
 
-### 4. Here document (<<)
+### 4. wc - Word Count
 \`\`\`bash
-cat << EOF
-Text on
-multiple lines
-EOF
+wc file.txt                 # Show lines, words, characters
+wc -l file.txt              # Count only lines
+wc -w file.txt              # Count only words
+wc -c file.txt              # Count only characters
 \`\`\`
-
-## Useful commands with redirections
-
-### wc - Word Count
-\`\`\`bash
-wc file.txt          # Lines, words, characters
-wc -l file.txt       # Number of lines only
-\`\`\`
-
-### echo - Text Display
-\`\`\`bash
-echo "Message"          # Display on screen
-echo "Message" > file   # Write to file
-\`\`\`
+Essential for analyzing file size and content.
 
 ## Practical Exercises
 
-### Exercise 1: Create with redirections
-1. \`echo "Shopping list" > shopping.txt\`
-2. \`echo "- Bread" >> shopping.txt\`
-3. \`echo "- Milk" >> shopping.txt\`
-4. \`echo "- Eggs" >> shopping.txt\`
-5. Verify: \`cat shopping.txt\`
+### Exercise 1: Exploring Sample Files
+1. Read the full \`sample.txt\` file
+2. Show only the first 3 lines
+3. Show only the last 3 lines
+4. Count lines, words, and characters
 
-### Exercise 2: Count and analyze
-1. Count the lines: \`wc -l shopping.txt\`
-2. Save the result: \`wc -l shopping.txt > stats.txt\`
-3. Display: \`cat stats.txt\`
+### Exercise 2: Creating Test Content
+1. Create a file with multiple lines using the editor
+2. Use different reading commands to explore it
+3. Compare the output of each command
 
-### Exercise 3: List and save
-1. \`ls -la > inventory.txt\`
-2. \`echo "--- End of inventory ---" >> inventory.txt\`
-3. \`cat inventory.txt\`
-
-### Exercise 4: Creating multiline files
-\`\`\`bash
-echo "Roses are red" > poem.txt
-echo "Violets are blue" >> poem.txt
-echo "I'm learning the terminal" >> poem.txt
-echo "And it's wonderful too!" >> poem.txt
-\`\`\`
-Verify with: \`cat poem.txt\`
+### Exercise 3: File Analysis
+1. Count how many lines are in \`sample.txt\`
+2. Show the first and last lines only
+3. Combine commands to see the middle content
 
 ## 🎯 Challenge
-Create a file \`report.txt\` that contains:
-1. The current date using: \`date > report.txt\`
-2. The list of files: \`ls -la >> report.txt\`
-3. The total number of files: \`ls | wc -l >> report.txt\`
+Using the \`large_sample.txt\` file:
+1. Find out how many lines it contains without showing the content
+2. Preview the beginning to understand the format
+3. Check the ending to see how it concludes
+4. Determine which reading method is most appropriate for this file
 
-## 💡 Important tips
-- **>** overwrites the existing file
-- **>>** adds to the end of the file
-- Be careful not to overwrite important files!
+Practice with different file sizes to understand when each tool is most useful!
 
-Ready for advanced concepts?
-\`cd ../05-advanced\``,
+Once complete, move to text search:
+\`cd ../06-search\``,
                         permissions: '-rw-r--r--',
-                        size: 2200,
+                        size: 2000,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'sample.txt': {
+                        name: 'sample.txt',
+                        type: 'file',
+                        content: `Line 1: Introduction
+Line 2: This is a sample file for practicing reading commands.
+Line 3: It contains multiple lines of text.
+Line 4: Each line demonstrates different content.
+Line 5: You can practice with head, tail, and cat.
+Line 6: Word counting with wc is also useful.
+Line 7: Understanding file structure is important.
+Line 8: Terminal skills improve with practice.
+Line 9: Reading files efficiently saves time.
+Line 10: Conclusion`,
+                        permissions: '-rw-r--r--',
+                        size: 512,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'large_sample.txt': {
+                        name: 'large_sample.txt',
+                        type: 'file',
+                        content: `# Large Sample File
+This file demonstrates reading commands on larger content.
+
+## Section 1: Introduction
+Reading files efficiently is crucial for terminal productivity.
+Different commands serve different purposes:
+- cat: for full content viewing
+- head: for quick previews
+- tail: for checking endings
+- wc: for content analysis
+
+## Section 2: Examples
+Here are various examples of content types:
+1. Configuration files
+2. Log files
+3. Data files
+4. Documentation files
+5. Script files
+
+## Section 3: Best Practices
+When working with files:
+- Use head to preview large files first
+- Use tail to check recent changes
+- Use wc to understand file size
+- Use cat only for smaller files
+
+## Section 4: Advanced Usage
+Combining commands becomes powerful:
+- head + tail for middle sections
+- wc + other commands for analysis
+- Different options for different needs
+
+## Section 5: Conclusion
+Practice with these commands regularly.
+They become essential tools in your terminal toolkit.
+Understanding when to use each command is key.
+Efficient file reading improves workflow significantly.
+
+End of large sample file.`,
+                        permissions: '-rw-r--r--',
+                        size: 1200,
                         createdAt: new Date(),
                         modifiedAt: new Date(),
                       },
                     },
                   },
-                  '05-advanced': {
-                    name: '05-advanced',
+                  '06-search': {
+                    name: '06-search',
                     type: 'directory',
                     permissions: 'drwxr-xr-x',
                     size: 4096,
@@ -2934,10 +3109,184 @@ Ready for advanced concepts?
                       'README.md': {
                         name: 'README.md',
                         type: 'file',
-                        content: `# Lesson 5: Advanced Concepts
+                        content: `# Lesson 6: Text Search
 
-Congratulations! 🎉 You've mastered the basics.  
-Let's now explore advanced shell features.
+Time to master searching through files! 🔍  
+Learn to find exactly what you need in any file.
+
+## Objectives
+- Search for text patterns in files
+- Use wildcards for flexible matching
+- Master grep options and flags
+- Find files and content efficiently
+
+## Commands to Learn
+
+### 1. grep - Search Text Patterns
+\`\`\`bash
+grep "word" file.txt         # Find lines containing "word"
+grep "pattern" *.txt         # Search in all .txt files
+grep -i "Word" file.txt      # Case insensitive search
+grep -n "word" file.txt      # Show line numbers
+grep -c "word" file.txt      # Count matches only
+grep -v "word" file.txt      # Show lines NOT containing "word"
+\`\`\`
+
+### 2. Wildcards for Pattern Matching
+\`\`\`bash
+ls *.txt                     # All files ending with .txt
+ls file?.txt                 # file1.txt, fileA.txt, etc.
+grep "test*" file.txt        # Lines with "test", "testing", etc.
+\`\`\`
+- **\*** matches any number of characters
+- **?** matches exactly one character
+
+### 3. Advanced grep Patterns
+\`\`\`bash
+grep "^Start" file.txt       # Lines starting with "Start"
+grep "end$" file.txt         # Lines ending with "end"
+grep "cat\\|dog" file.txt     # Lines with "cat" OR "dog"
+\`\`\`
+
+## Practical Exercises
+
+### Exercise 1: Basic Searching
+1. Search for "terminal" in \`tech_terms.txt\`
+2. Search for "command" with line numbers
+3. Count how many lines contain "file"
+
+### Exercise 2: Case and Options
+1. Search for "Linux" (case sensitive)
+2. Search for "linux" (case insensitive)
+3. Find lines that do NOT contain "Windows"
+
+### Exercise 3: Wildcards and Files
+1. List all files starting with "data"
+2. Search for "error" in all .log files
+3. Find .txt files containing "important"
+
+### Exercise 4: Pattern Matching
+1. Find lines starting with "Error:"
+2. Find lines ending with "done"
+3. Search for either "success" or "complete"
+
+## 🎯 Challenge
+Using the provided sample files:
+1. Find which files contain configuration settings
+2. Count total error messages across all log files  
+3. Locate lines that start with dates (hint: they start with numbers)
+4. Find files with email addresses (containing "@")
+
+**Bonus**: Combine grep with other commands you've learned!
+
+Master these search skills - they're essential for:
+- Debugging logs
+- Finding configuration options
+- Analyzing data files
+- Code searching
+
+Ready for redirections and pipes?
+\`cd ../07-redirections\``,
+                        permissions: '-rw-r--r--',
+                        size: 2200,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'tech_terms.txt': {
+                        name: 'tech_terms.txt',
+                        type: 'file',
+                        content: `terminal - A command-line interface for system interaction
+command - An instruction given to the computer
+file - A collection of data stored on disk
+directory - A folder containing files and other directories
+Linux - An open-source operating system
+Unix - The original command-line operating system
+Windows - Microsoft's operating system
+grep - A command for searching text patterns
+bash - A popular command shell
+vim - A powerful text editor
+configuration - Settings that control program behavior
+script - A file containing commands to execute`,
+                        permissions: '-rw-r--r--',
+                        size: 512,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'system.log': {
+                        name: 'system.log',
+                        type: 'file',
+                        content: `2023-12-01 10:00:00 INFO: System startup complete
+2023-12-01 10:05:00 ERROR: Failed to connect to database
+2023-12-01 10:06:00 INFO: Retrying database connection
+2023-12-01 10:06:30 SUCCESS: Database connection established
+2023-12-01 10:15:00 WARNING: High memory usage detected
+2023-12-01 10:30:00 INFO: Backup process started
+2023-12-01 10:45:00 SUCCESS: Backup completed successfully
+2023-12-01 11:00:00 ERROR: Network timeout occurred
+2023-12-01 11:01:00 INFO: Network connection restored`,
+                        permissions: '-rw-r--r--',
+                        size: 512,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'contacts.txt': {
+                        name: 'contacts.txt',
+                        type: 'file',
+                        content: `John Smith - john.smith@email.com - 555-0123
+Jane Doe - jane.doe@company.org - 555-0456
+Bob Wilson - bob@example.net - 555-0789
+Alice Brown - alice.brown@university.edu - 555-0012
+Mike Davis - mike.davis@startup.io - 555-0345
+Sarah Connor - sarah@terminator.net - 555-0678`,
+                        permissions: '-rw-r--r--',
+                        size: 256,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'data1.txt': {
+                        name: 'data1.txt',
+                        type: 'file',
+                        content: `Important configuration settings:
+server_url=localhost:8080
+debug_mode=true
+max_connections=100
+timeout=30
+Important: Always backup before changes`,
+                        permissions: '-rw-r--r--',
+                        size: 128,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'data2.txt': {
+                        name: 'data2.txt',
+                        type: 'file',
+                        content: `Configuration file for application:
+database_host=db.example.com
+cache_enabled=false
+log_level=info
+Important settings for production`,
+                        permissions: '-rw-r--r--',
+                        size: 128,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                  '07-redirections': {
+                    name: '07-redirections',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Lesson 7: Redirections and Pipes
+
+Now let's connect commands together! 🔄  
+Learn to redirect output and chain commands for powerful workflows.
 
 ## Environment Variables
 
@@ -3345,7 +3694,6 @@ alias ...='cd ../..'
 # Special tutorial aliases
 alias lessons='cd ~/lessons'
 alias sandbox='cd ~/sandbox'
-alias progress='cat ~/progress/tutorial_progress.md'
 
 # Welcome message
 echo "💡 Tutorial mode active! Type 'lessons' to begin."

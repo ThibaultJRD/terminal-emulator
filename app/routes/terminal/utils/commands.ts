@@ -502,6 +502,105 @@ export const commands: Record<string, CommandHandler> = {
     };
   },
 
+  progress: (args: string[], filesystem: FileSystemState): CommandResult => {
+    // Only available in tutorial mode
+    const isInTutorialMode = filesystem.root.children?.home?.children?.user?.children?.lessons;
+    if (!isInTutorialMode) {
+      return createErrorResult('progress: command only available in tutorial mode');
+    }
+
+    const lessonsNode = getNodeAtPath(filesystem, ['home', 'user', 'lessons']);
+    if (!lessonsNode || !lessonsNode.children) {
+      return createErrorResult('progress: lessons directory not found');
+    }
+
+    const sandboxNode = getNodeAtPath(filesystem, ['home', 'user', 'sandbox']);
+    const challengesNode = getNodeAtPath(filesystem, ['home', 'user', 'challenges']);
+
+    // Define lessons structure
+    const lessons = [
+      { id: '01-basics', name: 'Navigation and reading', key: 'basics' },
+      { id: '02-files', name: 'File management', key: 'files' },
+      { id: '03-editor', name: 'Vi mastery', key: 'editor' },
+      { id: '04-redirection', name: 'Redirections and pipes', key: 'redirection' },
+      { id: '05-advanced', name: 'Variables and aliases', key: 'advanced' },
+    ];
+
+    // Analyze progress for each lesson
+    const progressData = lessons.map((lesson) => {
+      const lessonNode = lessonsNode.children?.[lesson.id];
+      if (!lessonNode || !lessonNode.children) {
+        return { ...lesson, completed: false, visited: false };
+      }
+
+      // Check if any file in the lesson has been accessed (modifiedAt different from createdAt)
+      const visited = Object.values(lessonNode.children).some(
+        (file) => file.type === 'file' && file.modifiedAt && file.createdAt && file.modifiedAt.getTime() !== file.createdAt.getTime(),
+      );
+
+      // Simple heuristic: lesson is "completed" if user has visited it and created files in sandbox
+      const hasCreatedFiles = sandboxNode?.children && Object.keys(sandboxNode.children).length > 0;
+
+      return { ...lesson, completed: visited && hasCreatedFiles, visited };
+    });
+
+    // Calculate overall progress
+    const totalLessons = lessons.length;
+    const visitedLessons = progressData.filter((l) => l.visited).length;
+    const completedLessons = progressData.filter((l) => l.completed).length;
+
+    // Count sandbox files for practice tracking
+    const sandboxFileCount = sandboxNode?.children ? Object.keys(sandboxNode.children).length : 0;
+
+    // Count challenges files
+    const challengeFileCount = challengesNode?.children ? Object.keys(challengesNode.children).length : 0;
+
+    // Generate dynamic progress report
+    const progressPercentage = Math.round((completedLessons / totalLessons) * 100);
+    const visitedPercentage = Math.round((visitedLessons / totalLessons) * 100);
+
+    const output = [
+      '# 📊 Tutorial Progress',
+      '',
+      `## Overall Progress: ${progressPercentage}% Complete`,
+      '',
+      '```',
+      `Progress: [${'█'.repeat(Math.floor(progressPercentage / 10))}${' '.repeat(10 - Math.floor(progressPercentage / 10))}] ${progressPercentage}%`,
+      `Visited:  [${'█'.repeat(Math.floor(visitedPercentage / 10))}${' '.repeat(10 - Math.floor(visitedPercentage / 10))}] ${visitedPercentage}%`,
+      '```',
+      '',
+      '## ✅ Lesson Progress',
+      '',
+      ...progressData.map((lesson) => {
+        const status = lesson.completed ? '✅' : lesson.visited ? '🔄' : '⬜';
+        const indicator = lesson.completed ? ' ✓' : lesson.visited ? ' ~' : '';
+        return `- [${lesson.completed ? 'x' : ' '}] ${lesson.id}: ${lesson.name}${indicator}`;
+      }),
+      '',
+      '## 🎯 Activity Summary',
+      '',
+      `### Practice Files Created: ${sandboxFileCount}`,
+      sandboxFileCount > 0 ? '- 🎉 Great job practicing with real files!' : '- Try creating files in ~/sandbox to practice!',
+      '',
+      `### Challenge Files: ${challengeFileCount}`,
+      challengeFileCount > 0 ? '- 🏆 Excellent work on challenges!' : '- Check ~/challenges for practical exercises!',
+      '',
+      '## 🎨 Legend',
+      '- ✅ **Completed**: Lesson visited + practice files created',
+      '- 🔄 **In Progress**: Lesson visited but needs more practice',
+      '- ⬜ **Not Started**: Lesson not yet visited',
+      '',
+      '---',
+      '*💡 Tip: Progress auto-detects when you read lessons and create practice files in ~/sandbox*',
+    ].join('\n');
+
+    return {
+      success: true,
+      output: output,
+      exitCode: 0,
+    };
+  },
+
   'storage-info': (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
     const info = getStorageInfo();
     const formatSize = (bytes: number): string => {
