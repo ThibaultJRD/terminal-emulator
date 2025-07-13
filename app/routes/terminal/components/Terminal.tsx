@@ -642,7 +642,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   };
 
   const currentPrompt = {
-    user: mode === 'portfolio' ? 'ThibaultJRD' : 'user',
+    user: mode === 'portfolio' ? 'ThibaultJRD' : mode === 'tutorial' ? 'student' : 'user',
     host: 'terminal',
     path: formatPathWithTilde(terminalState.filesystem.currentPath),
     symbol: '❯',
