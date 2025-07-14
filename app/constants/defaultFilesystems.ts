@@ -3457,11 +3457,13 @@ workspace
 - Use short but explicit names for aliases
 - Be careful not to overwrite existing commands or variables!
 
-## 🏆 Congratulations!
-You've completed all the basic lessons!
+## 🏆 Great Progress!
+You've mastered environment variables and aliases! 
 
-To go further:
-- \`cd ../challenges\` : Practical challenges
+Ready to learn how to connect commands together?
+\`cd ../08-pipes-chaining\`
+
+Or if you want to practice:
 - \`cd ../../sandbox\` : Free testing area
 - \`help\` : General terminal help`,
                         permissions: '-rw-r--r--',
@@ -3494,6 +3496,414 @@ alias reload='source ~/.bashrc'
 `,
                         permissions: '-rw-r--r--',
                         size: 384,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                    },
+                  },
+                  '08-pipes-chaining': {
+                    name: '08-pipes-chaining',
+                    type: 'directory',
+                    permissions: 'drwxr-xr-x',
+                    size: 4096,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                    children: {
+                      'README.md': {
+                        name: 'README.md',
+                        type: 'file',
+                        content: `# Lesson 8: Pipes and Command Chaining
+
+Now let's connect commands together with pipes and chain operations! 🔗  
+Learn to create powerful command workflows by combining simple tools.
+
+## Understanding Pipes
+
+### What is a Pipe?
+A pipe (\`|\`) takes the output of one command and sends it as input to another command.
+
+\`\`\`bash
+command1 | command2
+\`\`\`
+
+### Basic Pipe Examples
+\`\`\`bash
+ls | wc -l                    # Count files in directory
+cat file.txt | grep "error"   # Find lines containing "error"
+echo "hello world" | wc -w    # Count words in text
+ls -la | head -5              # Show first 5 files in detailed listing
+\`\`\`
+
+### Chain Multiple Pipes
+\`\`\`bash
+cat access.log | grep "ERROR" | wc -l          # Count error lines
+ls -la | grep "\\.txt" | wc -l                   # Count .txt files
+cat data.txt | sort | uniq                     # Sort and remove duplicates
+cat words.txt | sort | uniq -c | sort -nr      # Word frequency analysis
+\`\`\`
+
+## Command Chaining Operators
+
+### Sequential Execution (;)
+Run commands one after another, regardless of success or failure.
+
+\`\`\`bash
+pwd ; ls ; date               # Run all three commands in sequence
+mkdir test ; cd test ; touch file.txt    # Create dir, enter it, create file
+\`\`\`
+
+### Conditional AND (&&)
+Run the next command ONLY if the previous one succeeded.
+
+\`\`\`bash
+mkdir project && cd project                    # Only cd if mkdir succeeds
+touch file.txt && echo "File created!"        # Only echo if touch succeeds
+ls file.txt && cat file.txt                   # Only cat if file exists
+\`\`\`
+
+### Conditional OR (||)
+Run the next command ONLY if the previous one failed.
+
+\`\`\`bash
+ls missing_file.txt || echo "File not found"  # Show message if ls fails
+cd nonexistent || echo "Directory not found"  # Handle missing directory
+\`\`\`
+
+### Combining Operators
+You can combine different operators for complex workflows:
+
+\`\`\`bash
+mkdir backup && cp *.txt backup/ || echo "Backup failed"
+ls project/ && cd project && ls || echo "No project directory"
+\`\`\`
+
+## Practical Exercises
+
+### Exercise 1: Basic Pipes
+1. List all files and count them: \`ls | wc -l\`
+2. Find lines containing "log" in system.log: \`cat system.log | grep "log"\`
+3. Count error messages: \`cat system.log | grep -i "error" | wc -l\`
+4. Show the first 3 contacts: \`cat contacts.txt | head -3\`
+
+### Exercise 2: Pipe Chains
+1. Sort contacts and show unique entries: \`cat contacts.txt | sort | uniq\`
+2. Find tech terms ending with "end": \`cat tech_terms.txt | grep "end$"\`
+3. Count unique words: \`cat tech_terms.txt | wc -w\`
+4. List files, filter for .txt, count them: \`ls | grep "\\.txt" | wc -l\`
+
+### Exercise 3: Command Chaining
+1. Create a test file: \`touch test.txt && echo "File created successfully"\`
+2. Try to access missing file: \`cat missing.txt || echo "File not found"\`
+3. Sequential commands: \`pwd ; ls ; date\`
+4. Complex chain: \`mkdir temp && cd temp && touch file.txt && ls\`
+
+### Exercise 4: Real-World Scenarios
+1. **Log Analysis**: Count different log levels
+   \`\`\`bash
+   cat system.log | grep "INFO" | wc -l
+   cat system.log | grep "ERROR" | wc -l
+   cat system.log | grep "SUCCESS" | wc -l
+   \`\`\`
+
+2. **File Management**: Safe file operations
+   \`\`\`bash
+   ls backup/ && echo "Backup exists" || mkdir backup
+   \`\`\`
+
+3. **Data Processing**: Process and analyze text
+   \`\`\`bash
+   cat tech_terms.txt | sort | head -5
+   cat contacts.txt | grep "@" | wc -l
+   \`\`\`
+
+## Advanced Combinations
+
+### Exit Status with $?
+Each command returns an exit status (0 = success, non-zero = failure):
+
+\`\`\`bash
+ls existing_file.txt ; echo "Exit status: $?"    # Should show 0
+ls missing_file.txt ; echo "Exit status: $?"     # Should show non-zero
+\`\`\`
+
+### Complex Workflows
+\`\`\`bash
+# Create project structure safely
+mkdir project && cd project && mkdir src docs tests && echo "Project setup complete" || echo "Setup failed"
+
+# Process logs and save results
+cat system.log | grep "ERROR" | wc -l > error_count.txt && echo "Error count saved"
+
+# Find and process specific files
+ls *.txt | head -3 | wc -l
+\`\`\`
+
+## 💡 Pro Tips
+
+### Best Practices
+- **Start simple**: Begin with single pipes, then build complexity
+- **Test incrementally**: Add one pipe at a time to debug issues
+- **Use meaningful commands**: Combine tools that logically work together
+- **Handle errors**: Use \`&&\` and \`||\` to handle success/failure cases
+
+### Common Patterns
+- **Count and filter**: \`command | grep pattern | wc -l\`
+- **Sort and dedupe**: \`command | sort | uniq\`
+- **Process and save**: \`command | process | save\`
+- **Safe operations**: \`test && action || fallback\`
+
+### Performance Tips
+- **Order matters**: Put filters early in pipe chains
+- **Limit output**: Use \`head\` or \`tail\` to limit processing
+- **Use specific grep**: More specific patterns = faster processing
+
+## 🎯 Challenge Yourself
+
+Try these complex combinations:
+1. \`cat system.log | grep -v "INFO" | sort | uniq -c | sort -nr\`
+2. \`ls -la | grep "^d" | wc -l && echo "directories" || echo "no dirs"\`
+3. \`echo "Process complete" && cat contacts.txt | head -2 | wc -w\`
+
+## 🏆 Congratulations!
+
+You've mastered pipes and command chaining! These are essential skills for:
+- **Log analysis and troubleshooting**
+- **Data processing and text manipulation** 
+- **Building robust command workflows**
+- **Automating repetitive tasks**
+
+Ready for practical challenges?
+\`cd ../challenges\``,
+                        permissions: '-rw-r--r--',
+                        size: 4200,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'system.log': {
+                        name: 'system.log',
+                        type: 'file',
+                        content: `2024-01-01 08:00:00 INFO: System startup initiated
+2024-01-01 08:00:05 INFO: Loading configuration files
+2024-01-01 08:00:10 ERROR: Failed to connect to database server
+2024-01-01 08:00:15 INFO: Retrying database connection
+2024-01-01 08:00:20 SUCCESS: Database connection established
+2024-01-01 08:05:00 INFO: User authentication module loaded
+2024-01-01 08:05:30 WARNING: High memory usage detected (85%)
+2024-01-01 08:10:00 INFO: Starting backup process
+2024-01-01 08:15:00 ERROR: Backup location not accessible
+2024-01-01 08:15:05 INFO: Switching to alternate backup location
+2024-01-01 08:20:00 SUCCESS: Backup completed successfully
+2024-01-01 08:25:00 INFO: System maintenance window started
+2024-01-01 08:30:00 WARNING: Disk space running low (90% used)
+2024-01-01 08:35:00 ERROR: Network timeout on external API call
+2024-01-01 08:35:30 INFO: API connection restored
+2024-01-01 08:40:00 INFO: Maintenance window completed
+2024-01-01 09:00:00 SUCCESS: All systems operational`,
+                        permissions: '-rw-r--r--',
+                        size: 1024,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'access.log': {
+                        name: 'access.log',
+                        type: 'file',
+                        content: `192.168.1.100 - - [01/Jan/2024:08:00:00 +0000] "GET /index.html HTTP/1.1" 200 1024
+192.168.1.101 - - [01/Jan/2024:08:00:15 +0000] "POST /api/login HTTP/1.1" 200 256
+192.168.1.102 - - [01/Jan/2024:08:00:30 +0000] "GET /dashboard HTTP/1.1" 403 512
+192.168.1.100 - - [01/Jan/2024:08:01:00 +0000] "GET /assets/style.css HTTP/1.1" 200 2048
+192.168.1.103 - - [01/Jan/2024:08:01:15 +0000] "POST /api/data HTTP/1.1" 500 128
+192.168.1.101 - - [01/Jan/2024:08:01:30 +0000] "GET /profile HTTP/1.1" 200 1536
+192.168.1.104 - - [01/Jan/2024:08:02:00 +0000] "GET /nonexistent HTTP/1.1" 404 256
+192.168.1.100 - - [01/Jan/2024:08:02:15 +0000] "POST /api/logout HTTP/1.1" 200 128
+ERROR: Failed to process request from 192.168.1.105
+192.168.1.106 - - [01/Jan/2024:08:03:00 +0000] "GET /index.html HTTP/1.1" 200 1024`,
+                        permissions: '-rw-r--r--',
+                        size: 512,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'contacts.txt': {
+                        name: 'contacts.txt',
+                        type: 'file',
+                        content: `John Doe - john@example.com - Developer
+Jane Smith - jane@company.org - Designer
+Bob Johnson - bob@tech.net - Manager
+Alice Brown - alice@startup.io - Engineer
+Charlie Wilson - charlie@corp.com - Analyst
+Diana Lee - diana@agency.co - Consultant
+Frank Miller - frank@freelance.dev - Developer
+Grace Taylor - grace@nonprofit.org - Coordinator
+Henry Davis - henry@enterprise.biz - Administrator
+Isabel Garcia - isabel@creative.studio - Artist`,
+                        permissions: '-rw-r--r--',
+                        size: 512,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'tech_terms.txt': {
+                        name: 'tech_terms.txt',
+                        type: 'file',
+                        content: `API - Application Programming Interface
+CLI - Command Line Interface
+GUI - Graphical User Interface
+HTTP - HyperText Transfer Protocol
+JSON - JavaScript Object Notation
+REST - Representational State Transfer
+CRUD - Create Read Update Delete
+MVC - Model View Controller
+OOP - Object Oriented Programming
+SQL - Structured Query Language
+NoSQL - Not Only SQL
+DevOps - Development Operations
+CI/CD - Continuous Integration/Continuous Deployment
+MVP - Minimum Viable Product
+SaaS - Software as a Service
+IaaS - Infrastructure as a Service
+PaaS - Platform as a Service
+frontend - client-side development
+backend - server-side development
+fullstack - both frontend and backend
+framework - software foundation
+library - reusable code collection
+repository - code storage location
+branch - code development line
+commit - code change record
+merge - combining code changes
+deploy - releasing to production
+debug - finding and fixing errors
+refactor - improving code structure
+optimize - enhancing performance
+scale - handling increased load
+monitor - tracking system health
+backup - data protection copy
+restore - recovering from backup
+encrypt - protecting data security
+authenticate - verifying user identity
+authorize - granting user permissions
+validate - checking data correctness
+test - verifying code functionality
+document - explaining code purpose
+version - tracking code changes
+release - distributing software update
+patch - fixing specific issues
+upgrade - improving system capabilities
+downgrade - reverting to older version
+migrate - moving to new system
+integrate - combining different systems
+configure - setting up system options
+customize - adapting to specific needs
+automate - making processes automatic
+schedule - planning task execution
+queue - organizing tasks in order
+cache - storing frequently used data
+index - organizing data for quick access
+query - requesting specific data
+filter - selecting subset of data
+sort - organizing data in order
+group - categorizing related data
+aggregate - combining multiple values
+transform - changing data format
+parse - analyzing data structure
+serialize - converting to storage format
+deserialize - converting from storage format
+encode - converting to specific format
+decode - converting from encoded format
+compress - reducing data size
+decompress - restoring compressed data
+hash - creating data fingerprint
+encrypt - protecting with secret key
+decrypt - revealing encrypted data
+sign - proving data authenticity
+verify - checking data signature
+tunnel - creating secure connection
+proxy - intermediary server
+firewall - network security barrier
+load_balancer - distributing traffic
+cdn - content delivery network
+dns - domain name system
+ssl - secure socket layer
+tls - transport layer security
+vpn - virtual private network
+ssh - secure shell connection
+ftp - file transfer protocol
+smtp - simple mail transfer protocol
+pop - post office protocol
+imap - internet message access protocol
+tcp - transmission control protocol
+udp - user datagram protocol
+ip - internet protocol
+mac - media access control
+lan - local area network
+wan - wide area network
+wifi - wireless networking
+bluetooth - short range wireless
+nfc - near field communication
+iot - internet of things
+ai - artificial intelligence
+ml - machine learning
+dl - deep learning
+nlp - natural language processing
+cv - computer vision
+ar - augmented reality
+vr - virtual reality
+blockchain - distributed ledger
+cryptocurrency - digital currency
+smart_contract - self executing code
+node - network participant
+consensus - agreement mechanism
+mining - transaction validation
+wallet - digital currency storage
+exchange - trading platform
+defi - decentralized finance
+nft - non fungible token
+dao - decentralized autonomous organization
+web3 - decentralized web
+metaverse - virtual shared space`,
+                        permissions: '-rw-r--r--',
+                        size: 2048,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'words.txt': {
+                        name: 'words.txt',
+                        type: 'file',
+                        content: `apple
+banana
+apple
+cherry
+banana
+date
+apple
+elderberry
+fig
+grape
+apple
+banana
+kiwi
+lemon
+mango
+banana
+apple`,
+                        permissions: '-rw-r--r--',
+                        size: 128,
+                        createdAt: new Date(),
+                        modifiedAt: new Date(),
+                      },
+                      'data.txt': {
+                        name: 'data.txt',
+                        type: 'file',
+                        content: `server1,active,high
+server2,inactive,low
+server3,active,medium
+server1,maintenance,high
+server4,active,low
+server2,active,high
+server3,inactive,medium
+server5,active,high
+server1,active,high
+server6,maintenance,low`,
+                        permissions: '-rw-r--r--',
+                        size: 256,
                         createdAt: new Date(),
                         modifiedAt: new Date(),
                       },
@@ -3798,11 +4208,14 @@ Technical Stack:
 This tutorial provides a comprehensive learning environment for Unix terminal commands.
 
 ## Lesson Structure
-1. **01-basics**: Navigation fundamentals
-2. **02-files**: File and directory management  
-3. **03-editor**: Vi editor training
-4. **04-redirection**: I/O redirection and pipes
-5. **05-advanced**: Environment variables and configuration
+1. **01-basics**: Navigation fundamentals (ls, cd, pwd, cat)
+2. **02-creation**: File and directory creation (touch, mkdir)
+3. **03-management**: File operations (cp, mv, rm)
+4. **04-editor**: Vi editor training (modes, editing, saving)
+5. **05-reading**: File reading and paging (cat, head, tail, less)
+6. **06-search**: Text search and filtering (grep, find)
+7. **07-redirections**: Environment variables and aliases (export, alias)
+8. **08-pipes-chaining**: Pipes and command chaining (|, &&, ||, ;)
 
 ## Safety Features
 - Isolated learning environment
@@ -3811,11 +4224,12 @@ This tutorial provides a comprehensive learning environment for Unix terminal co
 - Progress tracking without external dependencies
 
 ## Learning Objectives
-- Master essential Unix commands
-- Understand file system navigation
-- Learn text editing with vi
-- Practice I/O redirection concepts
-- Configure shell environment
+- Master essential Unix commands for navigation and file operations
+- Understand file system navigation and directory structure
+- Learn text editing with vi and modal editing concepts
+- Practice file reading, searching, and text filtering techniques
+- Configure shell environment with variables and aliases
+- Master pipes and command chaining for powerful workflows
 
 Built for interactive, hands-on learning! 🎓`,
             permissions: '-rw-------',
