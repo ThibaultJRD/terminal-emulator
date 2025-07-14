@@ -397,14 +397,23 @@ function createManualPages(mode: 'default' | 'portfolio' | 'tutorial' = 'default
   manPages['grep.1'] = createManualPage(
     'grep',
     'search text using patterns',
-    'Search for lines matching a pattern in files or stdin. Supports regular\n       expressions and various options for controlling the output.',
+    'Search for lines matching a pattern in files or stdin. Supports regular\n       expressions and various options for controlling the output.\n\n       PATTERN SYNTAX:\n       grep supports regular expression patterns with the following features:\n       ^pattern    - Match lines starting with pattern\n       pattern$    - Match lines ending with pattern\n       pat1|pat2   - Match lines containing pattern1 OR pattern2\n       [abc]       - Match any character in brackets\n       [^abc]      - Match any character NOT in brackets\n       .           - Match any single character\n       *           - Match zero or more of the preceding character\n       +           - Match one or more of the preceding character\n       ?           - Match zero or one of the preceding character',
     [
+      '# Basic patterns',
       'grep "pattern" file.txt\n              Search for "pattern" in file.txt',
       'cat file.txt | grep "error"\n              Search for "error" in cat output',
       'grep -i "hello" file.txt\n              Case-insensitive search for "hello"',
       'grep -n "TODO" file.txt\n              Show line numbers for matches',
       'grep -v "debug" log.txt\n              Show lines NOT containing "debug"',
       'grep -c "error" log.txt\n              Count matching lines',
+      '',
+      '# Advanced patterns',
+      'grep "^Start" file.txt\n              Lines starting with "Start"',
+      'grep "end$" file.txt\n              Lines ending with "end"',
+      'grep "cat|dog" file.txt\n              Lines containing "cat" OR "dog"',
+      'grep -i "linux|unix" file.txt\n              Case-insensitive OR pattern',
+      'grep "^Error:" log.txt\n              Log lines starting with "Error:"',
+      'grep "done$" process.log\n              Process lines ending with "done"',
     ],
     [
       '-i                ignore case distinctions',
@@ -3126,7 +3135,6 @@ Learn to find exactly what you need in any file.
 ### 1. grep - Search Text Patterns
 \`\`\`bash
 grep "word" file.txt         # Find lines containing "word"
-grep "pattern" *.txt         # Search in all .txt files
 grep -i "Word" file.txt      # Case insensitive search
 grep -n "word" file.txt      # Show line numbers
 grep -c "word" file.txt      # Count matches only
@@ -3137,7 +3145,7 @@ grep -v "word" file.txt      # Show lines NOT containing "word"
 \`\`\`bash
 grep "^Start" file.txt       # Lines starting with "Start"
 grep "end$" file.txt         # Lines ending with "end"
-grep "cat\\|dog" file.txt     # Lines with "cat" OR "dog"
+grep "cat\\|dog" file.txt      # Lines with "cat" OR "dog"
 \`\`\`
 
 ## Practical Exercises
@@ -3198,7 +3206,12 @@ grep - A command for searching text patterns
 bash - A popular command shell
 vim - A powerful text editor
 configuration - Settings that control program behavior
-script - A file containing commands to execute`,
+script - A file containing commands to execute
+Start learning new technologies to reach your end
+Process completed at the end
+cat is a common Unix command
+dog is man's best friend
+The journey doesn't end`,
                         permissions: '-rw-r--r--',
                         size: 512,
                         createdAt: new Date(),

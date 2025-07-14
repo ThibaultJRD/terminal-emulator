@@ -1050,7 +1050,14 @@ export const commands: Record<string, CommandHandler> = {
 
     // If no files specified, return an error - input will be handled by executeSingleCommand
     if (files.length === 0) {
-      return createErrorResult('grep: no input provided (use with pipe or specify file)', 1);
+      // Check if the pattern looks like a filename (common user mistake)
+      const looksLikeFilename = /\.(txt|md|js|ts|html|css|json|log|conf|sh|py|java|c|cpp|h|hpp)$/i.test(pattern);
+
+      if (looksLikeFilename) {
+        return createErrorResult(`grep: no pattern specified. Usage: grep 'pattern' ${pattern} or cat ${pattern} | grep 'pattern'`, 1);
+      }
+
+      return createErrorResult("grep: no input provided. Usage: grep 'pattern' file.txt or cat file.txt | grep 'pattern'", 1);
     }
 
     // Process specified files

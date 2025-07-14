@@ -1090,4 +1090,143 @@ describe('Commands', () => {
       expect(result.error).toContain('Is a directory');
     });
   });
+
+  describe('grep command', () => {
+    beforeEach(() => {
+      // Create test files for grep tests
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['grep-test.txt'] = {
+          name: 'grep-test.txt',
+          type: 'file',
+          content: 'Hello world\nThis is a test\nAnother line\ntest line here\nFinal line',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['anchor-test.txt'] = {
+          name: 'anchor-test.txt',
+          type: 'file',
+          content: 'Start of line\nmiddle line\nend of line here\nAnother start line\nMidline end',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['case-test.txt'] = {
+          name: 'case-test.txt',
+          type: 'file',
+          content: 'Linux is great\nI love linux\nWindows is different\nUNIX is powerful',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+    });
+
+    it('should search for basic patterns', () => {
+      const result = commands.grep(['test', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('This is a test\ntest line here');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle case-insensitive search with -i flag', () => {
+      const result = commands.grep(['-i', 'HELLO', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Hello world');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should show line numbers with -n flag', () => {
+      const result = commands.grep(['-n', 'test', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('2:This is a test\n4:test line here');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should count matches with -c flag', () => {
+      const result = commands.grep(['-c', 'line', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('3');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should invert match with -v flag', () => {
+      const result = commands.grep(['-v', 'test', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Hello world\nAnother line\nFinal line');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle anchor patterns (^ and $)', () => {
+      // Test start anchor
+      const startResult = commands.grep(['^Start', 'anchor-test.txt'], filesystem);
+      expect(startResult.success).toBe(true);
+      expect(startResult.output).toBe('Start of line');
+      expect(startResult.exitCode).toBe(0);
+
+      // Test end anchor
+      const endResult = commands.grep(['end$', 'anchor-test.txt'], filesystem);
+      expect(endResult.success).toBe(true);
+      expect(endResult.output).toBe('Midline end');
+      expect(endResult.exitCode).toBe(0);
+    });
+
+    it('should handle alternation patterns (|)', () => {
+      const result = commands.grep(['Linux|UNIX', 'case-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Linux is great\nUNIX is powerful');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle case-insensitive alternation', () => {
+      const result = commands.grep(['-i', 'linux|unix', 'case-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Linux is great\nI love linux\nUNIX is powerful');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should fail when no matches found', () => {
+      const result = commands.grep(['nonexistent', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.output).toBe('');
+      expect(result.exitCode).toBe(1);
+    });
+
+    it('should fail for non-existent file', () => {
+      const result = commands.grep(['test', 'nonexistent.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No such file or directory');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail for directory', () => {
+      commands.mkdir(['testdir'], filesystem);
+      const result = commands.grep(['test', 'testdir'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Is a directory');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail for invalid regex pattern', () => {
+      const result = commands.grep(['[', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('invalid pattern');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail when pattern is missing', () => {
+      const result = commands.grep([], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('missing pattern');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail when no files specified and no input provided', () => {
+      const result = commands.grep(['test'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('no input provided');
+      expect(result.exitCode).toBe(1);
+    });
+  });
 });

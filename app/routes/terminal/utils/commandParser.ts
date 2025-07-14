@@ -216,6 +216,43 @@ function parseArguments(input: string): string[] {
   return args.filter((arg) => arg.length > 0);
 }
 
+/**
+ * Finds chain operators in a command string while respecting quoted sections
+ */
+function findChainOperators(input: string): Array<{ index: number; operator: '&&' | '||' | ';' | '|'; length: number }> {
+  const operators: Array<{ index: number; operator: '&&' | '||' | ';' | '|'; length: number }> = [];
+  let inQuotes = false;
+  let quoteChar = '';
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true;
+      quoteChar = char;
+    } else if (inQuotes && char === quoteChar) {
+      inQuotes = false;
+      quoteChar = '';
+    } else if (!inQuotes) {
+      // Check for operators outside quotes
+      if (i < input.length - 1) {
+        const twoChar = input.slice(i, i + 2);
+        if (twoChar === '||' || twoChar === '&&') {
+          operators.push({ index: i, operator: twoChar as '||' | '&&', length: 2 });
+          i++; // Skip next character since we consumed two
+          continue;
+        }
+      }
+
+      if (char === ';' || char === '|') {
+        operators.push({ index: i, operator: char as ';' | '|', length: 1 });
+      }
+    }
+  }
+
+  return operators;
+}
+
 export function parseChainedCommand(input: string, environmentManager?: EnvironmentManager): ChainedCommand | PipedCommand | ParsedCommand {
   const trimmed = input.trim();
 
@@ -224,10 +261,10 @@ export function parseChainedCommand(input: string, environmentManager?: Environm
     throw new Error(`Command too long (max ${MAX_COMMAND_LENGTH} characters)`);
   }
 
-  // Check for command chaining operators
-  const matches = [...trimmed.matchAll(CHAIN_REGEX)];
+  // Check for command chaining operators while respecting quotes
+  const operatorMatches = findChainOperators(trimmed);
 
-  if (matches.length === 0) {
+  if (operatorMatches.length === 0) {
     // No chaining operators, return single command
     return parseCommand(trimmed, environmentManager);
   }
@@ -237,13 +274,13 @@ export function parseChainedCommand(input: string, environmentManager?: Environm
   const operators: ('&&' | '||' | ';' | '|')[] = [];
 
   let lastIndex = 0;
-  for (const match of matches) {
+  for (const match of operatorMatches) {
     const commandStr = trimmed.slice(lastIndex, match.index).trim();
     if (commandStr) {
       commands.push(parseCommand(commandStr, environmentManager));
     }
-    operators.push(match[1] as '&&' | '||' | ';' | '|');
-    lastIndex = match.index! + match[0].length;
+    operators.push(match.operator);
+    lastIndex = match.index + match.length;
   }
 
   // Add the last command

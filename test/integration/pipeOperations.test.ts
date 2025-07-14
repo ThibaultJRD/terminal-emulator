@@ -86,5 +86,39 @@ describe('Pipe Operations Integration', () => {
       // The pipe should return the exit code from the failing command (grep)
       expect(result.exitCode).toBe(2);
     });
+
+    it('should handle grep with anchor patterns (^ and $)', () => {
+      createFile(filesystem, ['home', 'user'], 'anchor-test.txt', 'Start of line\nmiddle line\nend of line here\nAnother start line\nMidline end');
+
+      // Test start anchor
+      const startResult = executeCommand('cat anchor-test.txt | grep "^Start"', filesystem);
+      expect(startResult.success).toBe(true);
+      expect(startResult.output).toBe('Start of line');
+      expect(startResult.exitCode).toBe(0);
+
+      // Test end anchor
+      const endResult = executeCommand('cat anchor-test.txt | grep "end$"', filesystem);
+      expect(endResult.success).toBe(true);
+      expect(endResult.output).toBe('Midline end');
+      expect(endResult.exitCode).toBe(0);
+    });
+
+    it('should handle grep with alternation patterns (|)', () => {
+      createFile(filesystem, ['home', 'user'], 'alternation-test.txt', 'I have a cat\nMy dog is friendly\nBirds are flying\nThe cat sleeps\nDogs are loyal');
+
+      const result = executeCommand('cat alternation-test.txt | grep "cat|dog"', filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('I have a cat\nMy dog is friendly\nThe cat sleeps');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle grep with case-insensitive alternation', () => {
+      createFile(filesystem, ['home', 'user'], 'case-test.txt', 'Linux is great\nI love linux\nWindows is different\nUNIX is powerful');
+
+      const result = executeCommand('cat case-test.txt | grep -i "linux|unix"', filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Linux is great\nI love linux\nUNIX is powerful');
+      expect(result.exitCode).toBe(0);
+    });
   });
 });
