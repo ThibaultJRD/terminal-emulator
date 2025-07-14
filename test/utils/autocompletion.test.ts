@@ -387,5 +387,22 @@ describe('Autocompletion', () => {
       const result3 = getAutocompletions('sort -r read', filesystem);
       expect(result3.completions).toContain('readme.txt');
     });
+
+    it('should handle autocompletion with quoted patterns containing pipe operators', () => {
+      // Create test files
+      createFile(filesystem, ['home', 'user'], 'test.txt', 'content');
+      createFile(filesystem, ['home', 'user'], 'example.txt', 'content');
+
+      // Test completion after quoted patterns with | operator
+      const result1 = getAutocompletions('grep "hello|world" test', filesystem);
+      expect(result1.completions).toContain('test.txt');
+
+      const result2 = getAutocompletions('grep "cat|dog" ex', filesystem);
+      expect(result2.completions).toContain('example.txt');
+
+      // Test with single quotes as well
+      const result3 = getAutocompletions("grep 'success|complete' test", filesystem);
+      expect(result3.completions).toContain('test.txt');
+    });
   });
 });

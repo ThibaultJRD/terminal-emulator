@@ -63,7 +63,7 @@ function processGrepInput(input: string, regex: RegExp, options: { flags: Record
   }
 
   if (results.length === 0) {
-    return { success: false, output: '', exitCode: 1 };
+    return { success: true, output: '', exitCode: 1 };
   }
 
   return createSuccessResult(results.join('\n'), 0);

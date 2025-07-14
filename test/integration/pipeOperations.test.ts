@@ -73,7 +73,7 @@ describe('Pipe Operations Integration', () => {
       createFile(filesystem, ['home', 'user'], 'test.txt', 'Hello world\nThis is a test');
 
       const result = executeCommand('cat test.txt | grep nonexistent', filesystem);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(result.exitCode).toBe(1);
       expect(result.output).toBe('');
     });

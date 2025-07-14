@@ -1186,9 +1186,9 @@ describe('Commands', () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it('should fail when no matches found', () => {
+    it('should return empty result when no matches found', () => {
       const result = commands.grep(['nonexistent', 'grep-test.txt'], filesystem);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(result.output).toBe('');
       expect(result.exitCode).toBe(1);
     });

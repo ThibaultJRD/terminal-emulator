@@ -3160,22 +3160,17 @@ grep "cat\\|dog" file.txt      # Lines with "cat" OR "dog"
 2. Search for "linux" (case insensitive)
 3. Find lines that do NOT contain "Windows"
 
-### Exercise 3: Wildcards and Files
-1. List all files starting with "data"
-2. Search for "error" in all .log files
-3. Find .txt files containing "important"
-
-### Exercise 4: Pattern Matching
-1. Find lines starting with "Error:"
-2. Find lines ending with "done"
-3. Search for either "success" or "complete"
+### Exercise 3: Pattern Matching
+1. Find lines starting with "ERROR:" in \`system.log\`
+2. Find lines ending with "end" in \`tech_terms.txt\`
+3. Search for "success" or "complete" (case insensitive) in \`system.log\`
 
 ## 🎯 Challenge
-Using the provided sample files:
-1. Find which files contain configuration settings
-2. Count total error messages across all log files  
-3. Locate lines that start with dates (hint: they start with numbers)
-4. Find files with email addresses (containing "@")
+Using the provided sample files (\`tech_terms.txt\`, \`system.log\`, \`contacts.txt\`):
+1. Find lines containing "configuration" in \`tech_terms.txt\`
+2. Count total ERROR messages in \`system.log\`
+3. Find lines starting with dates in \`system.log\`
+4. Find lines ending with "done" in \`system.log\`
 
 **Bonus**: Combine grep with other commands you've learned!
 
@@ -3228,7 +3223,8 @@ The journey doesn't end`,
 2023-12-01 10:30:00 INFO: Backup process started
 2023-12-01 10:45:00 SUCCESS: Backup completed successfully
 2023-12-01 11:00:00 ERROR: Network timeout occurred
-2023-12-01 11:01:00 INFO: Network connection restored`,
+2023-12-01 11:01:00 INFO: Network connection restored
+2023-12-01 11:15:00 INFO: Maintenance task done`,
                         permissions: '-rw-r--r--',
                         size: 512,
                         createdAt: new Date(),
@@ -3399,7 +3395,7 @@ source alias_file.sh       # Load aliases from a file
 2. \`echo "Hello, I'm $MY_NAME"\`
 3. \`export PROJECT_PATH="/home/user/projects"\`
 4. \`echo "My projects are in: $PROJECT_PATH"\`
-5. \`export\` (list all variables)
+5. \`env\` (list all variables)
 
 ### Exercise 3: Variable management
 1. \`export TEMP_VAR="temporary"\`

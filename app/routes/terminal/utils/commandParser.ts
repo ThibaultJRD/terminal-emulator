@@ -219,7 +219,7 @@ function parseArguments(input: string): string[] {
 /**
  * Finds chain operators in a command string while respecting quoted sections
  */
-function findChainOperators(input: string): Array<{ index: number; operator: '&&' | '||' | ';' | '|'; length: number }> {
+export function findChainOperators(input: string): Array<{ index: number; operator: '&&' | '||' | ';' | '|'; length: number }> {
   const operators: Array<{ index: number; operator: '&&' | '||' | ';' | '|'; length: number }> = [];
   let inQuotes = false;
   let quoteChar = '';
