@@ -31,7 +31,7 @@ export default function TutorialScreen() {
       <meta name="theme-color" content="#1e1e2e" />
 
       <meta property="og:type" content="website" />
-      <meta property="og:title" content="Terminal Tutorial - Interactive Unix Command Learning | How ls, cd, vi Works" />
+      <meta property="og:title" content="Terminal Tutorial - Interactive Unix Command Learning | Master ls, cd, vi & More" />
       <meta
         property="og:description"
         content="Learn Unix terminal commands interactively! Complete tutorial to master ls, cd, mkdir, vi, pipes, grep and more. Perfect terminal tutorial for beginners and advanced users wanting to improve their command line skills."
@@ -45,7 +45,7 @@ export default function TutorialScreen() {
       <meta property="og:image:alt" content="Terminal Tutorial - Interactive Unix Command Learning Interface" />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Terminal Tutorial - Interactive Unix Command Learning | How ls, cd, vi Works" />
+      <meta name="twitter:title" content="Terminal Tutorial - Interactive Unix Command Learning | Master ls, cd, vi & More" />
       <meta
         name="twitter:description"
         content="Learn Unix terminal commands interactively! Complete tutorial to master ls, cd, mkdir, vi, pipes, grep and more. Perfect terminal tutorial for beginners and advanced users wanting to improve their command line skills."

@@ -1,0 +1,173 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#313244;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e1e2e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="terminalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#313244;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#45475a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Terminal Window -->
+  <rect x="50" y="100" width="700" height="400" rx="12" fill="url(#terminalGradient)" stroke="#585b70" stroke-width="2"/>
+  
+  <!-- Terminal Header -->
+  <rect x="50" y="100" width="700" height="35" rx="12" fill="#45475a"/>
+  <rect x="50" y="125" width="700" height="10" fill="#45475a"/>
+  
+  <!-- Traffic Light Buttons -->
+  <circle cx="75" cy="118" r="6" fill="#f38ba8"/>
+  <circle cx="95" cy="118" r="6" fill="#fab387"/>
+  <circle cx="115" cy="118" r="6" fill="#a6e3a1"/>
+  
+  <!-- Terminal Title -->
+  <text x="400" y="126" text-anchor="middle" font-family="Inter, monospace" font-size="14" font-weight="500" fill="#cdd6f4">
+    Terminal Tutorial
+  </text>
+  
+  <!-- Tutorial Content -->
+  <text x="70" y="165" font-family="'Courier New', monospace" font-size="14" fill="#fab387">
+    $ tutorial
+  </text>
+  <text x="160" y="165" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    start
+  </text>
+  
+  <text x="70" y="190" font-family="'Courier New', monospace" font-size="12" fill="#f9e2af">
+    🎓 Welcome to the Interactive Terminal Tutorial!
+  </text>
+  
+  <text x="70" y="215" font-family="'Courier New', monospace" font-size="12" fill="#cdd6f4">
+    Learn Unix commands step by step:
+  </text>
+  
+  <text x="70" y="240" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    ✓ Basic navigation (ls, cd, pwd)
+  </text>
+  
+  <text x="70" y="260" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    ✓ File operations (cat, touch, mkdir)
+  </text>
+  
+  <text x="70" y="280" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    ✓ Text editing with vi
+  </text>
+  
+  <text x="70" y="300" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    ✓ Advanced commands (grep, find, pipe)
+  </text>
+  
+  <text x="70" y="330" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@tutorial:~$
+  </text>
+  <text x="200" y="330" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    ls
+  </text>
+  
+  <text x="70" y="355" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    lesson1/
+  </text>
+  <text x="150" y="355" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    lesson2/
+  </text>
+  <text x="230" y="355" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    lesson3/
+  </text>
+  <text x="310" y="355" font-family="'Courier New', monospace" font-size="12" fill="#89b4fa">
+    exercises/
+  </text>
+  
+  <text x="70" y="380" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@tutorial:~$
+  </text>
+  <text x="200" y="380" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    cd lesson1
+  </text>
+  
+  <text x="70" y="405" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@tutorial:~/lesson1$
+  </text>
+  <text x="260" y="405" font-family="'Courier New', monospace" font-size="14" fill="#cdd6f4">
+    cat intro.txt
+  </text>
+  
+  <text x="70" y="430" font-family="'Courier New', monospace" font-size="12" fill="#f9e2af">
+    ## Lesson 1: Basic Navigation
+  </text>
+  
+  <text x="70" y="450" font-family="'Courier New', monospace" font-size="12" fill="#cdd6f4">
+    Learn to navigate directories with 'ls' and 'cd'
+  </text>
+  
+  <text x="70" y="475" font-family="'Courier New', monospace" font-size="14" fill="#a6e3a1">
+    user@tutorial:~/lesson1$
+  </text>
+  <rect x="260" y="463" width="8" height="15" fill="#cdd6f4" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0;0.8" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Tutorial Info Panel -->
+  <g transform="translate(800, 120)">
+    <!-- Info Card Background -->
+    <rect x="0" y="0" width="350" height="320" rx="16" fill="#313244" stroke="#585b70" stroke-width="2"/>
+    
+    <!-- Icon -->
+    <circle cx="175" cy="60" r="35" fill="#45475a" stroke="#f9e2af" stroke-width="3"/>
+    <text x="175" y="72" text-anchor="middle" font-family="Inter" font-size="28" fill="#f9e2af">📚</text>
+    
+    <!-- Title -->
+    <text x="175" y="130" text-anchor="middle" font-family="Inter" font-size="28" font-weight="700" fill="#cdd6f4">
+      Interactive Tutorial
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="175" y="155" text-anchor="middle" font-family="Inter" font-size="16" font-weight="500" fill="#a6e3a1">
+      Learn Unix Commands
+    </text>
+    
+    <!-- Features -->
+    <g transform="translate(30, 180)">
+      <text x="0" y="20" font-family="Inter" font-size="14" fill="#fab387">🎯</text>
+      <text x="25" y="20" font-family="Inter" font-size="14" fill="#cdd6f4">Step-by-step lessons</text>
+      
+      <text x="0" y="45" font-family="Inter" font-size="14" fill="#cba6f7">⚡</text>
+      <text x="25" y="45" font-family="Inter" font-size="14" fill="#cdd6f4">Interactive exercises</text>
+      
+      <text x="0" y="70" font-family="Inter" font-size="14" fill="#a6e3a1">✨</text>
+      <text x="25" y="70" font-family="Inter" font-size="14" fill="#cdd6f4">Real terminal experience</text>
+      
+      <text x="0" y="95" font-family="Inter" font-size="14" fill="#89b4fa">🔄</text>
+      <text x="25" y="95" font-family="Inter" font-size="14" fill="#cdd6f4">Practice mode</text>
+    </g>
+    
+    <!-- Progress Indicator -->
+    <g transform="translate(50, 285)">
+      <text x="0" y="0" font-family="Inter" font-size="12" fill="#a6a8c7">Progress:</text>
+      <rect x="60" y="-8" width="180" height="8" rx="4" fill="#45475a"/>
+      <rect x="60" y="-8" width="54" height="8" rx="4" fill="#a6e3a1"/>
+      <text x="250" y="0" font-family="Inter" font-size="12" fill="#a6e3a1">30%</text>
+    </g>
+  </g>
+  
+  <!-- Main Title -->
+  <text x="600" y="60" text-anchor="middle" font-family="Inter" font-size="42" font-weight="700" fill="#cdd6f4">
+    Terminal Tutorial
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="580" text-anchor="middle" font-family="Inter" font-size="24" font-weight="400" fill="#a6a8c7">
+    Interactive Unix Command Learning Interface
+  </text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="80" cy="60" r="4" fill="#f9e2af" opacity="0.6"/>
+  <circle cx="1120" cy="560" r="6" fill="#cba6f7" opacity="0.4"/>
+  <circle cx="30" cy="560" r="3" fill="#f38ba8" opacity="0.5"/>
+  <circle cx="1170" cy="60" r="5" fill="#a6e3a1" opacity="0.3"/>
+</svg>
