@@ -63,7 +63,7 @@ function processGrepInput(input: string, regex: RegExp, options: { flags: Record
   }
 
   if (results.length === 0) {
-    return { success: false, output: '', exitCode: 1 };
+    return { success: true, output: '', exitCode: 1 };
   }
 
   return createSuccessResult(results.join('\n'), 0);
@@ -195,82 +195,130 @@ export const commands: Record<string, CommandHandler> = {
   },
 
   touch: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    if (args.length === 0) {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('touch', 'file'));
     }
 
-    const filepath = args[0];
+    for (const filepath of positionalArgs) {
+      // Resolve the path to handle tilde expansion
+      const targetPath = resolvePath(filesystem, filepath);
 
-    // Resolve the path to handle tilde expansion
-    const targetPath = resolvePath(filesystem, filepath);
+      // Extract parent directory path and filename
+      const parentPath = targetPath.slice(0, -1);
+      const filename = targetPath[targetPath.length - 1];
 
-    // Extract parent directory path and filename
-    const parentPath = targetPath.slice(0, -1);
-    const filename = targetPath[targetPath.length - 1];
+      // Security: Enhanced filename validation for the actual filename
+      if (filename.includes('\\') || filename.includes('\0')) {
+        return createErrorResult('touch: invalid filename');
+      }
 
-    // Security: Enhanced filename validation for the actual filename
-    if (filename.includes('\\') || filename.includes('\0')) {
-      return createErrorResult('touch: invalid filename');
-    }
+      if (filename.length > 255) {
+        return createErrorResult('touch: filename too long');
+      }
 
-    if (filename.length > 255) {
-      return createErrorResult('touch: filename too long');
-    }
+      const parentDir = getNodeAtPath(filesystem, parentPath);
+      if (!parentDir || parentDir.type !== 'directory' || !parentDir.children) {
+        return createErrorResult('touch: cannot access parent directory');
+      }
 
-    const parentDir = getNodeAtPath(filesystem, parentPath);
-    if (!parentDir || parentDir.type !== 'directory' || !parentDir.children) {
-      return createErrorResult('touch: cannot access parent directory');
-    }
+      // Security: Check directory file count limit
+      if (Object.keys(parentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
+        return createErrorResult(`touch: too many files in directory (max ${MAX_FILES_PER_DIRECTORY})`);
+      }
 
-    // Security: Check directory file count limit
-    if (Object.keys(parentDir.children).length >= MAX_FILES_PER_DIRECTORY) {
-      return createErrorResult(`touch: too many files in directory (max ${MAX_FILES_PER_DIRECTORY})`);
-    }
+      if (parentDir.children[filename]) {
+        parentDir.children[filename].modifiedAt = new Date();
+        continue; // Move to next file
+      }
 
-    if (parentDir.children[filename]) {
-      parentDir.children[filename].modifiedAt = new Date();
-      return createSuccessResult('');
-    }
+      // Security: Check filesystem size before creating file
+      const sizeValidation = validateFilesystemSize(filesystem);
+      if (!sizeValidation.valid) {
+        return createErrorResult(`touch: ${sizeValidation.error}`);
+      }
 
-    // Security: Check filesystem size before creating file
-    const sizeValidation = validateFilesystemSize(filesystem);
-    if (!sizeValidation.valid) {
-      return createErrorResult(`touch: ${sizeValidation.error}`);
-    }
-
-    const success = createFile(filesystem, parentPath, filename, '');
-    if (!success) {
-      return createErrorResult(`touch: cannot create '${filepath}'`);
+      const success = createFile(filesystem, parentPath, filename, '');
+      if (!success) {
+        return createErrorResult(`touch: cannot create '${filepath}'`);
+      }
     }
 
     return createSuccessResult('');
   },
 
   cat: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
-    if (args.length === 0) {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length === 0) {
       return createErrorResult(ERROR_MESSAGES.MISSING_OPERAND('cat', 'file'));
     }
 
-    const filename = args[0];
-    const targetPath = resolvePath(filesystem, filename);
-    const file = getNodeAtPath(filesystem, targetPath);
+    const showLineNumbers = flags.has('n');
 
-    if (!file) {
-      return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
+    // Handle single file for backward compatibility (especially for markdown)
+    if (positionalArgs.length === 1 && !showLineNumbers) {
+      const filename = positionalArgs[0];
+      const targetPath = resolvePath(filesystem, filename);
+      const file = getNodeAtPath(filesystem, targetPath);
+
+      if (!file) {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
+      }
+
+      if (file.type === 'directory') {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
+      }
+
+      const content = file.content || '';
+
+      // Check if it's a markdown file - return original renderMarkdown result
+      if (filename.endsWith('.md')) {
+        return createSuccessResult(renderMarkdown(content));
+      }
+
+      return createSuccessResult(content);
     }
 
-    if (file.type === 'directory') {
-      return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
+    // Handle multiple files or line numbers
+    const results: string[] = [];
+    let currentLineNumber = 1;
+
+    for (const filename of positionalArgs) {
+      const targetPath = resolvePath(filesystem, filename);
+      const file = getNodeAtPath(filesystem, targetPath);
+
+      if (!file) {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.FILE_NOT_FOUND(filename)}`);
+      }
+
+      if (file.type === 'directory') {
+        return createErrorResult(`cat: ${ERROR_MESSAGES.IS_A_DIRECTORY(filename)}`);
+      }
+
+      let content = file.content || '';
+
+      // For markdown files with multiple files or line numbers, convert to string
+      if (filename.endsWith('.md')) {
+        const markdownResult = renderMarkdown(content);
+        content = Array.isArray(markdownResult) ? markdownResult.map((seg) => seg.text).join('') : markdownResult;
+      }
+
+      if (showLineNumbers) {
+        const lines = content.split('\n');
+        const numberedLines = lines.map((line) => {
+          const lineNum = currentLineNumber.toString().padStart(6);
+          currentLineNumber++;
+          return `${lineNum}\t${line}`;
+        });
+        results.push(numberedLines.join('\n'));
+      } else {
+        results.push(content);
+      }
     }
 
-    const content = file.content || '';
-
-    // Check if it's a markdown file
-    if (filename.endsWith('.md')) {
-      return createSuccessResult(renderMarkdown(content));
-    }
-
-    return createSuccessResult(content);
+    return createSuccessResult(results.join(''));
   },
 
   mkdir: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
@@ -401,17 +449,66 @@ export const commands: Record<string, CommandHandler> = {
     return { success: true, output: output + '\n', exitCode: 0 };
   },
 
-  wc: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+  date: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    const now = new Date();
+
+    // Simple date command implementation
     if (args.length === 0) {
+      // Default format: Day Mon DD HH:MM:SS YYYY
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const dayName = days[now.getDay()];
+      const monthName = months[now.getMonth()];
+      const day = now.getDate().toString().padStart(2, '0');
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const year = now.getFullYear();
+
+      const dateStr = `${dayName} ${monthName} ${day} ${hours}:${minutes}:${seconds} ${year}`;
+      return { success: true, output: dateStr, exitCode: 0 };
+    }
+
+    // Handle format option
+    if (args[0] && args[0].startsWith('+')) {
+      const format = args[0].substring(1);
+      let result = format;
+
+      // Simple format substitutions
+      result = result.replace(/%Y/g, now.getFullYear().toString());
+      result = result.replace(/%m/g, (now.getMonth() + 1).toString().padStart(2, '0'));
+      result = result.replace(/%d/g, now.getDate().toString().padStart(2, '0'));
+      result = result.replace(/%H/g, now.getHours().toString().padStart(2, '0'));
+      result = result.replace(/%M/g, now.getMinutes().toString().padStart(2, '0'));
+      result = result.replace(/%S/g, now.getSeconds().toString().padStart(2, '0'));
+
+      return { success: true, output: result, exitCode: 0 };
+    }
+
+    return { success: false, output: '', error: 'date: invalid option', exitCode: 1 };
+  },
+
+  wc: (args: string[], filesystem: FileSystemState, aliasManager?: AliasManager): CommandResult => {
+    const { flags, positionalArgs } = parseOptions(args);
+
+    if (positionalArgs.length === 0) {
       return { success: false, output: '', error: 'wc: missing operand', exitCode: 1 };
     }
+
+    const showLines = flags.has('l');
+    const showWords = flags.has('w');
+    const showChars = flags.has('c');
+
+    // If no flags specified, show all (default behavior)
+    const showAll = !showLines && !showWords && !showChars;
 
     let totalLines = 0;
     let totalWords = 0;
     let totalChars = 0;
     const results: string[] = [];
 
-    for (const filename of args) {
+    for (const filename of positionalArgs) {
       const targetPath = resolvePath(filesystem, filename);
       const file = getNodeAtPath(filesystem, targetPath);
 
@@ -442,11 +539,37 @@ export const commands: Record<string, CommandHandler> = {
       totalWords += words;
       totalChars += chars;
 
-      results.push(`${lines.toString().padStart(8)} ${words.toString().padStart(8)} ${chars.toString().padStart(8)} ${filename}`);
+      const outputParts: string[] = [];
+
+      if (showAll || showLines) {
+        outputParts.push(lines.toString().padStart(8));
+      }
+      if (showAll || showWords) {
+        outputParts.push(words.toString().padStart(8));
+      }
+      if (showAll || showChars) {
+        outputParts.push(chars.toString().padStart(8));
+      }
+
+      outputParts.push(filename);
+      results.push(outputParts.join(' '));
     }
 
-    if (args.length > 1) {
-      results.push(`${totalLines.toString().padStart(8)} ${totalWords.toString().padStart(8)} ${totalChars.toString().padStart(8)} total`);
+    if (positionalArgs.length > 1) {
+      const totalParts: string[] = [];
+
+      if (showAll || showLines) {
+        totalParts.push(totalLines.toString().padStart(8));
+      }
+      if (showAll || showWords) {
+        totalParts.push(totalWords.toString().padStart(8));
+      }
+      if (showAll || showChars) {
+        totalParts.push(totalChars.toString().padStart(8));
+      }
+
+      totalParts.push('total');
+      results.push(totalParts.join(' '));
     }
 
     return { success: true, output: results.join('\n'), exitCode: 0 };
@@ -804,6 +927,7 @@ export const commands: Record<string, CommandHandler> = {
       '  pwd              - Print working directory',
       '  touch <file>     - Create empty file or update timestamp',
       '  cat <file>       - Display file contents (supports markdown rendering)',
+      '  date [+format]   - Display current date and time',
       '  mkdir [-p] <dir> - Create directory (-p: create parent directories)',
       '  rm [-r] [-f] <file> - Remove file (-r: recursive, -f: force)',
       '  rmdir <dir>      - Remove empty directory',
@@ -820,6 +944,8 @@ export const commands: Record<string, CommandHandler> = {
       'Aliases and Shell:',
       '  alias [name=cmd] - Create or list command aliases',
       '  unalias [-a] <name> - Remove alias (-a: remove all)',
+      '  export [VAR=value] - Create/list environment variables',
+      '  unset <VAR>      - Remove environment variables',
       '  source <file>    - Execute shell script and apply aliases',
       '',
       'Text Processing:',
@@ -876,6 +1002,9 @@ export const commands: Record<string, CommandHandler> = {
       '  ls -la | grep ".txt" | sort',
       '  cat file.txt | grep "pattern" | head -5',
       '  cat data.txt | sort | uniq | wc -l',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Made by ThibaultJRD - https://thibault.iusevimbtw.com',
     ].join('\n');
 
     return { success: true, output: helpText, exitCode: 0 };
@@ -921,7 +1050,14 @@ export const commands: Record<string, CommandHandler> = {
 
     // If no files specified, return an error - input will be handled by executeSingleCommand
     if (files.length === 0) {
-      return createErrorResult('grep: no input provided (use with pipe or specify file)', 1);
+      // Check if the pattern looks like a filename (common user mistake)
+      const looksLikeFilename = /\.(txt|md|js|ts|html|css|json|log|conf|sh|py|java|c|cpp|h|hpp)$/i.test(pattern);
+
+      if (looksLikeFilename) {
+        return createErrorResult(`grep: no pattern specified. Usage: grep 'pattern' ${pattern} or cat ${pattern} | grep 'pattern'`, 1);
+      }
+
+      return createErrorResult("grep: no input provided. Usage: grep 'pattern' file.txt or cat file.txt | grep 'pattern'", 1);
     }
 
     // Process specified files
@@ -1283,12 +1419,37 @@ function executePipedCommand(
     // For commands after the first, we need to pass the previous output as input
     if (i > 0) {
       // Convert previous output to string for piping
-      const previousOutput =
-        typeof lastResult.output === 'string'
-          ? lastResult.output
-          : Array.isArray(lastResult.output)
-            ? lastResult.output.map((segment) => segment.text || '').join('')
-            : '';
+      let previousOutput = '';
+      if (typeof lastResult.output === 'string') {
+        previousOutput = lastResult.output;
+      } else if (Array.isArray(lastResult.output)) {
+        // For commands that expect line-oriented input (like wc, grep),
+        // convert space-separated segments to newline-separated
+        const currentCommand = command.command;
+        if (currentCommand === 'wc' || currentCommand === 'grep' || currentCommand === 'head' || currentCommand === 'tail') {
+          // Convert output segments to lines by treating non-whitespace separators as line breaks
+          let text = '';
+          for (let j = 0; j < lastResult.output.length; j++) {
+            const segment = lastResult.output[j];
+            if (segment.text) {
+              if (segment.text.trim() === '' && j > 0 && j < lastResult.output.length - 1) {
+                // Replace whitespace-only segments between content with newlines
+                const prevSegment = lastResult.output[j - 1];
+                const nextSegment = lastResult.output[j + 1];
+                if (prevSegment?.text?.trim() && nextSegment?.text?.trim()) {
+                  text += '\n';
+                }
+              } else {
+                text += segment.text;
+              }
+            }
+          }
+          previousOutput = text;
+        } else {
+          // For other commands, join normally
+          previousOutput = lastResult.output.map((segment) => segment.text || '').join('');
+        }
+      }
 
       // Create a modified command that accepts piped input
       const modifiedCommand = { ...command };
@@ -1337,29 +1498,61 @@ function executeChainedCommand(
     const operator = i > 0 ? operators[i - 1] : null;
 
     // Check if we should execute this command based on the operator
+    let shouldExecute = true;
+
     if (operator === '&&' && lastResult.exitCode !== 0) {
       // && operator: only execute if previous command succeeded
-      break;
+      // Instead of breaking, skip to the next || if there is one
+      shouldExecute = false;
+
+      // Look ahead to see if there's an || operator
+      let foundOr = false;
+      for (let j = i; j < operators.length; j++) {
+        if (operators[j] === '||') {
+          foundOr = true;
+          // Skip all commands until we reach the || operator
+          while (i < commands.length - 1 && operators[i] !== '||') {
+            i++;
+          }
+          break;
+        }
+      }
+
+      if (!foundOr) {
+        // No || found, we're done
+        break;
+      }
     } else if (operator === '||' && lastResult.exitCode === 0) {
       // || operator: only execute if previous command failed
-      break;
+      shouldExecute = false;
     }
     // ; operator: always execute (no condition to check)
 
-    // Execute the command
-    const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode, environmentManager);
+    if (shouldExecute) {
+      // Execute the command
+      const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode, environmentManager);
 
-    // Add output to combined output
-    if (result.output) {
-      if (typeof result.output === 'string') {
-        combinedOutput.push({ text: result.output });
-      } else if (Array.isArray(result.output)) {
-        combinedOutput.push(...result.output);
+      // Add output to combined output
+      if (result.output) {
+        // Add newline separator if this is not the first command with output
+        if (combinedOutput.length > 0) {
+          // Check if the last output segment already ends with a newline
+          const lastSegment = combinedOutput[combinedOutput.length - 1];
+          if (lastSegment && typeof lastSegment.text === 'string' && !lastSegment.text.endsWith('\n')) {
+            combinedOutput.push({ text: '\n' });
+          }
+        }
+
+        if (typeof result.output === 'string') {
+          combinedOutput.push({ text: result.output });
+        } else if (Array.isArray(result.output)) {
+          combinedOutput.push(...result.output);
+        }
       }
-    }
 
-    // Update last result for next iteration
-    lastResult = result;
+      // Update last result for next iteration
+      lastResult = result;
+    }
   }
 
   return {
@@ -1507,6 +1700,42 @@ function handleStdinCommand(
       return createSuccessResult(uniqueLines.join('\n'), 0);
     }
 
+    case 'cat': {
+      // For cat with here document, output the input data directly
+      // This allows cat << EOF > file.txt to work properly
+      return createSuccessResult(inputData, 0);
+    }
+
+    case 'wc': {
+      const { flags } = parseOptions(args);
+
+      const showLines = flags.has('l');
+      const showWords = flags.has('w');
+      const showChars = flags.has('c');
+
+      // If no flags specified, show all (default behavior)
+      const showAll = !showLines && !showWords && !showChars;
+
+      const content = inputData;
+      const lines = content.split('\n').length;
+      const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length;
+      const chars = content.length;
+
+      const outputParts: string[] = [];
+
+      if (showAll || showLines) {
+        outputParts.push(lines.toString().padStart(8));
+      }
+      if (showAll || showWords) {
+        outputParts.push(words.toString().padStart(8));
+      }
+      if (showAll || showChars) {
+        outputParts.push(chars.toString().padStart(8));
+      }
+
+      return createSuccessResult(outputParts.join(' '), 0);
+    }
+
     default:
       return createErrorResult(`${command}: command not supported for stdin`, 1);
   }
@@ -1581,11 +1810,7 @@ function executeSingleCommand(
     }
 
     if (redirectInput.type === '<<') {
-      // Heredoc - for now, simulate with empty input for cat, or pass delimiter for other commands
-      if (command === 'cat' && args.length === 0) {
-        // For cat with heredoc and no files, simulate stdin input
-        return { success: true, output: `Reading input until '${redirectInput.source}'...`, exitCode: 0 };
-      }
+      // Heredoc - treat the source as the delimiter for multiline input
       finalArgs = [...args];
     } else {
       // File input - validate the file exists and is readable
@@ -1620,7 +1845,7 @@ function executeSingleCommand(
   if (
     redirectInput &&
     redirectInput.type === '<<' &&
-    (command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq')
+    (command === 'cat' || command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq' || command === 'wc')
   ) {
     // Handle commands that can process piped input
     const inputData = redirectInput.source;

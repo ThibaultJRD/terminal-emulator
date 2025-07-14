@@ -5,14 +5,15 @@ A modern and elegant terminal emulator built with React Router v7, TypeScript, a
 ![Terminal Emulator](https://img.shields.io/badge/React_Router-v7-blue?logo=react-router)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?logo=tailwindcss)
-![Tests](https://img.shields.io/badge/Tests-621%20passing-green?logo=vitest)
+![Tests](https://img.shields.io/badge/Tests-689%20passing-green?logo=vitest)
 
 ## 🚀 Live Demo
 
 **[Default Terminal](https://terminal-emulator-nine.vercel.app/)** - Unix-like filesystem experience  
-**[Interactive Portfolio](https://terminal-emulator-nine.vercel.app/portfolio)** - Explore professional experience
+**[Interactive Portfolio](https://terminal-emulator-nine.vercel.app/portfolio)** - Explore professional experience  
+**[Interactive Tutorial](https://terminal-emulator-nine.vercel.app/tutorial)** - Learn Unix commands step by step
 
-Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more. Try both modes to see the difference!
+Experience the full-featured terminal emulator directly in your browser! The live demo includes all features: Unix commands, file system persistence, text editor, and more. Try all three modes to see the difference!
 
 ## ✨ Features
 
@@ -70,9 +71,17 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Pattern Matching**: Regular expressions with security limits
 - **Chain Compatibility**: Pipes work with `ls`, `cat`, `echo`, `wc` and other output commands
 
+### 🎓 Interactive Tutorial
+
+- **Progressive Learning**: 8 structured lessons from basics to advanced concepts
+- **Hands-on Practice**: Sandbox environment for safe experimentation
+- **Auto-Detection**: Smart tracking of lesson visits and practice activities
+- **Comprehensive Curriculum**: Navigation, file management, text editing, I/O redirection, scripting
+- **Real-time Feedback**: Progress updates based on actual command usage and file creation
+
 ### 🧪 Testing
 
-- **621 tests** with comprehensive coverage
+- **689 tests** with comprehensive coverage across 28 test files
 - Unit and integration tests
 - Vitest framework with jsdom
 - All critical scenarios covered
@@ -223,7 +232,54 @@ wc file.txt            # Count lines/words/characters
 clear                  # Clear screen
 help                   # Command help
 man command            # Show manual for command
+
+# Tutorial Mode Commands (only available at /tutorial)
+lessons                # Go to lessons directory (alias for 'cd ~/lessons')
+sandbox                # Go to practice sandbox (alias for 'cd ~/sandbox')
 ```
+
+### Tutorial Learning Workflow
+
+The interactive tutorial provides a structured learning path for mastering Unix terminal commands:
+
+#### Getting Started
+
+```bash
+# 1. Access tutorial mode
+# Navigate to /tutorial in your browser
+
+# 2. Start learning
+lessons                          # Go to lessons directory
+ls                              # See available lessons (01-basics to 05-advanced)
+cd 01-basics && cat README.md   # Start with basic navigation
+
+# 3. Practice hands-on
+sandbox                         # Go to practice area
+# ... try commands from the lesson ...
+touch practice.txt              # Create practice files
+mkdir test-dir                  # Practice directory operations
+
+# 4. Continue learning
+cd lessons/02-files             # Move to next lesson
+```
+
+#### Learning Path
+
+1. **01-basics**: Master navigation (`cd`, `ls`, `pwd`) and reading files (`cat`)
+2. **02-creation**: Learn file and directory creation (`touch`, `mkdir`)
+3. **03-management**: Practice file operations (`cp`, `mv`, `rm`)
+4. **04-editor**: Master vim-style text editing (`vi` command)
+5. **05-reading**: File reading and paging (`cat`, `head`, `tail`)
+6. **06-search**: Text search and filtering (`grep`, pattern matching)
+7. **07-redirections**: I/O redirection (`>`, `>>`, `<`, `<<`)
+8. **08-pipes-chaining**: Pipes and command chaining (`|`, `&&`, `||`, `;`)
+
+#### Learning Features
+
+- **Auto-Detection**: Smart detection of lesson completion through practice activities
+- **Hands-on Practice**: Create files in sandbox to reinforce learning
+- **Practical Challenges**: Real-world exercises to test your skills
+- **Interactive Environment**: Safe space to experiment with Unix commands
 
 ### Pipes & Text Processing
 
@@ -235,7 +291,7 @@ The pipe operator (`|`) passes the output of one command as input to the next co
 
 ```bash
 # Basic piping
-ls | grep .txt                    # List files, filter for .txt files
+ls -l | grep .txt                    # List files, filter for .txt files
 cat file.txt | wc                 # Count lines/words/chars in file
 echo "hello world" | grep hello   # Search for pattern in text
 
@@ -663,7 +719,7 @@ make build && make test && make deploy || echo "Pipeline failed"
 
 # Note: Cannot mix pipes with other chaining operators
 # This would work: cat input.txt | sort
-# Followed by: echo "Sorted successfully" && rm -f temp.*
+# Followed by: echo "Sorted successfully" && rm -f temp.txt
 ```
 
 #### Practical Examples
@@ -687,7 +743,7 @@ mkdir backup ; cp *.txt backup/ ; echo "Backup attempt completed"
 
 ```bash
 # Clean temporary files
-rm temp.* && echo "Cleaned temp files" || echo "No temp files found" ; echo "Cleanup done"
+rm temp.txt temp.log && echo "Cleaned temp files" || echo "No temp files found" ; echo "Cleanup done"
 ```
 
 **Development Workflow:**
@@ -984,6 +1040,111 @@ vi international.txt
 4. **Check the status bar**: Monitor your current mode and cursor position
 5. **Unicode awareness**: The editor handles Unicode properly, but complex scripts may need special attention
 
+## 🛠️ General Troubleshooting
+
+### Common Terminal Issues
+
+#### Performance Issues
+
+**Q: Terminal feels slow or unresponsive**
+
+- **Solution**: Check storage usage with `storage-info`. Large filesystems may impact performance. Use `reset-fs` to clean up if needed.
+- **Prevention**: Avoid creating extremely large files (5MB limit per file) and manage storage regularly.
+
+**Q: Commands take a long time to complete**
+
+- **Solution**: Complex command chains or large pipe operations may be resource-intensive. Break down complex commands into simpler steps.
+
+#### Storage and Persistence Issues
+
+**Q: My files disappeared after refreshing the page**
+
+- **Solution**: Files are automatically saved to browser localStorage. Check if you're in the same route (/, /portfolio, /tutorial) and browser. Each route maintains separate storage.
+- **Prevention**: Use `storage-info` to monitor storage status and save important work externally.
+
+**Q: "Storage quota exceeded" error**
+
+- **Solution**: Browser localStorage is limited to ~5-10MB. Use `storage-info` to check usage and `reset-fs` to free up space.
+- **Prevention**: Regularly clean up unnecessary files and avoid storing large content.
+
+#### Command Execution Issues
+
+**Q: Command not found (exit code 127)**
+
+- **Solution**: Check command spelling. Use `help` to see available commands or `man command` for specific documentation.
+- **Available commands**: `ls`, `cd`, `cat`, `mkdir`, `touch`, `rm`, `cp`, `mv`, `vi`, `grep`, `head`, `tail`, `sort`, `uniq`, `wc`, `echo`, `alias`, `export`, `env`, `unset`, `source`, `man`, `help`, `clear`, `reset-fs`, `storage-info`
+
+**Q: Permission denied errors**
+
+- **Solution**: This is a simulated Unix environment. All operations should work within the security constraints. If persistent, try `reset-fs` to restore default permissions.
+
+**Q: Exit codes not working as expected**
+
+- **Solution**: Check command syntax and ensure proper chaining. Use `echo $?` immediately after a command to see its exit code.
+
+#### Autocompletion Issues
+
+**Q: Tab completion not working**
+
+- **Solution**: Ensure cursor is at the end of the line. Autocompletion works for commands, files, and paths based on context.
+- **Context**: After `cd` → directories only, after `cat` → files, after redirection operators → appropriate file types.
+
+#### Browser Compatibility
+
+**Q: Terminal doesn't work in my browser**
+
+- **Solution**: Modern browsers required (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+). Enable JavaScript and localStorage.
+- **Troubleshooting**: Try incognito/private mode to rule out extension conflicts.
+
+### Recovery Options
+
+#### Reset and Recovery
+
+```bash
+# Complete filesystem reset (loses all changes)
+reset-fs
+
+# Check current storage usage and status
+storage-info
+
+# Create backup before reset (manual)
+# Copy important files to external storage first
+```
+
+#### Data Export (Manual)
+
+Since this is a browser-based terminal, consider manually copying important text files to external editors for backup purposes before major operations.
+
+### Getting Help
+
+#### Built-in Help
+
+```bash
+# General help
+help
+
+# Command-specific help
+man ls        # Manual for ls command
+man vi        # Text editor documentation
+man grep      # Pattern matching help
+```
+
+#### Debug Information
+
+```bash
+# Check last command exit code
+echo $?
+
+# View environment status
+env
+
+# Check current location and permissions
+pwd && ls -la
+
+# Storage and performance info
+storage-info
+```
+
 ## 🗂️ Filesystem Configuration
 
 The terminal supports multiple filesystem modes through different routes, providing both a traditional Unix-like environment and an interactive portfolio experience.
@@ -1013,6 +1174,23 @@ An interactive portfolio showcasing real professional experience:
   - **Other Projects**: Bonjour Menu (COVID-19 solution), Terminal Emulator
 - `~/contact/` - Contact information and professional social links
 
+#### Tutorial Route (`/tutorial`)
+
+An interactive learning environment with progressive Unix lessons:
+
+- `~/lessons/` - 8 structured lessons (01-basics to 08-pipes-chaining)
+  - **01-basics**: Navigation fundamentals (ls, cd, pwd, cat)
+  - **02-creation**: File and directory creation (touch, mkdir)
+  - **03-management**: File operations (cp, mv, rm)
+  - **04-editor**: Vi editor training (modes, editing, saving)
+  - **05-reading**: File reading and paging (cat, head, tail, less)
+  - **06-search**: Text search and filtering (grep, find)
+  - **07-redirections**: I/O redirection (>, >>, <, <<)
+  - **08-pipes-chaining**: Pipes and command chaining (|, &&, ||, ;)
+- `~/sandbox/` - Practice area for hands-on learning and experimentation
+- `~/challenges/` - Practical exercises to test and apply skills
+- **Features**: Interactive lessons, hands-on practice, and practical challenges
+
 ### Accessing Different Modes
 
 Simply navigate to different URLs to access different filesystem modes:
@@ -1023,6 +1201,9 @@ https://your-domain.com/
 
 # Access interactive portfolio
 https://your-domain.com/portfolio
+
+# Access interactive tutorial
+https://your-domain.com/tutorial
 ```
 
 ### Filesystem Management Commands
@@ -1282,6 +1463,101 @@ yarn audit
 # Verify TypeScript compliance
 yarn typecheck
 ```
+
+### 🛡️ Security Best Practices
+
+#### Input Sanitization Examples
+
+The terminal automatically validates and sanitizes all user inputs:
+
+```bash
+# Filename validation (these are blocked)
+touch "file<script>alert('xss')</script>.txt"  # ❌ Invalid characters
+touch "file|malicious.txt"                     # ❌ Pipe character blocked
+touch "con.txt"                                # ❌ Windows reserved name
+
+# Valid filenames (these work)
+touch "my-file_123.txt"                        # ✅ Valid characters
+touch ".hidden-config"                         # ✅ Hidden files supported
+touch "résumé.pdf"                             # ✅ Unicode characters allowed
+```
+
+#### Command Injection Prevention
+
+The terminal uses safe parsing that prevents command injection:
+
+```bash
+# These potentially dangerous patterns are safely handled
+alias dangerous='rm -rf /'                    # ⚠️  Detected and blocked
+echo 'eval(malicious_code)'                   # ✅ Treated as literal text
+cat file.txt | grep '$(rm -rf /)'            # ✅ Pattern treated as literal
+
+# Safe command chaining works normally
+mkdir project && cd project && echo "Safe!"   # ✅ Legitimate chaining
+```
+
+#### Environment Variable Security
+
+Environment variables are safely managed with strict validation:
+
+```bash
+# Variable name validation
+export 123_VAR=value                          # ❌ Invalid name (starts with number)
+export VAR-WITH-DASHES=value                  # ❌ Invalid characters in name
+export VERY_LONG_VARIABLE_NAME_OVER_100_CHARS=value  # ❌ Name too long
+
+# Safe variable usage
+export PROJECT_PATH="/home/user/projects"     # ✅ Valid variable
+export NODE_ENV="development"                 # ✅ Standard environment variable
+echo "Working in: $PROJECT_PATH"              # ✅ Safe substitution
+```
+
+#### File Size and Storage Protection
+
+The terminal enforces strict limits to prevent abuse:
+
+```bash
+# Storage monitoring
+storage-info                                  # Check current usage
+
+# File size limits are enforced automatically
+# Attempting to create files >5MB will fail
+# Total filesystem >50MB will fail
+
+# Directory limits prevent filesystem abuse
+# Maximum 1,000 files per directory
+# Maximum 20 levels of nested directories
+```
+
+#### Path Traversal Protection
+
+All file operations are sandboxed within the virtual filesystem:
+
+```bash
+# These path traversal attempts are blocked
+cd ../../../etc/passwd                        # ❌ Resolved safely within sandbox
+cat ../../../../../../etc/hosts               # ❌ Cannot escape virtual filesystem
+
+# Normal relative paths work correctly
+cd ../parent-directory                        # ✅ Valid relative navigation
+cat ./subdirectory/file.txt                  # ✅ Safe relative file access
+```
+
+### 🚨 Security Incident Response
+
+If you encounter unexpected behavior:
+
+1. **Document the issue**: Note the exact command sequence that caused the problem
+2. **Check browser console**: Look for JavaScript errors or security warnings
+3. **Reset if necessary**: Use `reset-fs` to restore a clean state
+4. **Report**: Create an issue with reproduction steps if you suspect a security problem
+
+### 🔐 Privacy and Data Handling
+
+- **Local Storage Only**: All data remains in your browser's localStorage
+- **No Network Requests**: Terminal operates completely offline after initial load
+- **No Analytics**: No user behavior tracking or data collection
+- **Clean Uninstall**: Simply clear browser data to remove all traces
 
 ## 🚀 Deployment
 

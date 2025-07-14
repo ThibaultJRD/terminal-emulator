@@ -130,13 +130,30 @@ describe('Command Parser', () => {
       expect(result.args).toEqual(['-la']);
     });
 
-    it('should prioritize output redirection over input redirection when both are present', () => {
+    it('should support both input and output redirection when both are present', () => {
       const result = parseCommand('command < input > output');
       expect(result.redirectOutput).toEqual({
         type: '>',
         filename: 'output',
       });
-      expect(result.redirectInput).toBeUndefined();
+      expect(result.redirectInput).toEqual({
+        type: '<',
+        source: 'input',
+      });
+    });
+
+    it('should support here document with output redirection', () => {
+      const result = parseCommand('cat << EOF > poem.txt');
+      expect(result.command).toBe('cat');
+      expect(result.args).toEqual([]);
+      expect(result.redirectInput).toEqual({
+        type: '<<',
+        source: 'EOF',
+      });
+      expect(result.redirectOutput).toEqual({
+        type: '>',
+        filename: 'poem.txt',
+      });
     });
   });
 

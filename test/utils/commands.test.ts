@@ -156,6 +156,84 @@ describe('Commands', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('Is a directory');
     });
+
+    it('should display line numbers with -n option', () => {
+      // Create a test file with multiple lines
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['test-lines.txt'] = {
+          name: 'test-lines.txt',
+          type: 'file',
+          content: 'line 1\nline 2\nline 3',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.cat(['-n', 'test-lines.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('     1\tline 1');
+      expect(result.output).toContain('     2\tline 2');
+      expect(result.output).toContain('     3\tline 3');
+    });
+
+    it('should handle multiple files', () => {
+      // Create test files
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['file1.txt'] = {
+          name: 'file1.txt',
+          type: 'file',
+          content: 'content1',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['file2.txt'] = {
+          name: 'file2.txt',
+          type: 'file',
+          content: 'content2',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.cat(['file1.txt', 'file2.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('content1content2');
+    });
+
+    it('should handle multiple files with line numbers', () => {
+      // Create test files
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['multi1.txt'] = {
+          name: 'multi1.txt',
+          type: 'file',
+          content: 'line 1\nline 2',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['multi2.txt'] = {
+          name: 'multi2.txt',
+          type: 'file',
+          content: 'line 3\nline 4',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.cat(['-n', 'multi1.txt', 'multi2.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('     1\tline 1');
+      expect(result.output).toContain('     2\tline 2');
+      expect(result.output).toContain('     3\tline 3');
+      expect(result.output).toContain('     4\tline 4');
+    });
   });
 
   describe('mkdir command', () => {
@@ -238,6 +316,32 @@ describe('Commands', () => {
       const result = commands.echo([], filesystem);
       expect(result.success).toBe(true);
       expect(result.output).toBe('\n');
+    });
+  });
+
+  describe('date command', () => {
+    it('should output current date in default format', () => {
+      const result = commands.date([], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.exitCode).toBe(0);
+      expect(typeof result.output).toBe('string');
+      // Should include day, month, year
+      expect(result.output).toMatch(/\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}/);
+    });
+
+    it('should handle custom format strings', () => {
+      const result = commands.date(['+%Y-%m-%d'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.exitCode).toBe(0);
+      // Should match YYYY-MM-DD format
+      expect(result.output).toMatch(/\d{4}-\d{2}-\d{2}/);
+    });
+
+    it('should handle invalid options', () => {
+      const result = commands.date(['invalid'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.exitCode).toBe(1);
+      expect(result.error).toContain('invalid option');
     });
   });
 
@@ -434,6 +538,111 @@ describe('Commands', () => {
       const result = commands.wc(['nonexistent.txt'], filesystem);
       expect(result.success).toBe(false);
       expect(result.error).toContain('No such file or directory');
+    });
+
+    it('should show only line count with -l option', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-test.txt'] = {
+          name: 'wc-test.txt',
+          type: 'file',
+          content: 'line 1\nline 2\nline 3',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-l', 'wc-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*3\s+wc-test\.txt$/);
+    });
+
+    it('should show only word count with -w option', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-words.txt'] = {
+          name: 'wc-words.txt',
+          type: 'file',
+          content: 'hello world test',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-w', 'wc-words.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*3\s+wc-words\.txt$/);
+    });
+
+    it('should show only character count with -c option', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-chars.txt'] = {
+          name: 'wc-chars.txt',
+          type: 'file',
+          content: 'hello',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-c', 'wc-chars.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*5\s+wc-chars\.txt$/);
+    });
+
+    it('should handle multiple options', () => {
+      // Create a test file with known content
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-multi.txt'] = {
+          name: 'wc-multi.txt',
+          type: 'file',
+          content: 'line 1\nline 2',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-l', '-w', 'wc-multi.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toMatch(/^\s*2\s+4\s+wc-multi\.txt$/);
+    });
+
+    it('should handle multiple files with options', () => {
+      // Create test files
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['wc-file1.txt'] = {
+          name: 'wc-file1.txt',
+          type: 'file',
+          content: 'a\nb',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['wc-file2.txt'] = {
+          name: 'wc-file2.txt',
+          type: 'file',
+          content: 'c\nd',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+
+      const result = commands.wc(['-l', 'wc-file1.txt', 'wc-file2.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('2 wc-file1.txt');
+      expect(result.output).toContain('2 wc-file2.txt');
+      expect(result.output).toContain('4 total');
     });
   });
 
@@ -879,6 +1088,145 @@ describe('Commands', () => {
       const result = commands.uniq(['testdir'], filesystem);
       expect(result.success).toBe(false);
       expect(result.error).toContain('Is a directory');
+    });
+  });
+
+  describe('grep command', () => {
+    beforeEach(() => {
+      // Create test files for grep tests
+      const currentDir = getNodeAtPath(filesystem, filesystem.currentPath);
+      if (currentDir && currentDir.type === 'directory' && currentDir.children) {
+        currentDir.children['grep-test.txt'] = {
+          name: 'grep-test.txt',
+          type: 'file',
+          content: 'Hello world\nThis is a test\nAnother line\ntest line here\nFinal line',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['anchor-test.txt'] = {
+          name: 'anchor-test.txt',
+          type: 'file',
+          content: 'Start of line\nmiddle line\nend of line here\nAnother start line\nMidline end',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+        currentDir.children['case-test.txt'] = {
+          name: 'case-test.txt',
+          type: 'file',
+          content: 'Linux is great\nI love linux\nWindows is different\nUNIX is powerful',
+          createdAt: new Date(),
+          modifiedAt: new Date(),
+          permissions: '644',
+        };
+      }
+    });
+
+    it('should search for basic patterns', () => {
+      const result = commands.grep(['test', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('This is a test\ntest line here');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle case-insensitive search with -i flag', () => {
+      const result = commands.grep(['-i', 'HELLO', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Hello world');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should show line numbers with -n flag', () => {
+      const result = commands.grep(['-n', 'test', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('2:This is a test\n4:test line here');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should count matches with -c flag', () => {
+      const result = commands.grep(['-c', 'line', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('3');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should invert match with -v flag', () => {
+      const result = commands.grep(['-v', 'test', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Hello world\nAnother line\nFinal line');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle anchor patterns (^ and $)', () => {
+      // Test start anchor
+      const startResult = commands.grep(['^Start', 'anchor-test.txt'], filesystem);
+      expect(startResult.success).toBe(true);
+      expect(startResult.output).toBe('Start of line');
+      expect(startResult.exitCode).toBe(0);
+
+      // Test end anchor
+      const endResult = commands.grep(['end$', 'anchor-test.txt'], filesystem);
+      expect(endResult.success).toBe(true);
+      expect(endResult.output).toBe('Midline end');
+      expect(endResult.exitCode).toBe(0);
+    });
+
+    it('should handle alternation patterns (|)', () => {
+      const result = commands.grep(['Linux|UNIX', 'case-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Linux is great\nUNIX is powerful');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle case-insensitive alternation', () => {
+      const result = commands.grep(['-i', 'linux|unix', 'case-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Linux is great\nI love linux\nUNIX is powerful');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should return empty result when no matches found', () => {
+      const result = commands.grep(['nonexistent', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('');
+      expect(result.exitCode).toBe(1);
+    });
+
+    it('should fail for non-existent file', () => {
+      const result = commands.grep(['test', 'nonexistent.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No such file or directory');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail for directory', () => {
+      commands.mkdir(['testdir'], filesystem);
+      const result = commands.grep(['test', 'testdir'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Is a directory');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail for invalid regex pattern', () => {
+      const result = commands.grep(['[', 'grep-test.txt'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('invalid pattern');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail when pattern is missing', () => {
+      const result = commands.grep([], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('missing pattern');
+      expect(result.exitCode).toBe(2);
+    });
+
+    it('should fail when no files specified and no input provided', () => {
+      const result = commands.grep(['test'], filesystem);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('no input provided');
+      expect(result.exitCode).toBe(1);
     });
   });
 });

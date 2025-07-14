@@ -4,6 +4,15 @@ import type { FileSystemState } from '~/routes/terminal/types/filesystem';
 import { executeCommand } from '~/routes/terminal/utils/commands';
 import { createDefaultFileSystem, createFile } from '~/routes/terminal/utils/filesystem';
 
+// Helper function to extract text from output (string or OutputSegment[])
+function getOutputText(output: string | any[]): string {
+  if (typeof output === 'string') return output;
+  if (Array.isArray(output)) {
+    return output.map((segment) => segment.text || '').join('');
+  }
+  return '';
+}
+
 describe('Pipe Operations Integration', () => {
   let filesystem: FileSystemState;
 
@@ -73,7 +82,7 @@ describe('Pipe Operations Integration', () => {
       createFile(filesystem, ['home', 'user'], 'test.txt', 'Hello world\nThis is a test');
 
       const result = executeCommand('cat test.txt | grep nonexistent', filesystem);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(result.exitCode).toBe(1);
       expect(result.output).toBe('');
     });
@@ -85,6 +94,81 @@ describe('Pipe Operations Integration', () => {
       expect(result.success).toBe(false);
       // The pipe should return the exit code from the failing command (grep)
       expect(result.exitCode).toBe(2);
+    });
+
+    it('should handle grep with anchor patterns (^ and $)', () => {
+      createFile(filesystem, ['home', 'user'], 'anchor-test.txt', 'Start of line\nmiddle line\nend of line here\nAnother start line\nMidline end');
+
+      // Test start anchor
+      const startResult = executeCommand('cat anchor-test.txt | grep "^Start"', filesystem);
+      expect(startResult.success).toBe(true);
+      expect(startResult.output).toBe('Start of line');
+      expect(startResult.exitCode).toBe(0);
+
+      // Test end anchor
+      const endResult = executeCommand('cat anchor-test.txt | grep "end$"', filesystem);
+      expect(endResult.success).toBe(true);
+      expect(endResult.output).toBe('Midline end');
+      expect(endResult.exitCode).toBe(0);
+    });
+
+    it('should handle grep with alternation patterns (|)', () => {
+      createFile(filesystem, ['home', 'user'], 'alternation-test.txt', 'I have a cat\nMy dog is friendly\nBirds are flying\nThe cat sleeps\nDogs are loyal');
+
+      const result = executeCommand('cat alternation-test.txt | grep "cat|dog"', filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('I have a cat\nMy dog is friendly\nThe cat sleeps');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle grep with case-insensitive alternation', () => {
+      createFile(filesystem, ['home', 'user'], 'case-test.txt', 'Linux is great\nI love linux\nWindows is different\nUNIX is powerful');
+
+      const result = executeCommand('cat case-test.txt | grep -i "linux|unix"', filesystem);
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('Linux is great\nI love linux\nUNIX is powerful');
+      expect(result.exitCode).toBe(0);
+    });
+  });
+
+  describe('wc command in pipes', () => {
+    it('should pipe ls output to wc -l to count files', () => {
+      // Create test files
+      createFile(filesystem, ['home', 'user'], 'file1.txt', 'content1');
+      createFile(filesystem, ['home', 'user'], 'file2.txt', 'content2');
+      createFile(filesystem, ['home', 'user'], 'file3.txt', 'content3');
+
+      const result = executeCommand('ls | wc -l', filesystem);
+      expect(result.success).toBe(true);
+      expect(getOutputText(result.output).trim()).toBe('5'); // Should count 5 items (2 default dirs + 3 files)
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should pipe echo output to wc -w to count words', () => {
+      const result = executeCommand('echo "hello world test" | wc -w', filesystem);
+      expect(result.success).toBe(true);
+      expect(getOutputText(result.output).trim()).toBe('3'); // Should count 3 words
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should pipe cat output to wc -c to count characters', () => {
+      createFile(filesystem, ['home', 'user'], 'test.txt', 'hello');
+
+      const result = executeCommand('cat test.txt | wc -c', filesystem);
+      expect(result.success).toBe(true);
+      expect(getOutputText(result.output).trim()).toBe('5'); // Should count 5 characters
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should pipe cat output to wc (default behavior - lines, words, chars)', () => {
+      createFile(filesystem, ['home', 'user'], 'multi.txt', 'hello world\ntest line\nthird line');
+
+      const result = executeCommand('cat multi.txt | wc', filesystem);
+      expect(result.success).toBe(true);
+      // Should output: lines(3), words(6), chars(32)
+      // "hello world\ntest line\nthird line" = 32 chars, 6 words (hello, world, test, line, third, line), 3 lines
+      expect(getOutputText(result.output).trim()).toMatch(/^\s*3\s+6\s+32\s*$/);
+      expect(result.exitCode).toBe(0);
     });
   });
 });

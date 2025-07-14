@@ -186,5 +186,42 @@ describe('Exit Codes and Command Chaining', () => {
       expect(getOutputText(result.output)).toContain('still runs');
       expect(result.exitCode).toBe(0); // exit code of echo
     });
+
+    it('should handle complex mixed chaining: ls backup/ && echo "Backup exists" || mkdir backup', () => {
+      // Test case 1: backup directory does not exist
+      // ls should fail → echo should not execute → mkdir should execute
+      const result1 = executeCommand('ls backup/ && echo "Backup exists" || mkdir backup', filesystem);
+      expect(result1.success).toBe(true); // mkdir succeeds
+      expect(getOutputText(result1.output)).not.toContain('Backup exists');
+      expect(result1.exitCode).toBe(0); // mkdir exit code
+
+      // Test case 2: backup directory now exists
+      // ls should succeed → echo should execute → mkdir should not execute
+      const result2 = executeCommand('ls backup/ && echo "Backup exists" || mkdir backup', filesystem);
+      expect(result2.success).toBe(true);
+      expect(getOutputText(result2.output)).toContain('Backup exists');
+      expect(result2.exitCode).toBe(0); // echo exit code
+    });
+
+    it('should handle multiple && followed by ||', () => {
+      // Test: false && echo A && echo B || echo C
+      // false should fail → echo A should not execute → echo B should not execute → echo C should execute
+      const result = executeCommand('false && echo A && echo B || echo C', filesystem);
+      expect(result.success).toBe(true);
+      expect(getOutputText(result.output)).toBe('C\n');
+      expect(getOutputText(result.output)).not.toContain('A');
+      expect(getOutputText(result.output)).not.toContain('B');
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('should handle mixed operators with multiple ||', () => {
+      // Test: ls nonexistent || echo "fallback1" || echo "fallback2"
+      // ls should fail → echo "fallback1" should execute → echo "fallback2" should not execute
+      const result = executeCommand('ls nonexistent || echo "fallback1" || echo "fallback2"', filesystem);
+      expect(result.success).toBe(true);
+      expect(getOutputText(result.output)).toContain('fallback1');
+      expect(getOutputText(result.output)).not.toContain('fallback2');
+      expect(result.exitCode).toBe(0);
+    });
   });
 });

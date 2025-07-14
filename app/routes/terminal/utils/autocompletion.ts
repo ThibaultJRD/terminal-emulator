@@ -4,7 +4,7 @@ import type { EnvironmentManager } from '~/routes/terminal/utils/environmentMana
 // FilesystemMode removed as both modes now use the same structure
 import { getCurrentDirectory, getNodeAtPath, resolvePath } from '~/routes/terminal/utils/filesystem';
 
-import { CHAIN_REGEX } from './constants';
+import { findChainOperators } from './commandParser';
 
 export interface AutocompletionResult {
   completions: string[];
@@ -45,10 +45,10 @@ function isNewCommandContext(afterLastOperator: string): boolean {
  * and extracts the relevant part for completion
  */
 function parseCommandContext(input: string): CommandContext {
-  // Check for command chaining operators (&&, ||, ;)
-  const matches = [...input.matchAll(CHAIN_REGEX)];
+  // Check for command chaining operators while respecting quotes
+  const operatorMatches = findChainOperators(input);
 
-  if (matches.length === 0) {
+  if (operatorMatches.length === 0) {
     return {
       isChainedContext: false,
       currentInput: input,
@@ -57,8 +57,8 @@ function parseCommandContext(input: string): CommandContext {
   }
 
   // Find the last operator
-  const lastMatch = matches[matches.length - 1];
-  const lastOperatorIndex = lastMatch.index! + lastMatch[0].length;
+  const lastMatch = operatorMatches[operatorMatches.length - 1];
+  const lastOperatorIndex = lastMatch.index + lastMatch.length;
 
   // Extract the part after the last operator
   const afterLastOperator = input.slice(lastOperatorIndex).trimStart();

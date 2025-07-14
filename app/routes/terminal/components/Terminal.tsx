@@ -27,11 +27,11 @@ interface OutputLine {
 }
 
 interface TerminalProps {
-  mode?: 'default' | 'portfolio';
+  mode?: 'default' | 'portfolio' | 'tutorial';
 }
 
 export function Terminal({ mode = 'default' }: TerminalProps) {
-  const filesystemMode: FilesystemMode = mode === 'portfolio' ? 'portfolio' : 'default';
+  const filesystemMode: FilesystemMode = mode === 'portfolio' ? 'portfolio' : mode === 'tutorial' ? 'tutorial' : 'default';
 
   const [terminalState, setTerminalState] = useState<TerminalState>(() => {
     // Initialize filesystem with persistence support
@@ -86,6 +86,59 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
         {
           type: 'output',
           content: 'Explore my projects and experience with Unix commands. Type "help" to get started.',
+          timestamp: new Date().toISOString(),
+        },
+      ];
+    }
+
+    if (mode === 'tutorial') {
+      return [
+        {
+          type: 'output',
+          content: [
+            { text: '🎓 ', type: 'normal' },
+            { text: 'Welcome to the Interactive Terminal Tutorial!', type: 'header-1' },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: [
+            { text: 'Learn Unix commands step by step | ', type: 'header-2' },
+            { text: 'ls', type: 'inline-code' },
+            { text: ', ', type: 'normal' },
+            { text: 'cd', type: 'inline-code' },
+            { text: ', ', type: 'normal' },
+            { text: 'vi', type: 'inline-code' },
+            { text: ', pipes, variables...', type: 'header-2' },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: [
+            { text: '✨ ', type: 'normal' },
+            { text: 'Start your learning journey: ', type: 'bold' },
+            { text: 'cd lessons/01-basics && cat README.md', type: 'inline-code' },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: [
+            { text: 'General help: ', type: 'bold' },
+            { text: 'help', type: 'inline-code' },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'output',
+          content: [
+            { text: '🔄 ', type: 'normal' },
+            { text: 'Stuck? Reset and refresh: ', type: 'bold' },
+            { text: 'reset-fs', type: 'inline-code' },
+            { text: ' then refresh your browser', type: 'normal' },
+          ],
           timestamp: new Date().toISOString(),
         },
       ];
@@ -571,13 +624,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
     }
   };
 
-  const generatePromptText = (path: string[], currentMode: 'default' | 'portfolio'): string => {
-    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+  const generatePromptText = (path: string[], currentMode: 'default' | 'portfolio' | 'tutorial'): string => {
+    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : currentMode === 'tutorial' ? 'student' : 'user';
     return `${user}@terminal:${formatPath(path)} ❯ `;
   };
 
-  const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio'): OutputSegment[] => {
-    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : 'user';
+  const generatePromptSegments = (path: string[], currentMode: 'default' | 'portfolio' | 'tutorial'): OutputSegment[] => {
+    const user = currentMode === 'portfolio' ? 'ThibaultJRD' : currentMode === 'tutorial' ? 'student' : 'user';
     const formattedPath = formatPathWithTilde(path);
     return [
       { type: 'user' as const, text: user },
@@ -597,7 +650,7 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
   };
 
   const currentPrompt = {
-    user: mode === 'portfolio' ? 'ThibaultJRD' : 'user',
+    user: mode === 'portfolio' ? 'ThibaultJRD' : mode === 'tutorial' ? 'student' : 'user',
     host: 'terminal',
     path: formatPathWithTilde(terminalState.filesystem.currentPath),
     symbol: '❯',
@@ -664,6 +717,13 @@ export function Terminal({ mode = 'default' }: TerminalProps) {
       {isTextEditorOpen && textEditorState && (
         <TextEditor initialState={textEditorState} onSave={handleTextEditorSave} onClose={handleTextEditorClose} onStateChange={setTextEditorState} />
       )}
+
+      {/* Attribution */}
+      <div className="text-ctp-subtext0 absolute right-2 bottom-2 text-xs opacity-30 transition-opacity duration-200 hover:opacity-70">
+        <a href="https://thibault.iusevimbtw.com" target="_blank" rel="noopener noreferrer" className="hover:text-ctp-subtext1">
+          Made by ThibaultJRD
+        </a>
+      </div>
     </div>
   );
 }
