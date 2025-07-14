@@ -1419,12 +1419,37 @@ function executePipedCommand(
     // For commands after the first, we need to pass the previous output as input
     if (i > 0) {
       // Convert previous output to string for piping
-      const previousOutput =
-        typeof lastResult.output === 'string'
-          ? lastResult.output
-          : Array.isArray(lastResult.output)
-            ? lastResult.output.map((segment) => segment.text || '').join('')
-            : '';
+      let previousOutput = '';
+      if (typeof lastResult.output === 'string') {
+        previousOutput = lastResult.output;
+      } else if (Array.isArray(lastResult.output)) {
+        // For commands that expect line-oriented input (like wc, grep),
+        // convert space-separated segments to newline-separated
+        const currentCommand = command.command;
+        if (currentCommand === 'wc' || currentCommand === 'grep' || currentCommand === 'head' || currentCommand === 'tail') {
+          // Convert output segments to lines by treating non-whitespace separators as line breaks
+          let text = '';
+          for (let j = 0; j < lastResult.output.length; j++) {
+            const segment = lastResult.output[j];
+            if (segment.text) {
+              if (segment.text.trim() === '' && j > 0 && j < lastResult.output.length - 1) {
+                // Replace whitespace-only segments between content with newlines
+                const prevSegment = lastResult.output[j - 1];
+                const nextSegment = lastResult.output[j + 1];
+                if (prevSegment?.text?.trim() && nextSegment?.text?.trim()) {
+                  text += '\n';
+                }
+              } else {
+                text += segment.text;
+              }
+            }
+          }
+          previousOutput = text;
+        } else {
+          // For other commands, join normally
+          previousOutput = lastResult.output.map((segment) => segment.text || '').join('');
+        }
+      }
 
       // Create a modified command that accepts piped input
       const modifiedCommand = { ...command };
@@ -1473,29 +1498,61 @@ function executeChainedCommand(
     const operator = i > 0 ? operators[i - 1] : null;
 
     // Check if we should execute this command based on the operator
+    let shouldExecute = true;
+
     if (operator === '&&' && lastResult.exitCode !== 0) {
       // && operator: only execute if previous command succeeded
-      break;
+      // Instead of breaking, skip to the next || if there is one
+      shouldExecute = false;
+
+      // Look ahead to see if there's an || operator
+      let foundOr = false;
+      for (let j = i; j < operators.length; j++) {
+        if (operators[j] === '||') {
+          foundOr = true;
+          // Skip all commands until we reach the || operator
+          while (i < commands.length - 1 && operators[i] !== '||') {
+            i++;
+          }
+          break;
+        }
+      }
+
+      if (!foundOr) {
+        // No || found, we're done
+        break;
+      }
     } else if (operator === '||' && lastResult.exitCode === 0) {
       // || operator: only execute if previous command failed
-      break;
+      shouldExecute = false;
     }
     // ; operator: always execute (no condition to check)
 
-    // Execute the command
-    const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode, environmentManager);
+    if (shouldExecute) {
+      // Execute the command
+      const result = executeSingleCommand(command, filesystem, aliasManager, lastResult.exitCode, environmentManager);
 
-    // Add output to combined output
-    if (result.output) {
-      if (typeof result.output === 'string') {
-        combinedOutput.push({ text: result.output });
-      } else if (Array.isArray(result.output)) {
-        combinedOutput.push(...result.output);
+      // Add output to combined output
+      if (result.output) {
+        // Add newline separator if this is not the first command with output
+        if (combinedOutput.length > 0) {
+          // Check if the last output segment already ends with a newline
+          const lastSegment = combinedOutput[combinedOutput.length - 1];
+          if (lastSegment && typeof lastSegment.text === 'string' && !lastSegment.text.endsWith('\n')) {
+            combinedOutput.push({ text: '\n' });
+          }
+        }
+
+        if (typeof result.output === 'string') {
+          combinedOutput.push({ text: result.output });
+        } else if (Array.isArray(result.output)) {
+          combinedOutput.push(...result.output);
+        }
       }
-    }
 
-    // Update last result for next iteration
-    lastResult = result;
+      // Update last result for next iteration
+      lastResult = result;
+    }
   }
 
   return {
@@ -1649,6 +1706,36 @@ function handleStdinCommand(
       return createSuccessResult(inputData, 0);
     }
 
+    case 'wc': {
+      const { flags } = parseOptions(args);
+
+      const showLines = flags.has('l');
+      const showWords = flags.has('w');
+      const showChars = flags.has('c');
+
+      // If no flags specified, show all (default behavior)
+      const showAll = !showLines && !showWords && !showChars;
+
+      const content = inputData;
+      const lines = content.split('\n').length;
+      const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length;
+      const chars = content.length;
+
+      const outputParts: string[] = [];
+
+      if (showAll || showLines) {
+        outputParts.push(lines.toString().padStart(8));
+      }
+      if (showAll || showWords) {
+        outputParts.push(words.toString().padStart(8));
+      }
+      if (showAll || showChars) {
+        outputParts.push(chars.toString().padStart(8));
+      }
+
+      return createSuccessResult(outputParts.join(' '), 0);
+    }
+
     default:
       return createErrorResult(`${command}: command not supported for stdin`, 1);
   }
@@ -1758,7 +1845,7 @@ function executeSingleCommand(
   if (
     redirectInput &&
     redirectInput.type === '<<' &&
-    (command === 'cat' || command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq')
+    (command === 'cat' || command === 'grep' || command === 'sort' || command === 'head' || command === 'tail' || command === 'uniq' || command === 'wc')
   ) {
     // Handle commands that can process piped input
     const inputData = redirectInput.source;

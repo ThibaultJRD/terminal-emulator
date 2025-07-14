@@ -3589,7 +3589,7 @@ ls project/ && cd project && ls || echo "No project directory"
 1. Sort contacts and show unique entries: \`cat contacts.txt | sort | uniq\`
 2. Find tech terms ending with "end": \`cat tech_terms.txt | grep "end$"\`
 3. Count unique words: \`cat tech_terms.txt | wc -w\`
-4. List files, filter for .txt, count them: \`ls | grep "\\.txt" | wc -l\`
+4. List files, filter for .txt, count them: \`ls -l | grep ".txt" | wc -l\`
 
 ### Exercise 3: Command Chaining
 1. Create a test file: \`touch test.txt && echo "File created successfully"\`

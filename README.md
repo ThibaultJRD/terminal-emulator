@@ -289,7 +289,7 @@ The pipe operator (`|`) passes the output of one command as input to the next co
 
 ```bash
 # Basic piping
-ls | grep .txt                    # List files, filter for .txt files
+ls -l | grep .txt                    # List files, filter for .txt files
 cat file.txt | wc                 # Count lines/words/chars in file
 echo "hello world" | grep hello   # Search for pattern in text
 
