@@ -26,7 +26,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 - **Filesystem Management**: `reset-fs`, `storage-info`
 - **Alias System**: `alias`, `unalias`, `source` (shell script parsing)
 - **Manual System**: `man` (command manuals and documentation)
-- **Text Processing**: `grep` (regex pattern matching), `head`, `tail`, `sort`, `uniq`
+- **Text Processing**: `grep` (regex pattern matching), `head` (files + pipes), `tail` (files + pipes), `sort` (files + pipes), `uniq` (files + pipes)
 - **Utilities**: `echo` (with `$?` support), `wc`, `clear`, `help`
 - **Exit Codes**: Unix-standard exit codes (0 = success, >0 = error)
 
@@ -67,7 +67,7 @@ Experience the full-featured terminal emulator directly in your browser! The liv
 ### 🔗 Pipes & Text Processing
 
 - **Pipe Operator**: `cmd1 | cmd2` - Pass output from cmd1 as input to cmd2
-- **Text Processing Commands**: `grep` (files + pipes), `head`, `tail`, `sort`, `uniq` (pipes only)
+- **Text Processing Commands**: `grep` (files + pipes), `head` (files + pipes), `tail` (files + pipes), `sort` (files + pipes), `uniq` (files + pipes)
 - **Pattern Matching**: Regular expressions with security limits
 - **Chain Compatibility**: Pipes work with `ls`, `cat`, `echo`, `wc` and other output commands
 
@@ -148,29 +148,47 @@ The Vercel preset optimizes builds for Vercel's serverless environment, creating
 app/
 ├── root.tsx                 # Root layout with favicon
 ├── routes.ts                # Route configuration
-├── routes/terminal/
-│   ├── terminal.tsx         # Main terminal route
-│   ├── components/
-│   │   ├── Terminal.tsx     # Main terminal component
-│   │   └── TextEditor.tsx   # Vim-inspired text editor
-│   ├── types/
-│   │   └── filesystem.ts    # TypeScript types
-│   └── utils/
-│       ├── filesystem.ts    # File system utilities with persistence
-│       ├── commands.ts      # Command implementations + new commands
-│       ├── commandParser.ts # Parsing with redirection
-│       ├── optionParser.ts  # Unix option parsing
-│       ├── autocompletion.ts # Autocompletion system + new commands
-│       ├── aliasManager.ts  # Alias system management
-│       ├── shellParser.ts   # Shell script parsing
-│       ├── markdown.ts      # Markdown rendering
-│       ├── defaultFilesystems.ts # Default and portfolio filesystems
-│       ├── persistence.ts   # Browser localStorage management
-│       └── textEditor.ts    # Text editor state and logic
-├── test/                    # Comprehensive test suite
-│   ├── utils/              # Unit tests
-│   └── integration/        # Integration tests
-└── app.css                 # Global Catppuccin styles
+├── app.css                  # Global Catppuccin styles
+├── components/
+│   └── SEO.tsx             # SEO component
+├── constants/
+│   └── defaultFilesystems.ts # Default and portfolio filesystems
+└── routes/
+    ├── tutorial.tsx         # Tutorial route
+    ├── portfolio/
+    │   └── portfolio.tsx    # Portfolio route
+    └── terminal/
+        ├── terminal.tsx     # Main terminal route
+        ├── components/
+        │   ├── Terminal.tsx     # Main terminal component
+        │   ├── TextEditor.tsx   # Vim-inspired text editor
+        │   └── ErrorBoundary.tsx # Error boundary component
+        ├── hooks/
+        │   └── useFilesystemPersistence.ts # Filesystem persistence hook
+        ├── types/
+        │   └── filesystem.ts    # TypeScript types
+        └── utils/
+            ├── filesystem.ts    # File system utilities with persistence
+            ├── commands.ts      # Command implementations
+            ├── commandParser.ts # Parsing with redirection
+            ├── commandUtils.ts  # Command utilities
+            ├── optionParser.ts  # Unix option parsing
+            ├── autocompletion.ts # Autocompletion system
+            ├── aliasManager.ts  # Alias system management
+            ├── shellParser.ts   # Shell script parsing
+            ├── markdown.ts      # Markdown rendering
+            ├── persistence.ts   # Browser localStorage management
+            ├── textEditor.ts    # Text editor state and logic
+            ├── terminalHandlers.ts # Terminal event handlers
+            ├── environmentManager.ts # Environment variable management
+            ├── constants.ts     # Terminal constants
+            └── unicodeBase64.ts # Unicode handling utilities
+
+test/                        # Comprehensive test suite
+├── components/             # Component tests
+├── hooks/                  # Hook tests
+├── utils/                  # Unit tests
+└── integration/           # Integration tests
 ```
 
 ## 🎮 Usage Guide
@@ -318,59 +336,78 @@ cat log.txt | grep -i error       # Find error messages (case-insensitive)
 echo "test line" | grep test      # Search piped text
 ```
 
-**head - First Lines** (Pipe input only)
+**head - First Lines** (Files and pipes)
 
 ```bash
-# Works only with pipes - NOT direct file access
+# Works with both files and pipes
+head file.txt                     # First 10 lines from file
+head -n 5 document.txt            # First 5 lines from file
+head -n 3 data.txt                # First 3 lines from file
+
+# Pipe input
 ls -la | head -5                  # First 5 files in listing
 cat file.txt | head -10           # First 10 lines from cat output
 echo -e "line1\nline2\nline3" | head -2   # First 2 lines from echo
 
 # Options
-command | head                    # First 10 lines (default)
-command | head -5                 # First 5 lines
-command | head -n 3               # First 3 lines (explicit syntax)
+head [file]                       # First 10 lines (default)
+head -n 5 [file]                  # First 5 lines
+head -n 3 [file]                  # First 3 lines
 ```
 
-**tail - Last Lines** (Pipe input only)
+**tail - Last Lines** (Files and pipes)
 
 ```bash
-# Works only with pipes - NOT direct file access
+# Works with both files and pipes
+tail file.txt                     # Last 10 lines from file
+tail -n 5 document.txt            # Last 5 lines from file
+tail -n 3 data.txt                # Last 3 lines from file
+
+# Pipe input
 ls -la | tail -5                  # Last 5 files in listing
 cat log.txt | tail -20            # Last 20 lines from cat output
 echo -e "a\nb\nc\nd" | tail -2    # Last 2 lines from echo
 
 # Options
-command | tail                    # Last 10 lines (default)
-command | tail -5                 # Last 5 lines
-command | tail -n 3               # Last 3 lines (explicit syntax)
+tail [file]                       # Last 10 lines (default)
+tail -n 5 [file]                  # Last 5 lines
+tail -n 3 [file]                  # Last 3 lines
 ```
 
-**sort - Sort Lines** (Pipe input only)
+**sort - Sort Lines** (Files and pipes)
 
 ```bash
-# Works only with pipes - NOT direct file access
+# Works with both files and pipes
+sort file.txt                     # Sort file contents alphabetically
+sort -r data.txt                  # Reverse sort file contents
+sort -n numbers.txt               # Numeric sort of file
+
+# Pipe input
 ls | sort                         # Sort file listing alphabetically
 cat data.txt | sort               # Sort file contents
 echo -e "zebra\napple\nbanana" | sort  # Sort piped input
 
 # Options
-command | sort                    # Sort alphabetically
-command | sort -r                 # Reverse sort
-command | sort -n                 # Numeric sort
+sort [file]                       # Sort alphabetically
+sort -r [file]                    # Reverse sort
+sort -n [file]                    # Numeric sort
 ```
 
-**uniq - Remove Duplicates** (Pipe input only)
+**uniq - Remove Duplicates** (Files and pipes)
 
 ```bash
-# Works only with pipes - NOT direct file access
+# Works with both files and pipes
 # Note: Input should be sorted for best results
+uniq sorted_file.txt              # Remove duplicates from file
+sort data.txt | uniq              # Sort then remove duplicates
+
+# Pipe input
 ls | sort | uniq                  # Unique sorted file list
 cat data.txt | sort | uniq        # Remove duplicates from file
 echo -e "a\na\nb\nb" | sort | uniq # Remove duplicates from echo
 
 # Common pattern
-command | sort | uniq | wc        # Count unique lines
+sort file.txt | uniq | wc         # Count unique lines
 ```
 
 #### Complex Pipe Examples
@@ -432,8 +469,7 @@ echo -e "apple\nbanana\napple\ncherry" | sort | uniq | wc  # Count unique items
 
 #### Pipe Limitations and Notes
 
-- **Text Processing Commands**: `head`, `tail`, `sort`, and `uniq` only work with piped input, not direct file arguments
-- **Grep Exception**: `grep` works with both files and pipes: `grep pattern file.txt` OR `command | grep pattern`
+- **Text Processing Commands**: `head`, `tail`, `sort`, `uniq`, and `grep` all work with both files and pipes: `command file.txt` OR `command | other_command`
 - **No Mixing with Other Operators**: Pipes cannot be mixed with `&&`, `||`, or `;` in the same command chain
 - **Data Flow**: Each command in a pipe receives the complete output of the previous command
 - **Exit Codes**: Pipe chains return the exit code of the last command in the chain
