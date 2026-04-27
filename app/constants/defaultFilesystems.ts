@@ -1430,25 +1430,31 @@ export function createPortfolioFilesystem(): FileSystemNode {
                     type: 'file',
                     content: `# Thibault Jaillard
 
-**Senior Mobile Developer** • Montréal, QC
+**Senior Mobile & Frontend Developer** • Montréal, QC 🍁
 
 ## About
 
-Mobile and web developer with 8+ years experience. Built **10+ apps** including **Fruitz** (acquired by Bumble, 5.6M+ downloads) and banking apps serving **4M+ users**.
+Senior developer with **9 years** focused on **mobile (React Native)** and **modern web frontends (React, Next.js, TanStack Start)**. I ship user-facing products at scale, and co-found tools I wish existed.
+
+Notable work includes **Fruitz** (acquired by Bumble, 5.6M+ downloads) and banking apps serving **4M+ monthly active users**.
 
 ## Current Role
 
-**Senior Mobile Developer** at GO ROCK IT  
-*Banking consultant for Banque Nationale du Canada*
+**Senior Mobile Developer @ National Bank of Canada (NBC)** — *Since January 2025*
 
-- Maintain banking app with **4M+ monthly users**
-- Reduced bugs by **25%** and improved performance by **15%**
-- Cut accessibility incidents by **30%**
-- Developed **1000+ features** across multiple projects
+- Shipping features and resolving bugs on a React Native app serving **4M+ monthly active users**
+- Leading technical conception for new features, designing scalable solutions for high-volume traffic
+- Driving rigorous QA and code reviews on a mission-critical banking product
+- Operating inside a complex, enterprise-level codebase while maintaining high code quality and performance standards
+
+## Co-founder
+
+- **[middlewr.com](https://middlewr.com)** — Programmable link engine for modern teams
+- **[Orbit Codes](https://github.com/orbit-codes)** — Multi-chain blockchain tooling for the Cosmos ecosystem
 
 ## Education
 
-**EPITECH** - European Institute of Technology (2014-2019)  
+**EPITECH** — European Institute of Technology (2014-2019)
 Master in Computer Science
 
 ## Philosophy
@@ -1460,7 +1466,7 @@ Master in Computer Science
 - **Team player**: Share knowledge, give feedback
 - **Keep learning**: Stay current with tech`,
                     permissions: '-rw-r--r--',
-                    size: 847,
+                    size: 1180,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
                   },
@@ -1473,58 +1479,46 @@ Master in Computer Science
 
 - **TypeScript**
 - **JavaScript**
-- **PHP**
-- **C**
-- **C++**
-- **Go**
 
 ## Frontend
 
-### Frameworks
-- **React** • Expert • 8 years
-- **Redux** • Expert • 6 years
-- **React Router** • Expert • 5 years
-- **Next.js** • Advanced • 2 years
-- **TailwindCSS** • Advanced • 3 years
-- **Vue.js** • Advanced • 2 years
+- **React**
+- **Next.js**
+- **TanStack Start**
+- **Vue.js**
+- **TailwindCSS**
 
 ## Mobile
 
-- **React Native** • Expert • 7 years
-- **Expo** • Expert • 5 years
+- **React Native**
+- **Expo**
+- **iOS**
+- **Android**
 
-## Backend
+## Testing
 
-- **Node.js** • Expert • 5 years
-- **NestJS** • Advanced • 3 years
-- **SQL** • Advanced • 7 years
+- **Jest**
+- **Vitest**
+- **React Testing Library**
 
-## Blockchain
+## Tooling
 
-- **Cosmos SDK** • Advanced • 3 years
-- **JavaScript SDK** • Advanced • 3 years
-- **API Integration** • Advanced • 3 years
+- **Git**
+- **Neovim**
 
-## Tools
-
-- **Git/GitHub** • Expert
-- **Docker** • Advanced
-- **CI/CD** • Advanced
-- **Figma** • Advanced
-
-## Languages
+## Spoken Languages
 
 - **French** • Native
 - **English** • Professional
 
 ## Key Achievements
 
-- 📱 **1000+ features** developed across projects
-- 🍑 **Fruitz app**: 5.6M+ downloads, acquired by Bumble
-- 🏦 **BNC Banking**: 4M+ monthly users
-- ⛓️ **Blockchain**: Cosmos ecosystem projects`,
+- 🍑 **Fruitz**: 5.6M+ downloads, acquired by Bumble
+- 🏦 **NBC Banking**: 4M+ monthly active users
+- 🔗 **middlewr.com**: Co-founder, programmable link engine
+- 🌌 **Orbit Codes**: Co-founder, multi-chain Cosmos tooling`,
                     permissions: '-rw-r--r--',
-                    size: 1284,
+                    size: 760,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
                   },
@@ -1584,51 +1578,43 @@ Dating app with unique fruit-based matching system. Successfully acquired by Bum
                   'banking.md': {
                     name: 'banking.md',
                     type: 'file',
-                    content: `# BNC Banking App
+                    content: `# NBC Banking App
 
-**Users**: 4M+ monthly active  
-**Platform**: iOS & Android  
-**Role**: Senior Mobile Developer  
+**Users**: 4M+ monthly active
+**Platform**: iOS & Android
+**Role**: Senior Mobile Developer @ National Bank of Canada (since January 2025)
 **Tech**: React Native, TypeScript
 
 ## About
 
-Mobile banking application for Banque Nationale du Canada serving over 4 million monthly active users. Enterprise-level security and performance requirements.
+Mobile banking application for **National Bank of Canada (NBC)** serving over 4 million monthly active users. Mission-critical, enterprise-level codebase with strict security, compliance, and performance requirements.
 
-## Key Achievements
+## What I Do
 
-- 🏦 **4M+ monthly users** - One of Canada's largest banking apps
-- 📈 **25% bug reduction** through code optimization  
-- ⚡ **15% performance improvement** via stability enhancements
-- ♿ **30% fewer accessibility incidents** through improved standards
-- 🔧 **1000+ features** developed and maintained
+- Shipping features and resolving bugs on a React Native app serving **4M+ monthly active users**
+- Leading **technical conception** for new features, designing scalable solutions for high-volume traffic
+- Driving **rigorous QA and code reviews** on a mission-critical banking product
+- Operating inside a complex, **enterprise-level codebase** while maintaining high code quality and performance standards
 
-## Technical Focus
-
-### Performance & Reliability
-- **Load time optimization**: Critical screens < 2 seconds
-- **Error handling**: Comprehensive error tracking and recovery
-- **Memory management**: Efficient resource usage for sustained sessions
+## Domain Context
 
 ### Security & Compliance
-- **Banking regulations**: Full compliance with Canadian financial standards
-- **Data encryption**: Multi-layer security for financial data
-- **Authentication**: Biometric and multi-factor authentication
-- **Fraud detection**: Real-time transaction monitoring
+- Full compliance with Canadian financial regulations
+- Multi-layer security for financial data
+- Biometric and multi-factor authentication
 
 ### User Experience
-- **Accessibility**: WCAG compliance for inclusive banking
-- **Cross-platform**: Consistent experience iOS/Android
-- **Responsive design**: Optimized for all device sizes
+- Accessibility-conscious development for inclusive banking
+- Consistent cross-platform experience (iOS/Android)
+- Responsive design across the device matrix
 
 ## Tech Stack
 
-- **Frontend**: React Native, TypeScript, Redux
-- **Security**: Advanced encryption, secure authentication
-- **Performance**: Optimized for millions of concurrent users
-- **Testing**: 95%+ test coverage for critical operations`,
+- **Frontend**: React Native, TypeScript
+- **Scale**: Serving millions of monthly active users
+- **Practices**: Rigorous code review, technical design ownership`,
                     permissions: '-rw-r--r--',
-                    size: 1443,
+                    size: 1280,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
                   },
@@ -1750,6 +1736,114 @@ Full-featured web terminal emulator with in-memory filesystem, Unix-like command
                     createdAt: new Date(),
                     modifiedAt: new Date(),
                   },
+                  'middlewr.md': {
+                    name: 'middlewr.md',
+                    type: 'file',
+                    content: `# middlewr.com
+
+**Role**: Co-founder · Frontend Engineer
+**URL**: [middlewr.com](https://middlewr.com)
+**Tech**: TanStack Start, React 19, Shadcn UI, TypeScript, oRPC, Cloudflare Workers
+
+## About
+
+The **programmable link engine for modern teams**. Compose routing workflows, deploy at the edge, own every click.
+
+middlewr turns short links into composable workflows: route conditionally, run logic at the edge, and keep full ownership of your link analytics — no vendor lock-in on your most strategic surface.
+
+## My Role
+
+As co-founder and frontend engineer, I lead product surface decisions and frontend architecture:
+
+- **Product UX**: Designing the workflow composer and dashboard for routing logic
+- **Frontend stack**: TanStack Start with React 19 and Shadcn UI for a fast, modern editor experience
+- **End-to-end types**: oRPC for fully typed client/server contracts
+- **Edge runtime**: Deployed on Cloudflare Workers for low-latency routing worldwide
+
+## Tech Stack
+
+- **Framework**: TanStack Start
+- **UI**: React 19, Shadcn UI, TailwindCSS
+- **Language**: TypeScript
+- **API layer**: oRPC (end-to-end type safety)
+- **Runtime**: Cloudflare Workers (edge)`,
+                    permissions: '-rw-r--r--',
+                    size: 1130,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                  'orbit-codes.md': {
+                    name: 'orbit-codes.md',
+                    type: 'file',
+                    content: `# Orbit Codes
+
+**Role**: Co-founder · Frontend Engineer
+**URL**: [github.com/orbit-codes](https://github.com/orbit-codes)
+**Team**: 3 people
+**Focus**: Multi-chain blockchain tooling for the Cosmos ecosystem
+
+## About
+
+Orbit Codes is a 3-person team building **multi-chain blockchain tooling for the Cosmos ecosystem**. We focus on shipping production-grade infrastructure tools that make multi-chain operations practical for builders, validators, and end users.
+
+## My Role
+
+I lead the **frontend** across our products:
+
+### Rollappscan
+**Type**: Multi-chain blockchain explorer
+**Stack**: Next.js, TypeScript
+
+A multi-chain explorer for the Cosmos / RollApp ecosystem. Real-time transaction and block data, validator views, network analytics, and search across multiple chains from a single interface.
+
+### Internal Operator Dashboard
+**Type**: Internal tooling
+**Purpose**: Operational visibility and controls for the team
+
+Custom dashboard built to give the team live operational signal across the chains and services we run.
+
+## Stack
+
+- **Framework**: Next.js
+- **Language**: TypeScript
+- **Styling**: TailwindCSS
+- **Blockchain**: Cosmos SDK, multi-chain APIs`,
+                    permissions: '-rw-r--r--',
+                    size: 1180,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
+                  'bonjour-menu.md': {
+                    name: 'bonjour-menu.md',
+                    type: 'file',
+                    content: `# Bonjour Menu
+
+**Context**: COVID-era contactless ordering
+**Scale**: Used by **900+ restaurants**
+**Tech**: Web frontend (React)
+
+## About
+
+Built during the COVID era, **Bonjour Menu** was a contactless ordering platform that let restaurants replace paper menus with QR-driven digital ones — customers scanned, browsed, and ordered from their own phone.
+
+The product reached **900+ restaurants** at peak, providing a critical operational tool while in-person service was constrained.
+
+## What It Solved
+
+- **Contactless menus**: QR-driven menu access — no shared paper menus
+- **Order from table**: Customers placed orders directly from their phone
+- **Operational fit**: Designed to slot into existing restaurant workflows quickly
+
+## Impact
+
+- 🍽️ **900+ restaurants** onboarded
+- 🦠 Helped restaurants stay operational under COVID-era constraints
+- 📱 Mobile-first web experience for end customers`,
+                    permissions: '-rw-r--r--',
+                    size: 870,
+                    createdAt: new Date(),
+                    modifiedAt: new Date(),
+                  },
                 },
               },
               contact: {
@@ -1785,21 +1879,22 @@ Full-featured web terminal emulator with in-memory filesystem, Unix-like command
 
 ## Quick Stats
 
-- 📱 **8+ years** mobile/web development
+- 📱 **9 years** mobile & frontend development
 - 🏆 **10+ apps** built and deployed
-- 👥 **4M+ users** served (BNC Banking)
+- 👥 **4M+ users** served (NBC Banking)
 - 🚀 **1 acquisition** (Fruitz → Bumble)
-- 💼 **Currently**: Senior Mobile Developer at GO ROCK IT
+- 🤝 **Co-founder** of [middlewr.com](https://middlewr.com) & [Orbit Codes](https://github.com/orbit-codes)
+- 💼 **Currently**: Senior Mobile Developer @ National Bank of Canada (since January 2025)
 
 ## Availability
 
 Open to discussing:
-- Senior mobile development roles
-- React Native projects
-- Technical consulting
-- Remote and Montreal-based positions`,
+- Senior mobile / frontend development roles
+- React Native and React / Next.js / TanStack Start projects
+- Technical conception and architecture
+- Remote and Montréal-based positions`,
                     permissions: '-rw-r--r--',
-                    size: 1024,
+                    size: 1180,
                     createdAt: new Date(),
                     modifiedAt: new Date(),
                   },
